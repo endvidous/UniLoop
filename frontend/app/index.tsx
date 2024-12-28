@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
-import * as SplashScreen from 'expo-splash-screen';
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, Image } from "react-native";
+import * as SplashScreen from "expo-splash-screen";
 
 export default function App() {
   const [isReady, setIsReady] = useState(false);
@@ -11,7 +11,7 @@ export default function App() {
         // Keep the splash screen visible while we fetch resources
         await SplashScreen.preventAutoHideAsync();
         // Simulate a task (e.g., fetching assets or initializing app state)
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        await new Promise((resolve) => setTimeout(resolve, 3000));
       } catch (e) {
         console.warn(e);
       } finally {
@@ -37,16 +37,12 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#ffffff",
   },
   text: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
-
-
-
-
