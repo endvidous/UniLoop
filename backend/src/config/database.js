@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 const connection = {
-  isConnected: false, // Default should be false
+  isConnected: false,
 };
 
 const connectDB = async () => {
@@ -12,7 +12,6 @@ const connectDB = async () => {
       console.log("Already connected to MongoDB");
       return;
     }
-    console.log("Connecting to MongoDB...");
     const db = await mongoose.connect(process.env.MONGO_URI);
     connection.isConnected = db.connections[0].readyState;
     console.log("Connected to MongoDB");
