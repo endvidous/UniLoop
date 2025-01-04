@@ -1,17 +1,6 @@
-import { Text, View } from "react-native";
+import React from "react";
+import SplashScreen from "./splashScreen";
 
-export default function Index() {
-  return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Text>HI HENRYYY</Text>
-      <Text>Hello</Text>
-      <Text>Edit app/index.tsx to edit this screen.</Text>
-    </View>
-  );
+export default function App() {
+  return;
 }

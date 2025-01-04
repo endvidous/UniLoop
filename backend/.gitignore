@@ -18,7 +18,6 @@ expo-env.d.ts
 *.mobileprovision
 .env
 
-
 # debug
 npm-debug.*
 yarn-debug.*
