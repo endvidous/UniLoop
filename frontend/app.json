@@ -15,25 +15,15 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/u.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.anonymous.UniLoop"
     },
     "web": {
       "bundler": "metro",
       "output": "static",
       "favicon": "./assets/images/u.png"
     },
-    "plugins": [
-      "expo-router",
-      [
-        "expo-splash-screen",
-        {
-          "image": "./assets/images/splashnrw.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
-        }
-      ]
-    ],
+    "plugins": ["expo-router"],
     "experiments": {
       "typedRoutes": true
     }
