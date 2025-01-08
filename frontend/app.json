@@ -16,6 +16,7 @@
         "foregroundImage": "./assets/images/u.png",
         "backgroundColor": "#ffffff"
       },
+      "splash": null,
       "package": "com.anonymous.UniLoop"
     },
     "web": {

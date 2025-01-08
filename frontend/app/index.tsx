@@ -25,7 +25,7 @@ export default function App() {
       >
         Home Screen
       </Text>
-      <Link href="/(splash)" style={styles.link}>
+      <Link href="/(splash)/" style={styles.link}>
         Go to Splash Screen
       </Link>
     </View>
