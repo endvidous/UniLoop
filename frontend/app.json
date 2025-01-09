@@ -16,7 +16,6 @@
         "foregroundImage": "./assets/images/u.png",
         "backgroundColor": "#ffffff"
       },
-      "splash": null,
       "package": "com.anonymous.UniLoop"
     },
     "web": {
@@ -24,7 +23,18 @@
       "output": "static",
       "favicon": "./assets/images/u.png"
     },
-    "plugins": ["expo-router"],
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/u.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
+        }
+      ]
+    ],
     "experiments": {
       "typedRoutes": true
     }
