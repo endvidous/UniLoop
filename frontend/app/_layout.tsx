@@ -46,7 +46,7 @@ export default function RootLayout() {
     );
 
     if (!token && inProtectedRoute) {
-      router.replace("/login");
+      router.replace("/(auth)");
     } else if (token && inAuthRoute) {
       router.replace("/(authenticated)/(student)");
     }
