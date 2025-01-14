@@ -19,6 +19,6 @@
 │   │   ├── services/
 │   │   │   ├── auth.service.ts
 │   │   │   └── ...
-│   │   └── app.ts        # Express app setup
+│   │   └── server.ts        # Express app setup
 │   ├── .env              # Backend environment variables
 │   └── package.json      # Backend dependencies

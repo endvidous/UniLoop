@@ -12,7 +12,7 @@ const connectDB = async () => {
       console.log("Already connected to MongoDB");
       return;
     }
-    const db = await mongoose.connect(process.env.MONGO_URI);
+    const db = await mongoose.connect(process.env.MONGODB_URI);
     connection.isConnected = db.connections[0].readyState;
     console.log("Connected to MongoDB");
   } catch (err) {
@@ -20,4 +20,4 @@ const connectDB = async () => {
   }
 };
 
-export { connectDB };
+export default connectDB;
