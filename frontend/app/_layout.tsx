@@ -28,7 +28,7 @@ export default function RootLayout() {
         setIsInitialized(true);
         setTimeout(() => {
           setIsLoading(false);
-        }, 500);
+        }, 1000);
       }
     }
 
