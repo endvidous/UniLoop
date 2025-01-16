@@ -53,6 +53,6 @@ export const createAdmin = async (req, res) => {
     }
     res.status(201).json({ message: "Admin  registered" });
   } catch (err) {
-    res.status(500).json({ message: `Error gay route ${err}` });
+    res.status(500).json({ message: `Error route ${err}` });
   }
 };
