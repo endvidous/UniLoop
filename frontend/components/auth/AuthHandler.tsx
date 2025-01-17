@@ -9,15 +9,17 @@ export function AuthHandler() {
 
   useEffect(() => {
     if (isLoading) return;
+
     const inAuthGroup = segments[0] === "(auth)";
     const inProtectedGroup = segments[0] === "(authenticated)";
+
     if (token && user && inAuthGroup) {
-      const role = user?.role as "admin" | "teacher" | "student"; // Default to 'student' if role is missing
+      const role = user?.role as "admin" | "teacher" | "student";
       router.replace(`/(authenticated)/(${role})`);
     } else if (!token && inProtectedGroup) {
       router.replace("/(auth)");
     }
-  }, [token, user, isLoading]);
+  }, [token, user, isLoading, segments, router]);
 
   return null;
 }

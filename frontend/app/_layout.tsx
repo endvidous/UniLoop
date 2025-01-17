@@ -12,6 +12,7 @@ export default function RootLayout() {
   const token = useStore((state) => state.token);
   const isLoading = useStore((state) => state.isLoading);
   const initializeState = useStore((state) => state.initializeState);
+  const clearAuth = useStore((state) => state.clearAuth);
 
   useEffect(() => {
     async function initialize() {
@@ -22,7 +23,7 @@ export default function RootLayout() {
           await authService.validateToken();
         } catch (error) {
           // If token validation fails, clear storage
-          appStorage.clearAll();
+          clearAuth();
         }
       }
 

@@ -1,7 +1,6 @@
 import { createContext, useContext, useCallback, useEffect } from "react";
 import { useStore } from "./store";
 import { authService } from "@/services/api/auth";
-import { appStorage } from "@/services/storage/secureStorage";
 
 interface User {
   id: string;
@@ -38,11 +37,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setToken = useStore((state) => state.setToken);
   const setLoading = useStore((state) => state.setLoading);
   const initializeState = useStore((state) => state.initializeState);
+  const clearAuth = useStore((state) => state.clearAuth);
 
   useEffect(() => {
     // Initialize Zustand state when the component is mounted
     initializeState();
-  }, []);
+  }, [initializeState]);
 
   const signIn = useCallback(
     async (email: string, password: string) => {
@@ -54,10 +54,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Update Zustand store and appStorage
         setToken(token);
         setUser(user);
-
-        // Update local storage (appStorage)
-        appStorage.setToken(token);
-        appStorage.setUser(user);
 
         setLoading(false);
       } catch (error) {
@@ -71,9 +67,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = useCallback(async () => {
     try {
       setLoading(true);
-      await authService.logout();
+      // await authService.logout();
       // Clear Zustand state and appStorage
-      appStorage.clearAll();
+      clearAuth();
       setLoading(false);
     } catch (error) {
       console.error("Error signing out:", error);
