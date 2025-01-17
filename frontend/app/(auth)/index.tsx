@@ -1,46 +1,52 @@
 import {
   View,
   StyleSheet,
-  Dimensions,
   TextInput,
   TouchableOpacity,
   Text,
+  Alert,
 } from "react-native";
-import {
-  Badge,
-  Calendar,
-  CheckMark,
-  Exclamation,
-  Headphones,
-  Lightbulb,
-  Reading,
-  Stopwatch,
-  Sumo,
-  UniloopText,
-} from "@/assets/svgs/splashSvgs";
+import { UniloopText } from "@/assets/svgs/splashSvgs";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-const userDetails = {
-  name: "Henry",
-  email: "henry@gmail.com",
-  password: "henryhenry121",
-  ID: "klasjdflk1323",
-  role: "student",
-  classrep_of: null,
-  roll_no: "222MCS36",
-};
+import { authService } from "@/services/api/auth";
+import { useStore } from "@/context/store";
+import axios, { AxiosError } from "axios";
 
 export default function LoginPage() {
-  const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
-
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const { setUser, setToken } = useStore();
 
-  const checkuserFunc = (email: string, password: string) => {
-    if (email === userDetails.email && password === userDetails.password) {
-      if (userDetails.role === "student") {
-        router.replace("/(authenticated)/(student)");
+  const handleLogin = async () => {
+    try {
+      const response = await authService.login(email, password);
+      const { token, ...user } = response; // Extract user and token
+
+      setUser(user); // Save user in Zustand
+      setToken(token); // Save token in Zustand
+      Alert.alert("Login Successful!", `Welcome, ${user.name}`);
+
+      const role = user.role as "admin" | "teacher" | "student"; // Validate roles
+      router.replace(`/(authenticated)/(${role})`); // Type-safe routing
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        // Handle Axios-specific errors
+        const message =
+          error.response?.data?.message ||
+          "An error occurred while logging in.";
+        Alert.alert("Login Failed", message);
+        console.error(error.message);
+      } else if (error instanceof Error) {
+        // Handle general errors
+        Alert.alert(
+          "Login Failed",
+          error.message || "An unexpected error occurred."
+        );
+        console.error(error.message);
+      } else {
+        console.error("An unknown error occurred:", error);
       }
     }
   };
@@ -87,7 +93,7 @@ export default function LoginPage() {
           {/* Login Button */}
           <TouchableOpacity
             style={styles.loginButton}
-            onPress={() => checkuserFunc}
+            onPress={() => handleLogin()}
           >
             <Text style={styles.loginButtonText}>Login</Text>
           </TouchableOpacity>

@@ -3,7 +3,7 @@ import { MMKV } from "react-native-mmkv";
 const storage = new MMKV();
 
 interface User {
-  _id: string;
+  id: string;
   name: string;
   email: string;
   role: string;
