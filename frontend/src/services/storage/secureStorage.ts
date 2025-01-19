@@ -1,14 +1,7 @@
 import { MMKV } from "react-native-mmkv";
+import { User } from "../interfaces";
 
 const storage = new MMKV();
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-}
-
 const STORAGE_KEYS = {
   AUTH_TOKEN: "auth_token",
   THEME: "theme",

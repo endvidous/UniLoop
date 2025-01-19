@@ -6,11 +6,11 @@ import {
   Text,
   Alert,
 } from "react-native";
-import { UniloopText } from "@/assets/svgs/splashSvgs";
-import { useRouter } from "expo-router";
+import { UniloopText } from "@/src/assets/svgs/splashSvgs";
+import { Link, useRouter } from "expo-router";
 import { useState } from "react";
-import { authService } from "@/services/api/auth";
-import { useStore } from "@/context/store";
+import { authService } from "@/src/services/api/auth";
+import { useStore } from "@/src/context/store";
 import axios, { AxiosError } from "axios";
 
 export default function LoginPage() {
@@ -18,33 +18,35 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { setUser, setToken } = useStore();
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   const handleLogin = async () => {
     try {
       const response = await authService.login(email, password);
-      const { token, ...user } = response; // Extract user and token
+      const { token, ...user } = response;
 
       setUser(user); // Save user in Zustand
       setToken(token); // Save token in Zustand
       Alert.alert("Login Successful!", `Welcome, ${user.name}`);
 
-      const role = user.role as "admin" | "teacher" | "student"; // Validate roles
-      router.replace(`/(authenticated)/(${role})`); // Type-safe routing
-    } catch (error: unknown) {
+      const role = user.role as "admin" | "teacher" | "student";
+      router.replace(`/(authenticated)/(${role})`);
+    } catch (error) {
       if (axios.isAxiosError(error)) {
-        // Handle Axios-specific errors
-        const message =
-          error.response?.data?.message ||
-          "An error occurred while logging in.";
-        Alert.alert("Login Failed", message);
-        console.error(error.message);
-      } else if (error instanceof Error) {
-        // Handle general errors
-        Alert.alert(
-          "Login Failed",
-          error.message || "An unexpected error occurred."
-        );
-        console.error(error.message);
+        const message = error.response?.data?.message;
+
+        // Reset errors
+        setEmailError(null);
+        setPasswordError(null);
+        // Set error based on backend message
+        if (message === "Invalid credentials") {
+          setEmailError("Invalid email or user does not exist.");
+        } else if (message === "Wrong password") {
+          setPasswordError("Incorrect password. Please try again.");
+        } else {
+          Alert.alert("Error", "An unexpected error occurred.");
+        }
       } else {
         console.error("An unknown error occurred:", error);
       }
@@ -64,13 +66,15 @@ export default function LoginPage() {
           <Text style={styles.label}>Email ID</Text>
           <TextInput
             style={styles.input}
-            placeholder="ex: student@gmail.com"
+            placeholder="ex: user@gmail.com"
             placeholderTextColor="#999"
             value={email}
             onChange={(e) => {
               setEmail(e.nativeEvent.text);
             }}
           />
+          {/* Error message */}
+          {emailError && <Text style={styles.error}>{emailError}</Text>}
 
           {/* Password Input */}
           <Text style={styles.label}>Password</Text>
@@ -78,17 +82,20 @@ export default function LoginPage() {
             style={styles.input}
             secureTextEntry
             placeholderTextColor="#999"
-            placeholder={"*".repeat(password.length)}
             value={password}
             onChange={(e) => {
               setPassword(e.nativeEvent.text);
             }}
           />
+          {/* Error message */}
+          {passwordError && <Text style={styles.error}>{passwordError}</Text>}
 
           {/* Reset Password Link */}
-          <TouchableOpacity style={styles.resetButton}>
-            <Text style={styles.resetText}>Reset password</Text>
-          </TouchableOpacity>
+          <Link href={"/(auth)/resetPassword"} asChild>
+            <TouchableOpacity style={styles.resetButton}>
+              <Text style={styles.resetText}>Reset password</Text>
+            </TouchableOpacity>
+          </Link>
 
           {/* Login Button */}
           <TouchableOpacity
@@ -103,9 +110,11 @@ export default function LoginPage() {
             <Text style={styles.requestText}>
               Don't have your account details?
             </Text>
-            <TouchableOpacity>
-              <Text style={styles.requestLink}>Request here</Text>
-            </TouchableOpacity>
+            <Link href={"/(auth)/requestDetails"} asChild>
+              <TouchableOpacity>
+                <Text style={styles.requestLink}>Request here</Text>
+              </TouchableOpacity>
+            </Link>
           </View>
         </View>
       </View>
@@ -166,6 +175,12 @@ const styles = StyleSheet.create({
   resetText: {
     color: "#666",
     fontSize: 14,
+  },
+  error: {
+    color: "red",
+    fontSize: 14,
+    marginBottom: 15,
+    paddingHorizontal: 5,
   },
   loginButton: {
     width: "100%",

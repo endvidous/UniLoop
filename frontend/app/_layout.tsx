@@ -1,14 +1,12 @@
 import { useEffect } from "react";
 import { Stack } from "expo-router";
-import { AuthProvider } from "@/context/AuthContext";
-import { AuthHandler } from "@/components/auth/AuthHandler";
+import { AuthProvider } from "@/src/context/AuthContext";
+import { AuthHandler } from "@/src/components/auth/AuthHandler";
 import SplashScreen from "./(splash)/splashScreen";
-import { useStore } from "@/context/store";
-import { appStorage } from "@/services/storage/secureStorage";
-import { authService } from "@/services/api/auth";
+import { useStore } from "@/src/context/store";
+import { authService } from "@/src/services/api/auth";
 
 export default function RootLayout() {
-  const user = useStore((state) => state.user);
   const token = useStore((state) => state.token);
   const isLoading = useStore((state) => state.isLoading);
   const initializeState = useStore((state) => state.initializeState);
@@ -16,7 +14,6 @@ export default function RootLayout() {
 
   useEffect(() => {
     async function initialize() {
-      // Only validate token if it's available and valid
       if (token) {
         try {
           // Validate the token with the server

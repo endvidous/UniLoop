@@ -1,12 +1,12 @@
 import { createContext, useContext, useCallback, useEffect } from "react";
 import { useStore } from "./store";
-import { authService } from "@/services/api/auth";
+import { User } from "../services/interfaces";
+import { authService } from "@/src/services/api/auth";
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
+const enum ROLES {
+  ADMIN = "admin",
+  TEACHER = "teacher",
+  STUDENT = "student",
 }
 
 interface AuthContextType {
@@ -28,8 +28,6 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  // Using Zustand store for user, token, and loading state
-
   const user = useStore((state) => state.user);
   const token = useStore((state) => state.token);
   const isLoading = useStore((state) => state.isLoading);

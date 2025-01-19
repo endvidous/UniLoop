@@ -1,10 +1,8 @@
 import { Text, TouchableOpacity, View, StyleSheet } from "react-native";
-import { useStore } from "@/context/store";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/src/context/AuthContext";
 
 const AdminIndex = () => {
-  const user = useStore((state) => state.user);
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
   return (
     <View style={styles.container}>
       <Text style={styles.text}>AdminIndex</Text>

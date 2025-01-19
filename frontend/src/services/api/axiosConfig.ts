@@ -1,7 +1,7 @@
 import axios from "axios";
-import { useStore } from "@/context/store";
+import { useStore } from "@/src/context/store";
 import { useRouter } from "expo-router";
-import { appStorage } from "@/services/storage/secureStorage";
+import { appStorage } from "@/src/services/storage/secureStorage";
 
 const BASE_URL = "http://192.168.1.3:5000/api"; // your backend URL
 

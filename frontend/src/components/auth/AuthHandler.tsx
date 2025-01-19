@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useRouter, useSegments } from "expo-router";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/src/context/AuthContext";
 
 export function AuthHandler() {
   const segments = useSegments();
@@ -9,7 +9,6 @@ export function AuthHandler() {
 
   useEffect(() => {
     if (isLoading) return;
-
     const inAuthGroup = segments[0] === "(auth)";
     const inProtectedGroup = segments[0] === "(authenticated)";
 

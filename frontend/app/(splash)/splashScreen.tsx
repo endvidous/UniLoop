@@ -17,7 +17,7 @@ import {
   Stopwatch,
   Sumo,
   UniloopText,
-} from "@/assets/svgs/splashSvgs";
+} from "@/src/assets/svgs/splashSvgs";
 
 export default function SplashScreen() {
   const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
