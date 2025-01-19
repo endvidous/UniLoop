@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { appStorage } from "@/src/services/storage/secureStorage";
-import { User } from "@/src/services/interfaces";
+import { User } from "@/src/services/utils/interfaces";
 
 interface AppState {
   theme: "light" | "dark";

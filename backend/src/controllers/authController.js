@@ -17,7 +17,7 @@ export const login = async (req, res) => {
     if (!isMatch) return res.status(400).json({ message: "Wrong password" });
 
     res.json({
-      _id: user._id,
+      id: user._id,
       name: user.name,
       email: user.email,
       role: user.role,

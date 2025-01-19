@@ -11,7 +11,7 @@ import { Link, useRouter } from "expo-router";
 import { useState } from "react";
 import { authService } from "@/src/services/api/auth";
 import { useStore } from "@/src/context/store";
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 
 export default function LoginPage() {
   const router = useRouter();

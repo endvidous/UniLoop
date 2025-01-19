@@ -1,5 +1,5 @@
 import { MMKV } from "react-native-mmkv";
-import { User } from "../interfaces";
+import { User } from "../utils/interfaces";
 
 const storage = new MMKV();
 const STORAGE_KEYS = {

@@ -1,6 +1,6 @@
 import { createContext, useContext, useCallback, useEffect } from "react";
 import { useStore } from "./store";
-import { User } from "../services/interfaces";
+import { User } from "../services/utils/interfaces";
 import { authService } from "@/src/services/api/auth";
 
 const enum ROLES {
@@ -48,7 +48,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(true);
         const response = await authService.login(email, password);
         const { token, user } = response;
-
         // Update Zustand store and appStorage
         setToken(token);
         setUser(user);
