@@ -1,8 +1,16 @@
 import express from "express";
-import authMiddleware from "../middleware/authMiddleware";
+import { authMiddleware, isAdmin } from "../middleware/authMiddleware";
+import { createDepartmentsBatch } from "../controllers/adminController";
 
 const router = express.Router();
 
-router;
+router.post(
+  "/create/departmentsBatch",
+  authMiddleware,
+  isAdmin,
+  createDepartmentsBatch
+);
+
+router.post("/create/teachersBatch", authMiddleware, isAdmin);
 
 export default router;

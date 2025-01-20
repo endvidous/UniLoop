@@ -15,6 +15,7 @@ app.use(express.json()); // For parsing application/json
 // Define routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+
 app.get("/", (req, res) => {
   res.send("Hello");
 });
