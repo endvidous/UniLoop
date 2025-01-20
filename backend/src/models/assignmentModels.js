@@ -71,10 +71,8 @@ const assignmentSubmissionSchema = new Schema({
   },
 });
 
-const Assignments = mongoose.model("Assignments", assignmentSchema);
-const Assignment_Submissions = mongoose.model(
+export const Assignments = mongoose.model("Assignments", assignmentSchema);
+export const Assignment_Submissions = mongoose.model(
   "Assignment_Submissions",
   assignmentSubmissionSchema
 );
-
-module.exports = { Assignment_Submissions, Assignments };

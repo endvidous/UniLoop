@@ -83,10 +83,8 @@ const classroomBookingSchema = new Schema({
   },
 });
 
-const Classrooms = mongoose.model("Classrooms", classroomSchema);
-const Classroom_Booking = mongoose.model(
+export const Classrooms = mongoose.model("Classrooms", classroomSchema);
+export const Classroom_Booking = mongoose.model(
   "Classroom_Booking",
   classroomBookingSchema
 );
-
-module.exports = { Classrooms, Classroom_Booking };

@@ -1,4 +1,4 @@
-import User from "../models/userModels.js";
+import { User } from "../models/userModels.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
@@ -46,7 +46,7 @@ export const validateUser = async (req, res) => {
     // Check if the token is about to expire (e.g., within the next 5 minutes)
     const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
     const tokenExpirationTime = decoded.exp; // Expiration time from the token
-    
+
     // If the token is about to expire in the next 5 minutes (300 seconds)
     if (tokenExpirationTime - currentTime < 300) {
       const newToken = generateToken(user._id); // Generate a new token

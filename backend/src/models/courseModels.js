@@ -108,10 +108,8 @@ const semesterSchema = new Schema({
   endDate: Date,
 });
 
-const Department = mongoose.model("Department", departmentSchema);
-const Subject = mongoose.model("Subject", subjectSchema);
-const Course = mongoose.model("Course", courseSchema);
-const Batch = mongoose.model("Batch", batchSchema);
-const Semester = mongoose.model("Semester", semesterSchema);
-
-module.exports = { Department, Subject, Course, Batch, Semester };
+export const Department = mongoose.model("Department", departmentSchema);
+export const Subject = mongoose.model("Subject", subjectSchema);
+export const Course = mongoose.model("Course", courseSchema);
+export const Batch = mongoose.model("Batch", batchSchema);
+export const Semester = mongoose.model("Semester", semesterSchema);

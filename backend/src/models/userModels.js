@@ -107,6 +107,4 @@ userSchema.methods.hasPrivileges = function (requiredRole) {
   return roleHierarchy[this.role] >= roleHierarchy[requiredRole];
 };
 
-const User = mongoose.model("User", userSchema);
-
-export default User;
+export const User = mongoose.model("User", userSchema);
