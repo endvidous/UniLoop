@@ -46,21 +46,21 @@ export const validateUser = async (req, res) => {
     // Check if the token is about to expire (e.g., within the next 5 minutes)
     const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
     const tokenExpirationTime = decoded.exp; // Expiration time from the token
-// If the token is about to expire in the next 5 minutes (300 seconds)
-if (tokenExpirationTime - currentTime < 300) {
-  const newToken = generateToken(user._id); // Generate a new token
-  res.json({
-    success: true,
-    user,
-    token: newToken, // Return the new token
-  });
-} else {
-  res.json({
-    success: true,
-    user,
-  });
-}
-  
+    
+    // If the token is about to expire in the next 5 minutes (300 seconds)
+    if (tokenExpirationTime - currentTime < 300) {
+      const newToken = generateToken(user._id); // Generate a new token
+      res.json({
+        success: true,
+        user,
+        token: newToken, // Return the new token
+      });
+    } else {
+      res.json({
+        success: true,
+        user,
+      });
+    }
   } catch (err) {
     if (err.name === "TokenExpiredError") {
       return res.status(401).json({ message: "Token expired" });
