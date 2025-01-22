@@ -1,16 +1,17 @@
 import express from "express";
-import { authMiddleware, isAdmin } from "../middleware/authMiddleware";
-import { createDepartmentsBatch } from "../controllers/adminController";
+import {
+  createDepartmentsBatch,
+  createTeachersBatch,
+} from "../controllers/adminController.js";
 
 const router = express.Router();
 
-router.post(
-  "/create/departmentsBatch",
-  authMiddleware,
-  isAdmin,
-  createDepartmentsBatch
-);
+router.post("/create/departmentsBatch", createDepartmentsBatch);
 
-router.post("/create/teachersBatch", authMiddleware, isAdmin);
+router.post("/create/teachersBatch", createTeachersBatch);
+
+router.get("/users", (req, res) => {
+  res.send("Got all users");
+});
 
 export default router;

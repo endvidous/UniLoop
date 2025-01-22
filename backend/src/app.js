@@ -4,6 +4,8 @@ import cors from "cors";
 import connectDB from "./config/database.js";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
+import { authMiddleware, isAdmin } from "./middleware/authMiddleware.js";
 
 dotenv.config();
 connectDB();
@@ -14,7 +16,8 @@ app.use(express.json()); // For parsing application/json
 
 // Define routes
 app.use("/api/auth", authRoutes);
-app.use("/api/users", userRoutes);
+app.use("/api/users", authMiddleware, userRoutes);
+app.use("/api/admin", authMiddleware, isAdmin, adminRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello");

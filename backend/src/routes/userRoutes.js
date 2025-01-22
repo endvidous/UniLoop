@@ -1,6 +1,6 @@
 import express from "express";
 import { getAllUsers } from "../controllers/userController.js";
-import { authMiddleware } from "../middleware/authMiddleware.js";
+import { isAdmin } from "../middleware/authMiddleware.js";
 import {
   createAdmin,
   createTeacher,
@@ -10,7 +10,7 @@ import {
 const router = express.Router();
 
 // Get all users (Admin only)
-router.get("/", authMiddleware, getAllUsers);
+router.get("/", isAdmin, getAllUsers);
 
 // // Create Users routes
 // router.post("/create/admin", createAdmin);

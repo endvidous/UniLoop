@@ -53,18 +53,15 @@ userSchema.pre("save", async function (next) {
   else if (this.role === "teacher") {
     this.roll_no = null;
     this.classrep_of = null;
-    this.mentor_of = this.mentor_of || "";
+    this.mentor_of = null;
   }
   // Validate student-specific fields
   else if (this.role === "student") {
     this.mentor_of = null;
+    this.classrep_of = null;
 
     if (!this.roll_no) {
       return next(new Error("Students must have a roll number."));
-    }
-
-    if (!this.classrep_of) {
-      return next(new Error("Students must have a classrep_of field."));
     }
   }
 

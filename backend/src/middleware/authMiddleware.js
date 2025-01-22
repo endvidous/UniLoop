@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { User } from "../models/userModels.js";
 
 export const authMiddleware = async (req, res, next) => {
   try {
@@ -24,6 +25,7 @@ export const authMiddleware = async (req, res, next) => {
       req.user = user;
       next();
     } catch (error) {
+      console.log(error);
       return res.status(401).json({ message: "Not authorized, token failed" });
     }
   } catch (error) {

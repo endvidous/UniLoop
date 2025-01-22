@@ -1,5 +1,6 @@
 import { User } from "../models/userModels.js";
 import bcrypt from "bcryptjs";
+
 //GET DATA FUNCTIONS
 export const getAllUsers = async (_, res) => {
   const users = await User.find();
