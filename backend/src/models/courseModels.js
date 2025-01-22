@@ -13,27 +13,23 @@ const departmentSchema = new Schema({
       ref: "User",
     },
   ],
-});
-
-// Subject Schema
-const subjectSchema = new Schema({
-  name: {
-    type: String,
-    required: true,
-  },
-  code: {
-    type: String,
-    required: true,
-  },
-  department: {
-    type: Schema.Types.ObjectId,
-    ref: "Department",
-    required: true,
-  },
-  credits: {
-    type: Number,
-    required: true,
-  },
+  papers: [
+    {
+      name: {
+        type: String,
+        required: true,
+      },
+      code: {
+        type: String,
+        required: true,
+      },
+      semester: {
+        type: Number,
+        enum: [1, 2, 3, 4, 5, 6],
+        required: true,
+      },
+    },
+  ],
 });
 
 // Course Schema
@@ -66,6 +62,10 @@ const batchSchema = new Schema({
     type: Number,
     required: true,
   },
+  currentSemester: {
+    type: Number,
+    required: true,
+  },
   students: [
     {
       type: Schema.Types.ObjectId,
@@ -76,20 +76,20 @@ const batchSchema = new Schema({
 
 // Semester Schema (connects subjects, teachers, and batches)
 const semesterSchema = new Schema({
-  batch: {
+  course: {
     type: Schema.Types.ObjectId,
-    ref: "Batch",
+    ref: "Course",
     required: true,
   },
   number: {
     type: Number,
     required: true,
   },
-  subjects: [
+  papers: [
     {
-      subject: {
+      paper: {
         type: Schema.Types.ObjectId,
-        ref: "Subject",
+        ref: "Papers",
         required: true,
       },
       teacher: {
@@ -104,7 +104,7 @@ const semesterSchema = new Schema({
 });
 
 export const Department = mongoose.model("Department", departmentSchema);
-export const Subject = mongoose.model("Subject", subjectSchema);
+export const Papers = mongoose.model("Papers", paperSchema);
 export const Course = mongoose.model("Course", courseSchema);
 export const Batch = mongoose.model("Batch", batchSchema);
 export const Semester = mongoose.model("Semester", semesterSchema);
