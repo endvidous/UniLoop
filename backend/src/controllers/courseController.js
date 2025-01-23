@@ -6,7 +6,9 @@ import {
   Semesters,
 } from "../models/courseModels.js";
 import { createStudent } from "./userController.js";
+import mongoose from "mongoose";
 
+//HELPER FUNCTIONS
 const checkIfEmpty = (array) => {
   if (!Array.isArray(array) || array.length === 0) {
     throw new Error("Dataset cannot be empty");
@@ -146,5 +148,90 @@ export const createStudents = async (req, res) => {
     res
       .status(500)
       .json({ message: "Error adding students ", error: err.message });
+  }
+};
+
+export const createSemester = async (req, res) => {
+  const { courseID, sem_no } = req.params;
+  const { papers } = req.body;
+
+  try {
+    // Validate semester number
+    const semesterNumber = parseInt(sem_no);
+    if (isNaN(semesterNumber) || semesterNumber < 1 || semesterNumber > 6) {
+      return res
+        .status(400)
+        .json({ message: "Invalid semester number (1-6 only)" });
+    }
+
+    // Validate course exists
+    const course = await Courses.findById(courseID);
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+
+    // Validate papers array
+    checkIfEmpty(papers);
+
+    // Validate paper references and teacher assignments
+    const paperValidation = await Promise.all(
+      papers.map(async (p) => {
+        // Validate ObjectID formats first
+        if (!mongoose.Types.ObjectId.isValid(p.paper)) {
+          throw new Error(`Invalid paper ID format: ${p.paper}`);
+        }
+        if (!mongoose.Types.ObjectId.isValid(p.teacher)) {
+          throw new Error(`Invalid teacher ID format: ${p.teacher}`);
+        }
+
+        // Convert to ObjectIDs
+        const paperId = new mongoose.Types.ObjectId(p.paper);
+        const teacherId = new mongoose.Types.ObjectId(p.teacher);
+
+        // Validate paper exists
+        const paperExists = await Papers.findById(paperId);
+        if (!paperExists) {
+          throw new Error(`Paper not found: ${p.paper}`);
+        }
+
+        // Validate teacher exists and is a teacher
+        const teacher = await User.findById(teacherId);
+        if (!teacher || teacher.role !== "teacher") {
+          throw new Error(`Teacher not found or invalid role: ${p.teacher}`);
+        }
+
+        return { paper: paperId, teacher: teacherId };
+      })
+    );
+
+    // Check for existing semester
+    const existingSemester = await Semesters.findOne({
+      course: courseID,
+      number: semesterNumber,
+    });
+
+    if (existingSemester) {
+      return res.status(409).json({
+        message: `Semester ${semesterNumber} already exists for this course`,
+      });
+    }
+
+    // Create new semester with properly formatted IDs
+    const newSemester = await Semesters.create({
+      course: new mongoose.Types.ObjectId(courseID),
+      number: semesterNumber,
+      papers: paperValidation,
+    });
+
+    res.status(201).json({
+      message: "Semester created successfully",
+      data: newSemester,
+    });
+  } catch (err) {
+    const statusCode = err.name === "ValidationError" ? 400 : 500;
+    res.status(statusCode).json({
+      message: "Error creating semester",
+      error: err.message,
+    });
   }
 };

@@ -37,6 +37,24 @@ const paperSchema = new Schema({
   },
 });
 
+//Academic Timeline Schema
+const academicTimelineSchema = new Schema({
+  academicYear: {
+    type: String,
+    required: true,
+    unique: true,
+    match: [/\d{4}-\d{4}/, "Use format YYYY-YYYY"],
+  },
+  oddSemester: {
+    start: { type: Date, required: true },
+    end: { type: Date, required: true },
+  },
+  evenSemester: {
+    start: { type: Date, required: true },
+    end: { type: Date, required: true },
+  },
+});
+
 // Course Schema
 const courseSchema = new Schema({
   name: {
@@ -69,6 +87,7 @@ const batchSchema = new Schema({
   },
   currentSemester: {
     type: Number,
+    enum: [1, 2, 3, 4, 5, 6],
     required: true,
   },
   students: [
@@ -88,6 +107,7 @@ const semesterSchema = new Schema({
   },
   number: {
     type: Number,
+    enum: [1, 2, 3, 4, 5, 6],
     required: true,
   },
   papers: [
@@ -104,8 +124,6 @@ const semesterSchema = new Schema({
       },
     },
   ],
-  startDate: Date,
-  endDate: Date,
 });
 
 export const Departments = mongoose.model("Departments", departmentSchema);
