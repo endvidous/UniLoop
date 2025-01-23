@@ -10,7 +10,7 @@ const assignmentSchema = new Schema({
   },
   batch: {
     type: Schema.Types.ObjectId,
-    ref: "Batch",
+    ref: "Batches",
     required: true,
   },
   created_at: {
@@ -44,7 +44,7 @@ const assignmentSchema = new Schema({
 const assignmentSubmissionSchema = new Schema({
   assignment: {
     type: Schema.Types.ObjectId,
-    ref: "Assignment",
+    ref: "Assignments",
     required: true,
   },
   student: {
