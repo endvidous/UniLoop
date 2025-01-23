@@ -24,42 +24,52 @@ const userSchema = new Schema(
     },
     mentor_of: {
       type: Schema.Types.ObjectId,
-      ref: "Course",
-      default: null, // Only for teachers
+      ref: "Courses",
     },
     classrep_of: {
       type: Schema.Types.ObjectId,
-      ref: "Course",
-      default: null, // Only for students
+      ref: "Courses",
     },
     roll_no: {
       type: String,
-      default: null, // Only for students
     },
   },
   {
-    timestamps: true, // Adds createdAt and updatedAt fields
+    timestamps: true,
+    toJSON: {
+      transform: (doc, ret) => {
+        Object.keys(ret).forEach((key) => {
+          if (ret[key] === null || ret[key] === undefined) {
+            delete ret[key];
+          }
+        });
+        return ret;
+      },
+    },
+    toObject: {
+      transform: (doc, ret) => {
+        Object.keys(ret).forEach((key) => {
+          if (ret[key] === null || ret[key] === undefined) {
+            delete ret[key];
+          }
+        });
+        return ret;
+      },
+    },
   }
 );
 
 userSchema.pre("save", async function (next) {
-  // Clear all role-specific fields first
+  // Delete role-specific fields not applicable to the current role
   if (this.role === "admin") {
-    this.mentor_of = null;
-    this.classrep_of = null;
-    this.roll_no = null;
-  }
-  // Validate teacher-specific fields
-  else if (this.role === "teacher") {
-    this.roll_no = null;
-    this.classrep_of = null;
-    this.mentor_of = null;
-  }
-  // Validate student-specific fields
-  else if (this.role === "student") {
-    this.mentor_of = null;
-    this.classrep_of = null;
-
+    delete this.mentor_of;
+    delete this.classrep_of;
+    delete this.roll_no;
+  } else if (this.role === "teacher") {
+    delete this.roll_no;
+    delete this.classrep_of;
+  } else if (this.role === "student") {
+    delete this.mentor_of;
     if (!this.roll_no) {
       return next(new Error("Students must have a roll number."));
     }

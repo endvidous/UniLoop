@@ -1,17 +1,21 @@
 import express from "express";
 import {
-  createDepartmentsBatch,
-  createTeachersBatch,
-} from "../controllers/adminController.js";
+  createDepartments,
+  createTeachers,
+  createCourses,
+  createBatches,
+  createStudents,
+} from "../controllers/courseController.js";
 
 const router = express.Router();
 
-router.post("/create/departmentsBatch", createDepartmentsBatch);
+router.post("/create/departmentsBatch", createDepartments);
 
-router.post("/create/teachersBatch", createTeachersBatch);
+router.post("/create/teachersBatch", createTeachers);
 
-router.get("/users", (req, res) => {
-  res.send("Got all users");
-});
+router.post("/create/courses", createCourses);
 
+router.post("/create/:courseID/batches", createBatches);
+
+router.post("/create/:batchID/students", createStudents)
 export default router;

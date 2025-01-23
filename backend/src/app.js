@@ -16,7 +16,7 @@ app.use(express.json()); // For parsing application/json
 
 // Define routes
 app.use("/api/auth", authRoutes);
-app.use("/api/users", authMiddleware, userRoutes);
+// app.use("/api/users", userRoutes);
 app.use("/api/admin", authMiddleware, isAdmin, adminRoutes);
 
 app.get("/", (req, res) => {
