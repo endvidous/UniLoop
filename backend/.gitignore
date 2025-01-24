@@ -9,7 +9,7 @@ dist/
 web-build/
 expo-env.d.ts
 jsconfig.json
-randomjwtgen.js
+deleteDocuments.js
 
 # Native
 *.orig.*

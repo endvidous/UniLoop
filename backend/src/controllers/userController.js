@@ -1,13 +1,6 @@
 import { User } from "../models/userModels.js";
 import bcrypt from "bcryptjs";
-
-//HELPER FUNCTIONS
-const checkEmailExists = async (email) => {
-  const existingUser = await User.findOne({ email });
-  if (existingUser) {
-    throw new Error("User with this email already exists.");
-  }
-};
+import { checkEmailExists } from "../utils/helpers.js";
 
 //GET DATA FUNCTIONS
 export const getAllUsers = async (_, res) => {

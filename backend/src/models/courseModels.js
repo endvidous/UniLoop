@@ -98,7 +98,6 @@ const batchSchema = new Schema({
   currentSemester: {
     type: Number,
     enum: [1, 2, 3, 4, 5, 6],
-    required: true,
   },
   students: [
     {
@@ -115,7 +114,6 @@ const batchSchema = new Schema({
 batchSchema.index({ course: 1, startYear: 1 }); // Common query pattern
 batchSchema.index({ currentSemester: 1 }); // For semester-based queries
 batchSchema.index({ status: 1 }); // For active/completed filtering
-
 batchSchema.pre("save", async function (next) {
   try {
     const currentYear = new Date().getFullYear();
@@ -159,8 +157,9 @@ batchSchema.pre("save", async function (next) {
           },
         ],
       });
+
       // Calculate basemester and semester offset and cap semesters
-      const yearsSinceStart = currentYear - this.startYear;
+      const yearsSinceStart = Math.max(1, currentYear - this.startYear);
       const baseSemester = yearsSinceStart * 2;
       let semesterOffset = 0;
 
@@ -168,12 +167,11 @@ batchSchema.pre("save", async function (next) {
         semesterOffset =
           currentDate >= timeline.oddSemester.start &&
           currentDate <= timeline.oddSemester.end
-            ? 0
-            : 1;
+            ? 1
+            : 0;
       }
-
       this.currentSemester = Math.min(
-        baseSemester + semesterOffset + 1,
+        baseSemester + semesterOffset,
         course.type === "UG" ? 6 : 4 // Explicit PG cap
       );
     }
@@ -214,6 +212,7 @@ const semesterSchema = new Schema({
 semesterSchema.index({ course: 1, number: 1 }, { unique: true }); // Unique semesters per course
 semesterSchema.index({ "papers.paper": 1 }); // For paper-based queries
 semesterSchema.index({ "papers.teacher": 1 }); // For teacher-based queries
+
 semesterSchema.pre("save", async function (next) {
   try {
     // Find the associated course
@@ -221,7 +220,10 @@ semesterSchema.pre("save", async function (next) {
     if (!course) {
       return next(new Error("Associated course not found"));
     }
-
+    // Validate semester number for UG courses
+    if (course.type === "UG" && this.number > 6) {
+      return next(new Error("UG courses cannot have more than 6 semesters"));
+    }
     // Validate semester number for PG courses
     if (course.type === "PG" && this.number > 4) {
       return next(new Error("PG courses cannot have more than 4 semesters"));

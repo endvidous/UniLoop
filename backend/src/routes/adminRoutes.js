@@ -6,12 +6,14 @@ import {
   createBatches,
   createStudents,
   createSemester,
+  createAcademicTimeline,
 } from "../controllers/courseController.js";
 
 const router = express.Router();
 //POST ROUTES
 router.post("/create/departmentsBatch", createDepartments);
 router.post("/create/teachersBatch", createTeachers);
+router.post("/create/academic-timeline", createAcademicTimeline);
 router.post("/create/courses", createCourses);
 router.post("/create/:courseID/batches", createBatches);
 router.post("/create/:batchID/students", createStudents);
