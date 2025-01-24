@@ -120,34 +120,34 @@ batchSchema.pre("save", async function (next) {
   try {
     const currentYear = new Date().getFullYear();
 
-    // 1. Validate startYear isn't in the future
+    // Validate startYear isn't in the future
     if (this.startYear > currentYear) {
       return next(new Error("Start year cannot be in the future"));
     }
 
-    // 2. Get course details
+    // Check if course exists
     const course = await Courses.findById(this.course);
-    if (!course) {
-      return next(new Error("Associated course not found"));
-    }
+    if (!course) return next(new Error("Course not found"));
 
-    // 3. Validate startYear isn't too old for course duration
-    const maxValidStartYear = currentYear - course.duration;
-    if (this.startYear < maxValidStartYear) {
+    // Validate startYear isn't too old for course duration
+    if (this.startYear < currentYear - course.duration) {
       return next(
         new Error(
           `Start year too old for ${course.duration}-year course. ` +
-            `Maximum valid start year: ${maxValidStartYear}`
+            `Max valid start year: ${currentYear - course.duration}`
         )
       );
     }
 
-    // 4. Existing semester calculation (for new batches only)
+    // PG Semester Restriction
+    if (course.type === "PG" && this.currentSemester > 4) {
+      return next(new Error("PG batches cannot progress beyond semester 4"));
+    }
+
+    // Find current time and academic timeline
     if (this.isNew) {
       const currentDate = new Date();
-
-      // Find current academic timeline
-      const currentTimeline = await AcademicTimeline.findOne({
+      const timeline = await AcademicTimeline.findOne({
         $or: [
           {
             "oddSemester.start": { $lte: currentDate },
@@ -159,27 +159,23 @@ batchSchema.pre("save", async function (next) {
           },
         ],
       });
-
-      // Calculate base semester progression
+      // Calculate basemester and semester offset and cap semesters
       const yearsSinceStart = currentYear - this.startYear;
       const baseSemester = yearsSinceStart * 2;
-
-      // Determine semester offset
       let semesterOffset = 0;
-      if (currentTimeline) {
-        if (
-          currentDate >= currentTimeline.oddSemester.start &&
-          currentDate <= currentTimeline.oddSemester.end
-        ) {
-          semesterOffset = 0; // Odd semester
-        } else {
-          semesterOffset = 1; // Even semester
-        }
+
+      if (timeline) {
+        semesterOffset =
+          currentDate >= timeline.oddSemester.start &&
+          currentDate <= timeline.oddSemester.end
+            ? 0
+            : 1;
       }
 
-      // Calculate and cap semester
-      const calculatedSemester = baseSemester + semesterOffset + 1;
-      this.currentSemester = Math.min(calculatedSemester, course.duration * 2);
+      this.currentSemester = Math.min(
+        baseSemester + semesterOffset + 1,
+        course.type === "UG" ? 6 : 4 // Explicit PG cap
+      );
     }
 
     next();
@@ -199,7 +195,6 @@ const semesterSchema = new Schema({
     type: Number,
     enum: [1, 2, 3, 4, 5, 6],
     required: true,
-    unique: true,
   },
   papers: [
     {
@@ -219,6 +214,24 @@ const semesterSchema = new Schema({
 semesterSchema.index({ course: 1, number: 1 }, { unique: true }); // Unique semesters per course
 semesterSchema.index({ "papers.paper": 1 }); // For paper-based queries
 semesterSchema.index({ "papers.teacher": 1 }); // For teacher-based queries
+semesterSchema.pre("save", async function (next) {
+  try {
+    // Find the associated course
+    const course = await Courses.findById(this.course);
+    if (!course) {
+      return next(new Error("Associated course not found"));
+    }
+
+    // Validate semester number for PG courses
+    if (course.type === "PG" && this.number > 4) {
+      return next(new Error("PG courses cannot have more than 4 semesters"));
+    }
+
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
 
 export const Departments = mongoose.model("Departments", departmentSchema);
 export const Papers = mongoose.model("Papers", paperSchema);
