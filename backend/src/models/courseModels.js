@@ -36,6 +36,9 @@ const paperSchema = new Schema({
     required: true,
   },
 });
+paperSchema.index({ department: 1 }); // For finding papers by department
+paperSchema.index({ code: 1 }); // Already unique but explicit is better
+paperSchema.index({ semester: 1 }); // For finding papers by semester
 
 //Academic Timeline Schema
 const academicTimelineSchema = new Schema({
@@ -54,6 +57,11 @@ const academicTimelineSchema = new Schema({
     end: { type: Date, required: true },
   },
 });
+academicTimelineSchema.index({ "oddSemester.start": 1, "oddSemester.end": 1 });
+academicTimelineSchema.index({
+  "evenSemester.start": 1,
+  "evenSemester.end": 1,
+});
 
 // Course Schema
 const courseSchema = new Schema({
@@ -69,10 +77,12 @@ const courseSchema = new Schema({
   duration: {
     type: Number,
     default: function () {
-      return this.type === "UG" ? 6 : 4;
+      return this.type === "UG" ? 3 : 2; // Years UG | PG
     },
   },
 });
+courseSchema.index({ name: 1 }); // For course name searches
+courseSchema.index({ type: 1 }); // For filtering UG/PG courses
 
 // Batch Schema (represents a specific year's intake for a course)
 const batchSchema = new Schema({
@@ -96,6 +106,86 @@ const batchSchema = new Schema({
       ref: "User",
     },
   ],
+  status: {
+    type: String,
+    enum: ["active", "completed"],
+    default: "active",
+  },
+});
+batchSchema.index({ course: 1, startYear: 1 }); // Common query pattern
+batchSchema.index({ currentSemester: 1 }); // For semester-based queries
+batchSchema.index({ status: 1 }); // For active/completed filtering
+
+batchSchema.pre("save", async function (next) {
+  try {
+    const currentYear = new Date().getFullYear();
+
+    // 1. Validate startYear isn't in the future
+    if (this.startYear > currentYear) {
+      return next(new Error("Start year cannot be in the future"));
+    }
+
+    // 2. Get course details
+    const course = await Courses.findById(this.course);
+    if (!course) {
+      return next(new Error("Associated course not found"));
+    }
+
+    // 3. Validate startYear isn't too old for course duration
+    const maxValidStartYear = currentYear - course.duration;
+    if (this.startYear < maxValidStartYear) {
+      return next(
+        new Error(
+          `Start year too old for ${course.duration}-year course. ` +
+            `Maximum valid start year: ${maxValidStartYear}`
+        )
+      );
+    }
+
+    // 4. Existing semester calculation (for new batches only)
+    if (this.isNew) {
+      const currentDate = new Date();
+
+      // Find current academic timeline
+      const currentTimeline = await AcademicTimeline.findOne({
+        $or: [
+          {
+            "oddSemester.start": { $lte: currentDate },
+            "oddSemester.end": { $gte: currentDate },
+          },
+          {
+            "evenSemester.start": { $lte: currentDate },
+            "evenSemester.end": { $gte: currentDate },
+          },
+        ],
+      });
+
+      // Calculate base semester progression
+      const yearsSinceStart = currentYear - this.startYear;
+      const baseSemester = yearsSinceStart * 2;
+
+      // Determine semester offset
+      let semesterOffset = 0;
+      if (currentTimeline) {
+        if (
+          currentDate >= currentTimeline.oddSemester.start &&
+          currentDate <= currentTimeline.oddSemester.end
+        ) {
+          semesterOffset = 0; // Odd semester
+        } else {
+          semesterOffset = 1; // Even semester
+        }
+      }
+
+      // Calculate and cap semester
+      const calculatedSemester = baseSemester + semesterOffset + 1;
+      this.currentSemester = Math.min(calculatedSemester, course.duration * 2);
+    }
+
+    next();
+  } catch (err) {
+    next(err);
+  }
 });
 
 // Semester Schema (connects subjects, teachers, and batches)
@@ -109,6 +199,7 @@ const semesterSchema = new Schema({
     type: Number,
     enum: [1, 2, 3, 4, 5, 6],
     required: true,
+    unique: true,
   },
   papers: [
     {
@@ -125,9 +216,16 @@ const semesterSchema = new Schema({
     },
   ],
 });
+semesterSchema.index({ course: 1, number: 1 }, { unique: true }); // Unique semesters per course
+semesterSchema.index({ "papers.paper": 1 }); // For paper-based queries
+semesterSchema.index({ "papers.teacher": 1 }); // For teacher-based queries
 
 export const Departments = mongoose.model("Departments", departmentSchema);
 export const Papers = mongoose.model("Papers", paperSchema);
 export const Courses = mongoose.model("Courses", courseSchema);
 export const Batches = mongoose.model("Batches", batchSchema);
 export const Semesters = mongoose.model("Semesters", semesterSchema);
+export const AcademicTimeline = mongoose.model(
+  "AcademicTimeline",
+  academicTimelineSchema
+);
