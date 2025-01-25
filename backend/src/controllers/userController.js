@@ -11,7 +11,7 @@ export const getAllUsers = async (_, res) => {
 //CREATE USER FUNCTIONS
 export const createStudent = async (req, res) => {
   try {
-    const { name, email, password, role, classrep_of, roll_no } = req.body;
+    const { name, email, password, classrep_of, roll_no } = req.body;
 
     await checkEmailExists(email);
 
@@ -43,7 +43,7 @@ export const createStudent = async (req, res) => {
 
 export const createTeacher = async (req, res) => {
   try {
-    const { name, email, password, role, mentor_of } = req.body;
+    const { name, email, password, mentor_of } = req.body;
 
     // Check for existing email
     await checkEmailExists(email);

@@ -19,3 +19,20 @@ export const createStudentRecord = async (studentData) => {
   await newStudent.save();
   return newStudent;
 };
+
+export const createTeacherRecord = async (teacherData) => {
+  const { name, email, password, role } = teacherData;
+
+  await checkEmailExists(email);
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  const newTeacher = new User({
+    name,
+    email,
+    password: hashedPassword,
+    role,
+  });
+
+  await newTeacher.save();
+  return newTeacher;
+};

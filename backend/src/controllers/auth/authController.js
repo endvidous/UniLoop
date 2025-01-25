@@ -1,4 +1,4 @@
-import { User } from "../models/userModels.js";
+import { User } from "../../models/userModels.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
@@ -6,6 +6,7 @@ const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "30d" });
 };
 
+//Login function
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -24,6 +25,7 @@ export const login = async (req, res) => {
       token: generateToken(user._id),
     });
   } catch (err) {
+    console.log(err.message);
     res.status(500).json({ message: "Server error" });
   }
 };

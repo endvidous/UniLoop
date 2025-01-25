@@ -2,11 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import connectDB from "./config/database.js";
-import authRoutes from "./routes/authRoutes.js";
-import userRoutes from "./routes/userRoutes.js";
-import adminRoutes from "./routes/adminRoutes.js";
-import { authMiddleware, isAdmin } from "./middleware/authMiddleware.js";
-
+import AllRoutes from "./index.js";
 dotenv.config();
 connectDB();
 
@@ -14,14 +10,12 @@ const app = express();
 app.use(cors());
 app.use(express.json()); // For parsing application/json
 
-// Define routes
-app.use("/api/auth", authRoutes);
-// app.use("/api/users", userRoutes);
-app.use("/api/admin", authMiddleware, isAdmin, adminRoutes);
+app.use("/api", AllRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello");
 });
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

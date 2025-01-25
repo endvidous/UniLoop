@@ -6,3 +6,9 @@ export const checkEmailExists = async (email) => {
     throw new Error("User with this email already exists.");
   }
 };
+
+export const checkIfEmpty = (array) => {
+  if (!Array.isArray(array) || array.length === 0) {
+    throw new Error("Dataset cannot be empty");
+  }
+};
