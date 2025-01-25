@@ -29,6 +29,4 @@ const meetingSchema = new Schema({
   },
 });
 
-const Meetings = mongoose.model("Meetings", meetingSchema);
-
-module.exports = Meetings;
+export const Meetings = mongoose.model("Meetings", meetingSchema);

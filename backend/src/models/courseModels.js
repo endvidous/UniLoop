@@ -15,8 +15,8 @@ const departmentSchema = new Schema({
   ],
 });
 
-// Subject Schema
-const subjectSchema = new Schema({
+//Paper schema
+const paperSchema = new Schema({
   name: {
     type: String,
     required: true,
@@ -25,26 +25,48 @@ const subjectSchema = new Schema({
     type: String,
     required: true,
   },
+  semester: {
+    type: Number,
+    enum: [1, 2, 3, 4, 5, 6],
+    required: true,
+  },
   department: {
     type: Schema.Types.ObjectId,
-    ref: "Department",
+    ref: "Departments",
     required: true,
   },
-  credits: {
-    type: Number,
+});
+paperSchema.index({ department: 1 }); // For finding papers by department
+paperSchema.index({ code: 1 }); // Already unique but explicit is better
+paperSchema.index({ semester: 1 }); // For finding papers by semester
+
+//Academic Timeline Schema
+const academicTimelineSchema = new Schema({
+  academicYear: {
+    type: String,
     required: true,
+    unique: true,
+    match: [/\d{4}-\d{4}/, "Use format YYYY-YYYY"],
   },
+  oddSemester: {
+    start: { type: Date, required: true },
+    end: { type: Date, required: true },
+  },
+  evenSemester: {
+    start: { type: Date, required: true },
+    end: { type: Date, required: true },
+  },
+});
+academicTimelineSchema.index({ "oddSemester.start": 1, "oddSemester.end": 1 });
+academicTimelineSchema.index({
+  "evenSemester.start": 1,
+  "evenSemester.end": 1,
 });
 
 // Course Schema
 const courseSchema = new Schema({
   name: {
     type: String,
-    required: true,
-  },
-  department: {
-    type: Schema.Types.ObjectId,
-    ref: "Department",
     required: true,
   },
   type: {
@@ -55,21 +77,27 @@ const courseSchema = new Schema({
   duration: {
     type: Number,
     default: function () {
-      return this.type === "UG" ? 6 : 4;
+      return this.type === "UG" ? 3 : 2; // Years UG | PG
     },
   },
 });
+courseSchema.index({ name: 1 }); // For course name searches
+courseSchema.index({ type: 1 }); // For filtering UG/PG courses
 
 // Batch Schema (represents a specific year's intake for a course)
 const batchSchema = new Schema({
   course: {
     type: Schema.Types.ObjectId,
-    ref: "Course",
+    ref: "Courses",
     required: true,
   },
   startYear: {
     type: Number,
     required: true,
+  },
+  currentSemester: {
+    type: Number,
+    enum: [1, 2, 3, 4, 5, 6],
   },
   students: [
     {
@@ -77,24 +105,100 @@ const batchSchema = new Schema({
       ref: "User",
     },
   ],
+  status: {
+    type: String,
+    enum: ["active", "completed"],
+    default: "active",
+  },
+});
+batchSchema.index({ course: 1, startYear: 1 }); // Common query pattern
+batchSchema.index({ currentSemester: 1 }); // For semester-based queries
+batchSchema.index({ status: 1 }); // For active/completed filtering
+batchSchema.pre("save", async function (next) {
+  try {
+    const currentYear = new Date().getFullYear();
+
+    // Validate startYear isn't in the future
+    if (this.startYear > currentYear) {
+      return next(new Error("Start year cannot be in the future"));
+    }
+
+    // Check if course exists
+    const course = await Courses.findById(this.course);
+    if (!course) return next(new Error("Course not found"));
+
+    // Validate startYear isn't too old for course duration
+    if (this.startYear < currentYear - course.duration) {
+      return next(
+        new Error(
+          `Start year too old for ${course.duration}-year course. ` +
+            `Max valid start year: ${currentYear - course.duration}`
+        )
+      );
+    }
+
+    // PG Semester Restriction
+    if (course.type === "PG" && this.currentSemester > 4) {
+      return next(new Error("PG batches cannot progress beyond semester 4"));
+    }
+
+    // Find current time and academic timeline
+    if (this.isNew) {
+      const currentDate = new Date();
+      const timeline = await AcademicTimeline.findOne({
+        $or: [
+          {
+            "oddSemester.start": { $lte: currentDate },
+            "oddSemester.end": { $gte: currentDate },
+          },
+          {
+            "evenSemester.start": { $lte: currentDate },
+            "evenSemester.end": { $gte: currentDate },
+          },
+        ],
+      });
+
+      // Calculate basemester and semester offset and cap semesters
+      const yearsSinceStart = Math.max(1, currentYear - this.startYear);
+      const baseSemester = yearsSinceStart * 2;
+      let semesterOffset = 0;
+
+      if (timeline) {
+        semesterOffset =
+          currentDate >= timeline.oddSemester.start &&
+          currentDate <= timeline.oddSemester.end
+            ? 1
+            : 0;
+      }
+      this.currentSemester = Math.min(
+        baseSemester + semesterOffset,
+        course.type === "UG" ? 6 : 4 // Explicit PG cap
+      );
+    }
+
+    next();
+  } catch (err) {
+    next(err);
+  }
 });
 
 // Semester Schema (connects subjects, teachers, and batches)
 const semesterSchema = new Schema({
-  batch: {
+  course: {
     type: Schema.Types.ObjectId,
-    ref: "Batch",
+    ref: "Courses",
     required: true,
   },
   number: {
     type: Number,
+    enum: [1, 2, 3, 4, 5, 6],
     required: true,
   },
-  subjects: [
+  papers: [
     {
-      subject: {
+      paper: {
         type: Schema.Types.ObjectId,
-        ref: "Subject",
+        ref: "Papers",
         required: true,
       },
       teacher: {
@@ -104,14 +208,39 @@ const semesterSchema = new Schema({
       },
     },
   ],
-  startDate: Date,
-  endDate: Date,
+});
+semesterSchema.index({ course: 1, number: 1 }, { unique: true }); // Unique semesters per course
+semesterSchema.index({ "papers.paper": 1 }); // For paper-based queries
+semesterSchema.index({ "papers.teacher": 1 }); // For teacher-based queries
+
+semesterSchema.pre("save", async function (next) {
+  try {
+    // Find the associated course
+    const course = await Courses.findById(this.course);
+    if (!course) {
+      return next(new Error("Associated course not found"));
+    }
+    // Validate semester number for UG courses
+    if (course.type === "UG" && this.number > 6) {
+      return next(new Error("UG courses cannot have more than 6 semesters"));
+    }
+    // Validate semester number for PG courses
+    if (course.type === "PG" && this.number > 4) {
+      return next(new Error("PG courses cannot have more than 4 semesters"));
+    }
+
+    next();
+  } catch (err) {
+    next(err);
+  }
 });
 
-const Department = mongoose.model("Department", departmentSchema);
-const Subject = mongoose.model("Subject", subjectSchema);
-const Course = mongoose.model("Course", courseSchema);
-const Batch = mongoose.model("Batch", batchSchema);
-const Semester = mongoose.model("Semester", semesterSchema);
-
-module.exports = { Department, Subject, Course, Batch, Semester };
+export const Departments = mongoose.model("Departments", departmentSchema);
+export const Papers = mongoose.model("Papers", paperSchema);
+export const Courses = mongoose.model("Courses", courseSchema);
+export const Batches = mongoose.model("Batches", batchSchema);
+export const Semesters = mongoose.model("Semesters", semesterSchema);
+export const AcademicTimeline = mongoose.model(
+  "AcademicTimeline",
+  academicTimelineSchema
+);

@@ -49,6 +49,4 @@ const annoucementsSchema = new Schema({
   ],
 });
 
-const Annoucements = mongoose.model("Annoucements", annoucementsSchema);
-
-module.exports = Annoucements;
+export const Annoucements = mongoose.model("Annoucements", annoucementsSchema);

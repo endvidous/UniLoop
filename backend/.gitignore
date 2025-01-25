@@ -8,6 +8,8 @@ node_modules/
 dist/
 web-build/
 expo-env.d.ts
+jsconfig.json
+deleteDocuments.js
 
 # Native
 *.orig.*

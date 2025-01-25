@@ -4,7 +4,7 @@
     "slug": "UniLoop",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/u.png",
+    "icon": "./src/assets/images/u.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -13,21 +13,22 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/u.png",
+        "foregroundImage": "./src/assets/images/u.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.anonymous.UniLoop"
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/u.png"
+      "favicon": "./src/assets/images/u.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splashnrw.png",
+          "image": "./src/assets/images/u.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"

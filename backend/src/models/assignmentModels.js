@@ -10,7 +10,7 @@ const assignmentSchema = new Schema({
   },
   batch: {
     type: Schema.Types.ObjectId,
-    ref: "Batch",
+    ref: "Batches",
     required: true,
   },
   created_at: {
@@ -44,7 +44,7 @@ const assignmentSchema = new Schema({
 const assignmentSubmissionSchema = new Schema({
   assignment: {
     type: Schema.Types.ObjectId,
-    ref: "Assignment",
+    ref: "Assignments",
     required: true,
   },
   student: {
@@ -71,10 +71,8 @@ const assignmentSubmissionSchema = new Schema({
   },
 });
 
-const Assignments = mongoose.model("Assignments", assignmentSchema);
-const Assignment_Submissions = mongoose.model(
+export const Assignments = mongoose.model("Assignments", assignmentSchema);
+export const Assignment_Submissions = mongoose.model(
   "Assignment_Submissions",
   assignmentSubmissionSchema
 );
-
-module.exports = { Assignment_Submissions, Assignments };
