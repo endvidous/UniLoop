@@ -1,22 +1,42 @@
 import { Text, TouchableOpacity, View, StyleSheet } from "react-native";
-import { useAuth } from "@/src/context/AuthContext";
+import { Link } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { pickCSVDocument } from "@/src/services/utils/documentPicker";
 
 const AdminIndex = () => {
-  const { user, signOut } = useAuth();
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>AdminIndex</Text>
-      <Text style={styles.text}>{user?.name}</Text>
-      <Text style={styles.text}>{user?.role}</Text>
-      <TouchableOpacity
-        style={[styles.signOutButton, styles.shadow]}
-        onPress={signOut}
+      <Link
+        style={[styles.dataButton, styles.shadow]}
+        href="/(authenticated)/(admin)/home/timeline"
+        asChild
       >
-        <Text style={styles.signOutText}>Sign Out</Text>
-        <Ionicons name="log-out-outline" size={24} color="#fff" />
-      </TouchableOpacity>
+        <TouchableOpacity>
+          <Text style={styles.buttontext}>Academic Timeline</Text>
+          <Ionicons name="log-out-outline" size={24} color="#fff" />
+        </TouchableOpacity>
+      </Link>
+
+      <Link
+        style={[styles.dataButton, styles.shadow]}
+        href="/(authenticated)/(admin)/home/departments"
+        asChild
+      >
+        <TouchableOpacity>
+          <Text style={styles.buttontext}>Departments</Text>
+          <Ionicons name="enter-outline" size={24} color="#fff" />
+        </TouchableOpacity>
+      </Link>
+
+      <Link
+        style={[styles.dataButton, styles.shadow]}
+        href="/(authenticated)/(admin)/home/courses"
+        asChild
+      >
+        <TouchableOpacity>
+          <Text style={styles.buttontext}>Courses</Text>
+          <Ionicons name="book-outline" size={24} color="#fff" />
+        </TouchableOpacity>
+      </Link>
     </View>
   );
 };
@@ -44,19 +64,19 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  signOutButton: {
+  dataButton: {
     flexDirection: "row",
     width: "80%",
     height: 50,
-    backgroundColor: "#000000",
+    backgroundColor: "#fcba03",
     borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 15,
     marginTop: 20,
   },
-  signOutText: {
-    color: "#fff",
+  buttontext: {
+    color: "#000000",
     fontSize: 16,
     fontWeight: "600",
     marginRight: 10,
