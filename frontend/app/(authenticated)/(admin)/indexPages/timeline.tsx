@@ -3,16 +3,14 @@ import {
   View,
   Text,
   TextInput,
-  Button,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  Modal,
 } from "react-native";
-import { Calendar } from "react-native-calendars";
 import { Card } from "react-native-paper";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import CalendarModal from "@/src/components/calendar/calendarModal";
 
 interface DateInputProps {
   value: string;
@@ -28,7 +26,6 @@ const DateInput: React.FC<DateInputProps> = ({
   onFocus,
 }) => {
   const handleChange = (text: string) => {
-    // Automatically add "/" after the year and month
     if (text.length === 4 || text.length === 7) {
       text += "/";
     }
@@ -43,51 +40,57 @@ const DateInput: React.FC<DateInputProps> = ({
       placeholder={placeholder}
       onFocus={onFocus}
       keyboardType="numeric"
-      maxLength={10} // Format: YYYY/MM/DD
+      maxLength={10}
     />
   );
 };
 
 const TimelinePage = () => {
   const navigation = useNavigation();
-
-  const [academicYear, setAcademicYear] = useState("");
-  const [oddSemesterStart, setOddSemesterStart] = useState("");
-  const [oddSemesterEnd, setOddSemesterEnd] = useState("");
-  const [evenSemesterStart, setEvenSemesterStart] = useState("");
-  const [evenSemesterEnd, setEvenSemesterEnd] = useState("");
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectedDateField, setSelectedDateField] = useState("");
-  interface Timeline {
-    academicYear: string;
-    oddSemester: { start: string; end: string };
-    evenSemester: { start: string; end: string };
-  }
+  const [timelines, setTimelines] = useState<any[]>([]);
 
-  const [timelines, setTimelines] = useState<Timeline[]>([]);
+  const [dates, setDates] = useState({
+    academicYear: "",
+    oddSemesterStart: "",
+    oddSemesterEnd: "",
+    evenSemesterStart: "",
+    evenSemesterEnd: "",
+  });
 
-  const handleDateSelect = (day: any) => {
-    const formattedDate = day.dateString.replace(/-/g, "/");
-    if (selectedDateField === "oddStart") setOddSemesterStart(formattedDate);
-    if (selectedDateField === "oddEnd") setOddSemesterEnd(formattedDate);
-    if (selectedDateField === "evenStart") setEvenSemesterStart(formattedDate);
-    if (selectedDateField === "evenEnd") setEvenSemesterEnd(formattedDate);
-    setShowCalendar(false);
+  const handleDateSelect = (date: string) => {
+    setDates((prev) => ({
+      ...prev,
+      [selectedDateField]: date,
+    }));
   };
 
   const handleSubmit = () => {
     const newTimeline = {
-      academicYear,
-      oddSemester: { start: oddSemesterStart, end: oddSemesterEnd },
-      evenSemester: { start: evenSemesterStart, end: evenSemesterEnd },
+      academicYear: dates.academicYear,
+      oddSemester: {
+        start: dates.oddSemesterStart,
+        end: dates.oddSemesterEnd,
+      },
+      evenSemester: {
+        start: dates.evenSemesterStart,
+        end: dates.evenSemesterEnd,
+      },
     };
-    setTimelines([...timelines, newTimeline]);
 
-    setAcademicYear("");
-    setOddSemesterStart("");
-    setOddSemesterEnd("");
-    setEvenSemesterStart("");
-    setEvenSemesterEnd("");
+    setTimelines([...timelines, newTimeline]);
+    setDates({
+      academicYear: "",
+      oddSemesterStart: "",
+      oddSemesterEnd: "",
+      evenSemesterStart: "",
+      evenSemesterEnd: "",
+    });
+  };
+
+  const getInitialDate = () => {
+    return dates[selectedDateField as keyof typeof dates] || "";
   };
 
   return (
@@ -103,133 +106,71 @@ const TimelinePage = () => {
         <Text style={styles.label}>Academic Year</Text>
         <TextInput
           style={styles.input}
-          value={academicYear}
-          onChangeText={setAcademicYear}
+          value={dates.academicYear}
+          onChangeText={(text) =>
+            setDates((prev) => ({ ...prev, academicYear: text }))
+          }
           placeholder="2024-2025"
         />
       </View>
 
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Odd Semester Start</Text>
-        <View style={styles.dateInputContainer}>
-          <DateInput
-            value={oddSemesterStart}
-            onChangeText={setOddSemesterStart}
-            placeholder="YYYY/MM/DD"
-            onFocus={() => {
-              setShowCalendar(true);
-              setSelectedDateField("oddStart");
-            }}
-          />
-          <TouchableOpacity
-            onPress={() => {
-              setShowCalendar(true);
-              setSelectedDateField("oddStart");
-            }}
-          >
-            <Ionicons name="calendar" size={24} color="black" />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Odd Semester End</Text>
-        <View style={styles.dateInputContainer}>
-          <DateInput
-            value={oddSemesterEnd}
-            onChangeText={setOddSemesterEnd}
-            placeholder="YYYY/MM/DD"
-            onFocus={() => {
-              setShowCalendar(true);
-              setSelectedDateField("oddEnd");
-            }}
-          />
-          <TouchableOpacity
-            onPress={() => {
-              setShowCalendar(true);
-              setSelectedDateField("oddEnd");
-            }}
-          >
-            <Ionicons name="calendar" size={24} color="black" />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Even Semester Start</Text>
-        <View style={styles.dateInputContainer}>
-          <DateInput
-            value={evenSemesterStart}
-            onChangeText={setEvenSemesterStart}
-            placeholder="YYYY/MM/DD"
-            onFocus={() => {
-              setShowCalendar(true);
-              setSelectedDateField("evenStart");
-            }}
-          />
-          <TouchableOpacity
-            onPress={() => {
-              setShowCalendar(true);
-              setSelectedDateField("evenStart");
-            }}
-          >
-            <Ionicons name="calendar" size={24} color="black" />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Even Semester End</Text>
-        <View style={styles.dateInputContainer}>
-          <DateInput
-            value={evenSemesterEnd}
-            onChangeText={setEvenSemesterEnd}
-            placeholder="YYYY/MM/DD"
-            onFocus={() => {
-              setShowCalendar(true);
-              setSelectedDateField("evenEnd");
-            }}
-          />
-          <TouchableOpacity
-            onPress={() => {
-              setShowCalendar(true);
-              setSelectedDateField("evenEnd");
-            }}
-          >
-            <Ionicons name="calendar" size={24} color="black" />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <Modal
-        visible={showCalendar}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowCalendar(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Calendar onDayPress={handleDateSelect} />
-            <Button title="Close" onPress={() => setShowCalendar(false)} />
+      {[
+        "oddSemesterStart",
+        "oddSemesterEnd",
+        "evenSemesterStart",
+        "evenSemesterEnd",
+      ].map((field) => (
+        <View key={field} style={styles.inputContainer}>
+          <Text style={styles.label}>
+            {field
+              .replace(/([A-Z])/g, " $1")
+              .replace(/^./, (str) => str.toUpperCase())}
+          </Text>
+          <View style={styles.dateInputContainer}>
+            <DateInput
+              value={dates[field as keyof typeof dates]}
+              onChangeText={(text) =>
+                setDates((prev) => ({ ...prev, [field]: text }))
+              }
+              placeholder="YYYY/MM/DD"
+              onFocus={() => {
+                setSelectedDateField(field);
+                setShowCalendar(true);
+              }}
+            />
+            <TouchableOpacity
+              onPress={() => {
+                setSelectedDateField(field);
+                setShowCalendar(true);
+              }}
+            >
+              <Ionicons name="calendar" size={24} color="black" />
+            </TouchableOpacity>
           </View>
         </View>
-      </Modal>
+      ))}
+
+      <CalendarModal
+        visible={showCalendar}
+        onClose={() => setShowCalendar(false)}
+        onDateSelect={handleDateSelect}
+        initialDate={getInitialDate()}
+      />
 
       <TouchableOpacity style={styles.button} onPress={handleSubmit}>
         <Text style={styles.buttonText}>Submit</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={() => {}}>
-        <Text style={styles.buttonText}>View Timelines</Text>
-      </TouchableOpacity>
 
       {timelines.map((timeline, index) => (
         <Card key={index} style={styles.card}>
-          <Text>Academic Year: {timeline.academicYear}</Text>
-          <Text>
+          <Text style={styles.cardText}>
+            Academic Year: {timeline.academicYear}
+          </Text>
+          <Text style={styles.cardText}>
             Odd Semester: {timeline.oddSemester.start} -{" "}
             {timeline.oddSemester.end}
           </Text>
-          <Text>
+          <Text style={styles.cardText}>
             Even Semester: {timeline.evenSemester.start} -{" "}
             {timeline.evenSemester.end}
           </Text>
@@ -271,18 +212,7 @@ const styles = StyleSheet.create({
   dateInputContainer: {
     flexDirection: "row",
     alignItems: "center",
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  modalContent: {
-    backgroundColor: "white",
-    padding: 20,
-    borderRadius: 10,
-    width: "80%",
+    gap: 10,
   },
   button: {
     backgroundColor: "#007BFF",
@@ -297,8 +227,13 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   card: {
-    padding: 20,
+    padding: 15,
     marginVertical: 10,
+    backgroundColor: "#f8f9fa",
+  },
+  cardText: {
+    fontSize: 14,
+    marginVertical: 2,
   },
 });
 
