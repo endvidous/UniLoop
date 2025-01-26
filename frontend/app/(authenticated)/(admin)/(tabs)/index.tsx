@@ -1,8 +1,10 @@
 import { Text, TouchableOpacity, View, StyleSheet } from "react-native";
 import { Link } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { useAuth } from "@/src/context/AuthContext";
 
 const AdminIndex = () => {
+  const { signOut } = useAuth();
   return (
     <View style={styles.container}>
       <Link
@@ -37,6 +39,13 @@ const AdminIndex = () => {
           <Ionicons name="book-outline" size={24} color="#fff" />
         </TouchableOpacity>
       </Link>
+      <TouchableOpacity
+        onPress={signOut}
+        style={[styles.dataButton, styles.shadow]}
+      >
+        <Text style={styles.buttontext}>Log out</Text>
+        <Ionicons name="log-out-outline" size={24} color="#fff" />
+      </TouchableOpacity>
     </View>
   );
 };

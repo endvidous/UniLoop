@@ -1,8 +1,15 @@
-type Role = string | "admin" | "teacher" | "student";
+export const navigateToRole = (role: string): any => {
+  switch (role) {
+    case "admin":
+      return "/(authenticated)/(admin)";
 
-export const navigateToRole = (role: Role) => {
-  return `/(authenticated)/(${role})/(tabs)` as
-    | "/(authenticated)/(admin)/(tabs)"
-    | "/(authenticated)/(teacher)/(tabs)"
-    | "/(authenticated)/(student)/(tabs)";
+    case "teacher":
+      return "/(authenticated)/(teacher)";
+
+    case "student":
+      return "/(authenticated)/(student)";
+
+    default:
+      return "/(auth)";
+  }
 };

@@ -53,9 +53,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(user);
 
         setLoading(false);
-      } catch (error) {
-        console.error("Error signing in:", error);
+      } catch (error: any) {
         setLoading(false);
+        throw error;
       }
     },
     [setToken, setUser, setLoading]

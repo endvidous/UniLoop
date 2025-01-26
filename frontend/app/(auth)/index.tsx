@@ -9,28 +9,20 @@ import {
 import { UniloopText } from "@/src/assets/svgs/splashSvgs";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
-import { authService } from "@/src/services/api/auth";
-import { useStore } from "@/src/context/store";
 import axios from "axios";
-import { navigateToRole } from "@/src/utils/navigation";
+import { useAuth } from "@/src/context/AuthContext";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { setUser, setToken } = useStore();
+  const { signIn } = useAuth();
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
   const handleLogin = async () => {
     try {
-      const response = await authService.login(email, password);
-      const { token, ...user } = response;
-
-      setUser(user); // Save user in Zustand
-      setToken(token); // Save token in Zustand
-      Alert.alert("Login Successful!", `Welcome, ${user.name}`);
-      router.replace(navigateToRole(user.role));
+      await signIn(email, password);
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const message = error.response?.data?.message;

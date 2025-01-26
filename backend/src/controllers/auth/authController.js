@@ -18,10 +18,12 @@ export const login = async (req, res) => {
     if (!isMatch) return res.status(400).json({ message: "Wrong password" });
 
     res.json({
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
       token: generateToken(user._id),
     });
   } catch (err) {
@@ -40,7 +42,14 @@ export const validateUser = async (req, res) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id).select("-password"); // Fetch user without password
+    const userM = await User.findById(decoded.id).select("-password"); // Fetch user without password
+
+    const user = {
+      id: userM._id,
+      name: userM.name,
+      email: userM.email,
+      role: userM.role,
+    };
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
