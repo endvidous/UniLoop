@@ -6,16 +6,19 @@ export default function ManageLayout() {
   return (
     <Stack
       screenOptions={({ route }) => ({
-        headerTitle:
-          route.name.split("/")[0] === "index"
+        headerTitle: ((base) =>
+          base === "index"
             ? "Home"
-            : route.name.split("/")[0].toUpperCase(),
+            : base.replace(/^./, (c) => c.toUpperCase()))(
+          route.name?.split("/")?.[0] || ""
+        ),
         headerLeft: (props) =>
           navigation.canGoBack() ? (
             <HeaderBackButton
               {...props}
               onPress={() => navigation.goBack()}
               tintColor="#0003a0"
+              displayMode="minimal"
             />
           ) : null,
       })}
