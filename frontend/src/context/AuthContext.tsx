@@ -1,6 +1,6 @@
 import { createContext, useContext, useCallback, useEffect } from "react";
 import { useStore } from "./store";
-import { User } from "../services/utils/interfaces";
+import { User } from "../utils/interfaces";
 import { authService } from "@/src/services/api/auth";
 
 const enum ROLES {

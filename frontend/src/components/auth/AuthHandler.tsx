@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useRouter, useSegments } from "expo-router";
 import { useAuth } from "@/src/context/AuthContext";
+import { navigateToRole } from "@/src/utils/navigation";
 
 export function AuthHandler() {
   const segments = useSegments();
@@ -13,8 +14,7 @@ export function AuthHandler() {
     const inProtectedGroup = segments[0] === "(authenticated)";
 
     if (token && user && inAuthGroup) {
-      const role = user?.role as "admin" | "teacher" | "student";
-      router.replace(`/(authenticated)/(${role})`);
+      router.replace(navigateToRole(user.role));
     } else if (!token && inProtectedGroup) {
       router.replace("/(auth)");
     }

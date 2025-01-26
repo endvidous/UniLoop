@@ -12,6 +12,7 @@ import { useState } from "react";
 import { authService } from "@/src/services/api/auth";
 import { useStore } from "@/src/context/store";
 import axios from "axios";
+import { navigateToRole } from "@/src/utils/navigation";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -29,9 +30,7 @@ export default function LoginPage() {
       setUser(user); // Save user in Zustand
       setToken(token); // Save token in Zustand
       Alert.alert("Login Successful!", `Welcome, ${user.name}`);
-
-      const role = user.role as "admin" | "teacher" | "student";
-      router.replace(`/(authenticated)/(${role})`);
+      router.replace(navigateToRole(user.role));
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const message = error.response?.data?.message;
