@@ -5,6 +5,7 @@ import { AuthHandler } from "@/src/components/auth/AuthHandler";
 import SplashScreen from "../src/components/SplashScreen/splashScreen";
 import { useStore } from "@/src/context/store";
 import { authService } from "@/src/services/api/auth";
+import { StatusBar } from "react-native";
 
 export default function RootLayout() {
   const token = useStore((state) => state.token);
@@ -37,6 +38,7 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
+      <StatusBar translucent={false} />
       <Stack screenOptions={{ headerShown: false }} />
       <AuthHandler />
     </AuthProvider>

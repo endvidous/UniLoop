@@ -1,10 +1,7 @@
 import { Tabs } from "expo-router";
-import { useAuth } from "@/src/context/AuthContext";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 
-const tabBarIconOptions = { color: "#ffffff" };
 const TabLayout = () => {
-  const { user } = useAuth();
   return (
     <Tabs
       screenOptions={{
@@ -19,6 +16,7 @@ const TabLayout = () => {
           tabBarIcon: ({ color }) => (
             <FontAwesome size={28} name="home" color={color} />
           ),
+          headerShown: false,
         }}
       />
       <Tabs.Screen

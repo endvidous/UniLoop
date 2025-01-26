@@ -52,6 +52,7 @@ const CreateTimelineModal: React.FC<CreateTimelineModalProps> = ({
       animationType="fade"
       transparent
       onRequestClose={onClose}
+      statusBarTranslucent={true}
     >
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>

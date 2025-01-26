@@ -88,7 +88,12 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
   const modalHeight = selectionFlow ? 400 : null; // Adjust height dynamically
 
   return (
-    <Modal visible={visible} transparent={true} animationType="fade">
+    <Modal
+      visible={visible}
+      transparent={true}
+      animationType="fade"
+      statusBarTranslucent={true}
+    >
       <View style={styles.modalContainer}>
         <View style={[styles.modalContent, { height: modalHeight }]}>
           {selectionFlow === "year" ? (
