@@ -42,14 +42,7 @@ export const validateUser = async (req, res) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userM = await User.findById(decoded.id).select("-password"); // Fetch user without password
-
-    const user = {
-      id: userM._id,
-      name: userM.name,
-      email: userM.email,
-      role: userM.role,
-    };
+    const user = await User.findById(decoded.id).select("-password"); // Fetch user without password
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -63,13 +56,23 @@ export const validateUser = async (req, res) => {
       const newToken = generateToken(user._id); // Generate a new token
       res.json({
         success: true,
-        user,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
         token: newToken, // Return the new token
       });
     } else {
       res.json({
         success: true,
-        user,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
       });
     }
   } catch (err) {
