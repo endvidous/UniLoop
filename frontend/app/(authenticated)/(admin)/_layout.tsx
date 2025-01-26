@@ -1,25 +1,37 @@
-// (admin)/_layout.tsx
-import { Stack } from "expo-router";
+import { Tabs } from "expo-router";
 import { useAuth } from "@/src/context/AuthContext";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
 
-const AdminLayout = () => {
+const tabBarIconOptions = { color: "#ffffff" };
+const TabLayout = () => {
   const { user } = useAuth();
-
   return (
-    <Stack
+    <Tabs
       screenOptions={{
-        headerTitle: user?.role,
-        headerBackButtonDisplayMode: "default",
+        tabBarActiveTintColor: "#0003a0",
+        // headerBackButtonDisplayMode: "default",
       }}
     >
-      <Stack.Screen
-        name="(tabs)"
+      <Tabs.Screen
+        name="Home"
         options={{
-          headerShown: false,
+          title: "Home",
+          tabBarIcon: ({ color }) => (
+            <FontAwesome size={28} name="home" color={color} />
+          ),
         }}
       />
-    </Stack>
+      <Tabs.Screen
+        name="Settings"
+        options={{
+          title: "Settings",
+          tabBarIcon: ({ color }) => (
+            <FontAwesome size={28} name="cog" color={color} />
+          ),
+        }}
+      />
+    </Tabs>
   );
 };
 
-export default AdminLayout;
+export default TabLayout;

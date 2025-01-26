@@ -9,7 +9,7 @@ const AdminIndex = () => {
     <View style={styles.container}>
       <Link
         style={[styles.dataButton, styles.shadow]}
-        href="/(authenticated)/(admin)/indexPages/timeline"
+        href="/Home/timelines"
         asChild
       >
         <TouchableOpacity>
@@ -20,7 +20,7 @@ const AdminIndex = () => {
 
       <Link
         style={[styles.dataButton, styles.shadow]}
-        href="/(authenticated)/(admin)/indexPages/departments"
+        href="/Home/departments/"
         asChild
       >
         <TouchableOpacity>
@@ -31,7 +31,7 @@ const AdminIndex = () => {
 
       <Link
         style={[styles.dataButton, styles.shadow]}
-        href="/(authenticated)/(admin)/indexPages/courses"
+        href="/Home/courses/"
         asChild
       >
         <TouchableOpacity>
