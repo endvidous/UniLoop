@@ -182,8 +182,9 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: "white",
+    width: width * 0.8,
     borderRadius: 10,
-    width: width * 0.9,
+    overflow: "hidden",
   },
   headerContainer: {
     flexDirection: "row",
@@ -241,6 +242,7 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   closeButton: {
+    marginTop: 14,
     bottom: 10,
     alignSelf: "center",
     backgroundColor: "#007BFF",
