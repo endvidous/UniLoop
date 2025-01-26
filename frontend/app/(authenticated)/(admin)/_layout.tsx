@@ -1,27 +1,24 @@
-import { Tabs } from "expo-router";
+// (admin)/_layout.tsx
+import { Stack } from "expo-router";
 import { useAuth } from "@/src/context/AuthContext";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
 
 const AdminLayout = () => {
   const { user } = useAuth();
+
   return (
-    <Tabs
+    <Stack
       screenOptions={{
         headerTitle: user?.role,
         headerBackButtonDisplayMode: "default",
       }}
     >
-      <Tabs.Screen
-        name="index"
+      <Stack.Screen
+        name="(tabs)"
         options={{
-          title: "Home",
-          tabBarIcon: ({ color }) => (
-            <FontAwesome size={28} name="home" color={color} />
-          ),
+          headerShown: false,
         }}
       />
-      <Tabs.Screen name="home" options={{ href: null }} />
-    </Tabs>
+    </Stack>
   );
 };
 
