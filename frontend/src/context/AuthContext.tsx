@@ -45,16 +45,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = useCallback(
     async (email: string, password: string) => {
       try {
-        setLoading(true);
         const response = await authService.login(email, password);
         const { token, user } = response;
         // Update Zustand store and appStorage
         setToken(token);
         setUser(user);
-
-        setLoading(false);
       } catch (error: any) {
-        setLoading(false);
         throw error;
       }
     },
