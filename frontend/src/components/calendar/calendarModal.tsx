@@ -59,6 +59,10 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
     onClose();
   };
 
+  const handleMonthChange = (month: { year: number; month: number }) => {
+    setCurrentDate(new Date(month.year, month.month - 1));
+  };
+
   const CustomHeader = () => {
     const month = currentDate.toLocaleString("default", { month: "long" });
     const year = currentDate.getFullYear();
@@ -81,10 +85,12 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
     );
   };
 
+  const modalHeight = selectionFlow ? 400 : null; // Adjust height dynamically
+
   return (
     <Modal visible={visible} transparent={true} animationType="fade">
       <View style={styles.modalContainer}>
-        <View style={styles.modalContent}>
+        <View style={[styles.modalContent, { height: modalHeight }]}>
           {selectionFlow === "year" ? (
             <YearPicker onSelectYear={handleYearSelect} />
           ) : selectionFlow === "month" ? (
@@ -93,10 +99,17 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
             <Calendar
               current={currentDate.toISOString().split("T")[0]}
               onDayPress={handleDaySelect}
+              onMonthChange={handleMonthChange} // Listen for month changes
               renderHeader={() => <CustomHeader />}
             />
           )}
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={() => {
+              onClose();
+              setSelectionFlow(null);
+            }}
+          >
             <Text style={styles.closeButtonText}>Close</Text>
           </TouchableOpacity>
         </View>
@@ -104,7 +117,6 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
     </Modal>
   );
 };
-
 const MonthPicker: React.FC<{ onSelectMonth: (month: number) => void }> = ({
   onSelectMonth,
 }) => {
@@ -172,7 +184,6 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     borderRadius: 10,
     width: width * 0.9,
-    height: 400,
   },
   headerContainer: {
     flexDirection: "row",
