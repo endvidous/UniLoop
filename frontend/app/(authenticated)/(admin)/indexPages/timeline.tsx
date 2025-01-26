@@ -14,13 +14,6 @@ import TimelineCard from "@/src/components/TimelineComponents/TimelineCard";
 const TimelinePage = () => {
   const [showModal, setShowModal] = useState(false);
   const [timelines, setTimelines] = useState<any[]>([]);
-  const [dates, setDates] = useState({
-    academicYear: "",
-    oddSemStart: "",
-    oddSemEnd: "",
-    evenSemStart: "",
-    evenSemEnd: "",
-  });
 
   const handleSubmit = (newDates: any) => {
     const { academicYear, oddSemStart, oddSemEnd, evenSemStart, evenSemEnd } =
@@ -34,17 +27,6 @@ const TimelinePage = () => {
 
     setTimelines([...timelines, newTimeline]);
     setShowModal(false);
-  };
-
-  const handleOpenModal = () => {
-    setDates({
-      academicYear: "",
-      oddSemStart: "",
-      oddSemEnd: "",
-      evenSemStart: "",
-      evenSemEnd: "",
-    });
-    setShowModal(true);
   };
 
   return (
@@ -64,7 +46,7 @@ const TimelinePage = () => {
         )}
       </ScrollView>
 
-      <TouchableOpacity style={styles.fab} onPress={handleOpenModal}>
+      <TouchableOpacity style={styles.fab} onPress={() => setShowModal(true)}>
         <Ionicons name="add" size={30} color="white" />
       </TouchableOpacity>
 
@@ -72,7 +54,6 @@ const TimelinePage = () => {
         visible={showModal}
         onClose={() => setShowModal(false)}
         onSubmit={handleSubmit}
-        initialDates = {dates}
       />
     </View>
   );

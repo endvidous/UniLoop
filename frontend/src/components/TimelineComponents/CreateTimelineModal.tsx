@@ -14,30 +14,29 @@ interface CreateTimelineModalProps {
   visible: boolean;
   onClose: () => void;
   onSubmit: (data: any) => void;
-  initialDates: {
-    academicYear: string;
-    oddSemStart: string;
-    oddSemEnd: string;
-    evenSemStart: string;
-    evenSemEnd: string;
-  };
 }
 
 const CreateTimelineModal: React.FC<CreateTimelineModalProps> = ({
   visible,
   onClose,
   onSubmit,
-  initialDates,
 }) => {
-  const [dates, setDates] = useState(initialDates);
+  const defaultDates = {
+    academicYear: "",
+    oddSemStart: "",
+    oddSemEnd: "",
+    evenSemStart: "",
+    evenSemEnd: "",
+  };
+  const [dates, setDates] = useState(defaultDates);
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectedDateField, setSelectedDateField] = useState("");
 
   useEffect(() => {
     if (visible) {
-      setDates(initialDates);
+      setDates(defaultDates);
     }
-  }, [visible, initialDates]);
+  }, [visible]);
 
   const handleDateSelect = (date: string) => {
     setDates((prev) => ({

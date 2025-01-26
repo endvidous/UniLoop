@@ -33,8 +33,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8f9fa",
   },
   text: {
-    fontSize: 14,
+    fontSize: 16,
     marginVertical: 2,
+    fontWeight: 400,
   },
 });
 
