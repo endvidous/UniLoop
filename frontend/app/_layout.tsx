@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Stack } from "expo-router";
 import { AuthProvider } from "@/src/context/AuthContext";
 import { AuthHandler } from "@/src/components/auth/AuthHandler";
-import SplashScreen from "./(splash)/splashScreen";
+import SplashScreen from "../src/components/SplashScreen/splashScreen";
 import { useStore } from "@/src/context/store";
 import { authService } from "@/src/services/api/auth";
 
