@@ -11,6 +11,7 @@ import { Link, useRouter } from "expo-router";
 import { useState } from "react";
 import axios from "axios";
 import { useAuth } from "@/src/context/AuthContext";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -19,10 +20,11 @@ export default function LoginPage() {
   const { signIn } = useAuth();
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordVisible, setPasswordVisible] = useState(false);
 
   const handleLogin = async () => {
     try {
-      await signIn(email, password);
+      await signIn(email.trim(), password.trim());
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const message = error.response?.data?.message;
@@ -69,15 +71,29 @@ export default function LoginPage() {
 
           {/* Password Input */}
           <Text style={styles.label}>Password</Text>
-          <TextInput
-            style={styles.input}
-            secureTextEntry
-            placeholderTextColor="#999"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.nativeEvent.text);
-            }}
-          />
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={styles.passwordInput}
+              secureTextEntry={!passwordVisible}
+              placeholder="Enter your password"
+              placeholderTextColor="#999"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.nativeEvent.text);
+              }}
+            />
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => setPasswordVisible(!passwordVisible)}
+            >
+              <Ionicons
+                name={passwordVisible ? "eye-off" : "eye"}
+                size={24}
+                color="black"
+              />
+            </TouchableOpacity>
+          </View>
+
           {/* Error message */}
           {passwordError && <Text style={styles.error}>{passwordError}</Text>}
 
@@ -158,6 +174,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     marginBottom: 15,
     fontSize: 16,
+  },
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 10,
+    height: 50,
+    paddingHorizontal: 15,
+    marginBottom: 15,
+  },
+  passwordInput: {
+    flex: 1,
+    paddingRight: 10,
+    fontSize: 16,
+  },
+  iconButton: {
+    paddingHorizontal: 5,
   },
   resetButton: {
     alignSelf: "flex-start",
