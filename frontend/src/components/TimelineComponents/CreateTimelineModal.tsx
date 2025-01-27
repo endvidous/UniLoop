@@ -7,7 +7,7 @@ import {
   StyleSheet,
   Modal,
 } from "react-native";
-import CalendarModal from "@/src/components/calendar/calendarModal";
+import CalendarModal from "@/src/components/calendar/CalendarModal";
 import DateButton from "./dateButton";
 
 interface CreateTimelineModalProps {
