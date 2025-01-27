@@ -24,7 +24,7 @@ export default function LoginPage() {
 
   const handleLogin = async () => {
     try {
-      await signIn(email.trim(), password.trim());
+      await signIn(email.trim(), password);
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const message = error.response?.data?.message;
