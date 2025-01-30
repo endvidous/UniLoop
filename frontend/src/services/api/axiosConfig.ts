@@ -2,8 +2,10 @@ import axios from "axios";
 import { useStore } from "@/src/context/store";
 import { useRouter } from "expo-router";
 import { appStorage } from "@/src/services/storage/secureStorage";
+import { API_URL } from "@env";
 
-const BASE_URL = "http://10.31.4.174:5000/api"; // your backend URL
+console.log(API_URL);
+const BASE_URL = `http://${API_URL}:5000/api`; // your backend URL
 
 const axiosInstance = axios.create({
   baseURL: BASE_URL,
