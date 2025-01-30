@@ -1,7 +1,13 @@
-import { View, StyleSheet, TextInput, TouchableOpacity, Text, Alert } from "react-native";
-import { useState } from "react"; 
-import { Link, useRouter} from "expo-router"; 
-
+import {
+  View,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  Text,
+  Alert,
+} from "react-native";
+import { useState } from "react";
+import { Link, useRouter } from "expo-router";
 
 export default function ResetPasswordPage() {
   const [email, setEmail] = useState("");
@@ -21,11 +27,17 @@ export default function ResetPasswordPage() {
     }
 
     setIsLoading(true);
-    Alert.alert("Success","Reset password has been sent to your email.");
+    Alert.alert("Success", "Reset password link has been sent to your email.", [
+      {
+        text: "Okay",
+        onPress: () => {
+          router.push("/");
+        },
+      },
+    ]);
     setIsLoading(false);
     setEmail("");
-    router.push("/(auth)")
-
+    setEmailError("");
   };
 
   return (
@@ -41,7 +53,6 @@ export default function ResetPasswordPage() {
             onChangeText={setEmail}
           />
           {emailError && <Text style={styles.error}>{emailError}</Text>}
-
 
           <TouchableOpacity
             style={[styles.resetButton, isLoading && styles.loadingButton]}
