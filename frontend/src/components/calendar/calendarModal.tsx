@@ -15,14 +15,14 @@ const { width } = Dimensions.get("window");
 interface CalendarModalProps {
   visible: boolean;
   onClose: () => void;
-  onDateSelect: (date: string) => void;
+  onDateSelect: (date: string) => void; // Add this line
   initialDate?: string;
 }
 
 const CalendarModal: React.FC<CalendarModalProps> = ({
   visible,
   onClose,
-  onDateSelect,
+  onDateSelect, // Destructure the prop
   initialDate,
 }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -55,7 +55,7 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
 
   const handleDaySelect = (day: any) => {
     const formattedDate = day.dateString.replace(/-/g, "/");
-    onDateSelect(formattedDate);
+    onDateSelect(formattedDate); // Use the prop here
     onClose();
   };
 
@@ -122,6 +122,7 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
     </Modal>
   );
 };
+
 const MonthPicker: React.FC<{ onSelectMonth: (month: number) => void }> = ({
   onSelectMonth,
 }) => {
