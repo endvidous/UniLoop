@@ -141,7 +141,9 @@ export const deleteTeacher = async (req, res) => {
     }
 
     // Delete teacher
-    const deletedTeacher = await User.findByIdAndDelete(teacherId);
+    const deletedTeacher = await User.findByIdAndDelete(teacherId).select(
+      "-password -__v"
+    );
 
     if (!deletedTeacher) {
       return res.status(404).json({ message: "Teacher not found" });
