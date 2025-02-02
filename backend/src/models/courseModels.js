@@ -14,6 +14,7 @@ const departmentSchema = new Schema({
     },
   ],
 });
+departmentSchema.index({ name: 1 });
 
 //Paper schema
 const paperSchema = new Schema({
