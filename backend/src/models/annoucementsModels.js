@@ -15,7 +15,7 @@ const annoucementsSchema = new Schema({
   priority: {
     type: String,
     enum: ["High", "Normal", "Low"],
-    defautl: "Normal",
+    default: "Normal",
   },
   postedBy: {
     type: Schema.Types.ObjectId,
@@ -26,13 +26,13 @@ const annoucementsSchema = new Schema({
     type: {
       model: {
         type: String,
-        enum: ["Department", "Batch", "Course"],
+        enum: ["Departments", "Batches", "Courses"],
         required: true,
       },
       id: {
         type: Schema.Types.ObjectId,
         required: true,
-        refPath: "posted_to.model",
+        refPath: this.posted_to.model,
       },
     },
   },
