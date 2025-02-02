@@ -153,6 +153,14 @@ const CreateTimelineModal: React.FC<CreateTimelineModalProps> = ({
 
     onSubmit(dates);
   };
+  // new line added
+  useEffect(() => {
+    if (visible) {
+      setDates(defaultDates);
+      setStartYear(null);
+      setEndYear(null);
+    }
+  }, [visible]);
 
   return (
     <Modal
