@@ -7,6 +7,7 @@ import {
   ScrollView,
   StyleSheet,
   Dimensions,
+  Alert,
 } from "react-native";
 import { Calendar } from "react-native-calendars";
 
@@ -17,6 +18,8 @@ interface CalendarModalProps {
   onClose: () => void;
   onDateSelect: (date: string) => void;
   initialDate?: string;
+  startYear?: number | null;
+  endYear?: number | null;
 }
 
 const CalendarModal: React.FC<CalendarModalProps> = ({
@@ -24,6 +27,8 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
   onClose,
   onDateSelect,
   initialDate,
+  startYear,
+  endYear,
 }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectionFlow, setSelectionFlow] = useState<"month" | "year" | null>(
@@ -31,26 +36,59 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
   );
   const [tempYear, setTempYear] = useState<number | null>(null);
 
+  // Calculate min and max dates based on startYear and endYear
+  const minDate = startYear ? `${startYear}-01-01` : undefined;
+  const maxDate = endYear ? `${endYear}-12-31` : undefined;
+
   useEffect(() => {
     if (initialDate) {
       const [year, month, day] = initialDate.split("/");
-      setCurrentDate(
-        new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+      const newDate = new Date(
+        parseInt(year),
+        parseInt(month) - 1,
+        parseInt(day)
       );
+
+      // Ensure the initial date is within bounds
+      if (
+        (!minDate || newDate >= new Date(minDate)) &&
+        (!maxDate || newDate <= new Date(maxDate))
+      ) {
+        setCurrentDate(newDate);
+      }
     }
-  }, [initialDate]);
+  }, [initialDate, minDate, maxDate]);
 
   const handleYearSelect = (year: number) => {
-    setTempYear(year);
-    setSelectionFlow("month");
+    if ((!startYear || year >= startYear) && (!endYear || year <= endYear)) {
+      setTempYear(year);
+      setSelectionFlow("month");
+    } else {
+      Alert.alert(
+        "Invalid Year",
+        "Please select a year within the valid range."
+      );
+    }
   };
 
   const handleMonthSelect = (month: number) => {
-    const newDate = new Date();
-    if (tempYear) newDate.setFullYear(tempYear);
-    newDate.setMonth(month - 1);
-    setCurrentDate(newDate);
-    setSelectionFlow(null);
+    if (tempYear) {
+      const newDate = new Date(tempYear, month - 1, 1);
+
+      // Ensure the selected month is within bounds
+      if (
+        (!minDate || newDate >= new Date(minDate)) &&
+        (!maxDate || newDate <= new Date(maxDate))
+      ) {
+        setCurrentDate(newDate);
+        setSelectionFlow(null);
+      } else {
+        Alert.alert(
+          "Invalid Month",
+          "Please select a month within the valid range."
+        );
+      }
+    }
   };
 
   const handleDaySelect = (day: any) => {
@@ -60,7 +98,15 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
   };
 
   const handleMonthChange = (month: { year: number; month: number }) => {
-    setCurrentDate(new Date(month.year, month.month - 1));
+    const newDate = new Date(month.year, month.month - 1, 1);
+
+    // Ensure the new month is within bounds
+    if (
+      (!minDate || newDate >= new Date(minDate)) &&
+      (!maxDate || newDate <= new Date(maxDate))
+    ) {
+      setCurrentDate(newDate);
+    }
   };
 
   const CustomHeader = () => {
@@ -97,15 +143,26 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
       <View style={styles.modalContainer}>
         <View style={[styles.modalContent, { height: modalHeight }]}>
           {selectionFlow === "year" ? (
-            <YearPicker onSelectYear={handleYearSelect} />
+            <YearPicker
+              onSelectYear={handleYearSelect}
+              startYear={startYear}
+              endYear={endYear}
+            />
           ) : selectionFlow === "month" ? (
-            <MonthPicker onSelectMonth={handleMonthSelect} />
+            <MonthPicker
+              onSelectMonth={handleMonthSelect}
+              selectedYear={tempYear}
+              startYear={startYear}
+              endYear={endYear}
+            />
           ) : (
             <Calendar
               current={currentDate.toISOString().split("T")[0]}
               onDayPress={handleDaySelect}
-              onMonthChange={handleMonthChange} // Listen for month changes
+              onMonthChange={handleMonthChange}
               renderHeader={() => <CustomHeader />}
+              minDate={minDate}
+              maxDate={maxDate}
             />
           )}
           <TouchableOpacity
@@ -122,9 +179,13 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
     </Modal>
   );
 };
-const MonthPicker: React.FC<{ onSelectMonth: (month: number) => void }> = ({
-  onSelectMonth,
-}) => {
+
+const MonthPicker: React.FC<{
+  onSelectMonth: (month: number) => void;
+  selectedYear?: number | null;
+  startYear?: number | null;
+  endYear?: number | null;
+}> = ({ onSelectMonth, selectedYear, startYear, endYear }) => {
   const months = [
     "January",
     "February",
@@ -143,25 +204,40 @@ const MonthPicker: React.FC<{ onSelectMonth: (month: number) => void }> = ({
   return (
     <ScrollView contentContainerStyle={styles.monthScrollContainer}>
       <View style={styles.monthGrid}>
-        {months.map((month, index) => (
-          <TouchableOpacity
-            key={month}
-            style={styles.monthItem}
-            onPress={() => onSelectMonth(index + 1)}
-          >
-            <Text style={styles.monthText}>{month}</Text>
-          </TouchableOpacity>
-        ))}
+        {months.map((month, index) => {
+          const isDisabled =
+            (selectedYear === startYear && index < 0) || // Adjust based on your logic
+            (selectedYear === endYear && index > 11); // Adjust based on your logic
+
+          return (
+            <TouchableOpacity
+              key={month}
+              style={[styles.monthItem, isDisabled && { opacity: 0.5 }]}
+              onPress={() => !isDisabled && onSelectMonth(index + 1)}
+              disabled={isDisabled}
+            >
+              <Text style={styles.monthText}>{month}</Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </ScrollView>
   );
 };
 
-const YearPicker: React.FC<{ onSelectYear: (year: number) => void }> = ({
-  onSelectYear,
-}) => {
+const YearPicker: React.FC<{
+  onSelectYear: (year: number) => void;
+  startYear?: number | null;
+  endYear?: number | null;
+}> = ({ onSelectYear, startYear, endYear }) => {
   const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 21 }, (_, i) => currentYear - 10 + i);
+  const years = Array.from(
+    {
+      length:
+        (endYear || currentYear + 10) - (startYear || currentYear - 10) + 1,
+    },
+    (_, i) => (startYear || currentYear - 10) + i
+  );
 
   return (
     <ScrollView contentContainerStyle={styles.yearScrollContainer}>
