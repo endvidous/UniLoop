@@ -2,8 +2,7 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  TextInput,
-  ScrollView,
+  FlatList,
   StyleSheet,
   TouchableOpacity,
 } from "react-native";
@@ -11,42 +10,57 @@ import { Ionicons } from "@expo/vector-icons";
 import CreateTimelineModal from "@/src/components/TimelineComponents/CreateTimelineModal";
 import TimelineCard from "@/src/components/TimelineComponents/TimelineCard";
 
+interface Timeline {
+  academicYear: string;
+  oddSemester: { start: string; end: string };
+  evenSemester: { start: string; end: string };
+}
+
 const TimelinePage = () => {
   const [showModal, setShowModal] = useState(false);
-  const [timelines, setTimelines] = useState<any[]>([]);
+  const [timelines, setTimelines] = useState<Timeline[]>([]);
 
   const handleSubmit = (newDates: any) => {
     const { academicYear, oddSemStart, oddSemEnd, evenSemStart, evenSemEnd } =
       newDates;
 
-    const newTimeline = {
+    // Create new timeline (validation is already handled in CreateTimelineModal)
+    const newTimeline: Timeline = {
       academicYear,
       oddSemester: { start: oddSemStart, end: oddSemEnd },
       evenSemester: { start: evenSemStart, end: evenSemEnd },
     };
 
-    setTimelines([...timelines, newTimeline]);
+    setTimelines((prev) => [...prev, newTimeline]);
     setShowModal(false);
   };
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {timelines.length === 0 ? (
-          <Text style={styles.noTimelinesText}>No timelines available</Text>
-        ) : (
-          timelines.map((timeline, index) => (
-            <TimelineCard
-              key={index}
-              academicYear={timeline.academicYear}
-              oddSemester={timeline.oddSemester}
-              evenSemester={timeline.evenSemester}
-            />
-          ))
+      <FlatList
+        data={timelines}
+        keyExtractor={(item) => item.academicYear}
+        contentContainerStyle={styles.listContent}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.noTimelinesText}>No timelines available</Text>
+          </View>
+        }
+        renderItem={({ item }) => (
+          <TimelineCard
+            academicYear={item.academicYear}
+            oddSemester={item.oddSemester}
+            evenSemester={item.evenSemester}
+          />
         )}
-      </ScrollView>
+      />
 
-      <TouchableOpacity style={styles.fab} onPress={() => setShowModal(true)}>
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => setShowModal(true)}
+        accessibilityLabel="Create new timeline"
+        accessibilityRole="button"
+      >
         <Ionicons name="add" size={30} color="white" />
       </TouchableOpacity>
 
@@ -58,19 +72,24 @@ const TimelinePage = () => {
     </View>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f4f4f4",
   },
-  scrollContent: {
+  listContent: {
     padding: 20,
   },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    minHeight: 300,
+  },
   noTimelinesText: {
-    textAlign: "center",
     fontSize: 16,
     color: "#777",
-    marginTop: 20,
   },
   fab: {
     position: "absolute",
@@ -88,4 +107,5 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
 });
+
 export default TimelinePage;

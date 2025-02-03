@@ -56,6 +56,9 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
       ) {
         setCurrentDate(newDate);
       }
+    } else {
+      // Reset to the current date if no initialDate is provided
+      setCurrentDate(new Date());
     }
   }, [initialDate, minDate, maxDate]);
 
