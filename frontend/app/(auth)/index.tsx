@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   topLogo: {
-    marginTop: 40,
+    marginTop: 100,
   },
   svg: {
     position: "absolute",
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 20,
     padding: 20,
-    marginTop: 40,
+    marginTop: 85,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,

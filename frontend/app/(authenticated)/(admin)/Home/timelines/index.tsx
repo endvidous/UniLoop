@@ -7,8 +7,8 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import CreateTimelineModal from "@/src/components/TimelineComponents/CreateTimelineModal";
-import TimelineCard from "@/src/components/TimelineComponents/TimelineCard";
+import CreateTimelineModal from "@/src/components/admin/TimelineComponents/CreateTimelineModal";
+import TimelineCard from "@/src/components/admin/TimelineComponents/TimelineCard";
 
 interface Timeline {
   academicYear: string;

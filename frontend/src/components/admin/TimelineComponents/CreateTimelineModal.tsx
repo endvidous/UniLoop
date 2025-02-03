@@ -9,7 +9,7 @@ import {
   Alert,
 } from "react-native";
 import CalendarModal from "@/src/components/calendar/calendarModal";
-import DateButton from "@/src/components/admin/TimelineComponents/dateButton";
+import DateButton from "./dateButton";
 
 interface CreateTimelineModalProps {
   visible: boolean;
@@ -153,6 +153,14 @@ const CreateTimelineModal: React.FC<CreateTimelineModalProps> = ({
 
     onSubmit(dates);
   };
+  // new line added
+  useEffect(() => {
+    if (visible) {
+      setDates(defaultDates);
+      setStartYear(null);
+      setEndYear(null);
+    }
+  }, [visible]);
 
   return (
     <Modal

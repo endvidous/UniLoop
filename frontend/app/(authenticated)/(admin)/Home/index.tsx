@@ -1,51 +1,53 @@
 import { Text, TouchableOpacity, View, StyleSheet } from "react-native";
+import React from 'react';
 import { Link } from "expo-router";
-import Ionicons from "@expo/vector-icons/Ionicons";
+// import Ionicons from "@expo/vector-icons/Ionicons";
 import { useAuth } from "@/src/context/AuthContext";
 
 const AdminIndex = () => {
   const { signOut } = useAuth();
   return (
     <View style={styles.container}>
+      
       <Link
-        style={[styles.dataButton, styles.shadow]}
+        style={[styles.card, styles.shadow]}
         href="/Home/timelines"
         asChild
       >
-        <TouchableOpacity>
-          <Text style={styles.buttontext}>Academic Timeline</Text>
-          <Ionicons name="log-out-outline" size={24} color="#fff" />
+        <TouchableOpacity style={styles.cardTouchable}>
+          <View style={styles.cardContent}>
+            <Text style={styles.cardTitle}>Academic Timeline</Text>
+            {/* <Ionicons name="log-out-outline" size={30} color="#fff" /> */}
+          </View>
         </TouchableOpacity>
       </Link>
 
       <Link
-        style={[styles.dataButton, styles.shadow]}
-        href="/Home/departments/"
+        style={[styles.card, styles.shadow]}
+        href="/Home/departments"
         asChild
       >
-        <TouchableOpacity>
-          <Text style={styles.buttontext}>Departments</Text>
-          <Ionicons name="enter-outline" size={24} color="#fff" />
+        <TouchableOpacity style={styles.cardTouchable}>
+          <View style={styles.cardContent}>
+            <Text style={styles.cardTitle}>Departments</Text>
+            {/* <Ionicons name="enter-outline" size={30} color="#fff" /> */}
+          </View>
         </TouchableOpacity>
       </Link>
 
       <Link
-        style={[styles.dataButton, styles.shadow]}
-        href="/Home/courses/"
+        style={[styles.card, styles.shadow]}
+        href="/Home/courses"
         asChild
       >
-        <TouchableOpacity>
-          <Text style={styles.buttontext}>Courses</Text>
-          <Ionicons name="book-outline" size={24} color="#fff" />
+        <TouchableOpacity style={styles.cardTouchable}>
+          <View style={styles.cardContent}>
+            <Text style={styles.cardTitle}>Courses</Text>
+            {/* <Ionicons name="book-outline" size={30} color="#fff" /> */}
+          </View>
         </TouchableOpacity>
       </Link>
-      <TouchableOpacity
-        onPress={signOut}
-        style={[styles.dataButton, styles.shadow]}
-      >
-        <Text style={styles.buttontext}>Log out</Text>
-        <Ionicons name="log-out-outline" size={24} color="#fff" />
-      </TouchableOpacity>
+
     </View>
   );
 };
@@ -56,11 +58,32 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  text: {
-    textAlign: "center",
-    fontSize: 18,
-    color: "#333",
-    marginBottom: 8,
+  card: {
+    backgroundColor: '#1E1E1E', 
+    borderRadius: 12, 
+    padding: 40, 
+    width: '90%',
+    marginBottom: 40,
+    elevation: 5, 
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 5,
+  },
+  cardTouchable: {
+    flexDirection: 'column', 
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardContent: {
+    flexDirection: 'column', 
+    alignItems: 'center', 
+    justifyContent: 'center',
+  },
+  cardTitle: {
+    color: '#fff', 
+    fontSize: 30, 
+    marginRight: 10, 
   },
   shadow: {
     shadowColor: "#000",
@@ -72,23 +95,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  dataButton: {
-    flexDirection: "row",
-    width: "80%",
-    height: 50,
-    backgroundColor: "#00100B",
-    borderRadius: 12,
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 15,
-    marginTop: 20,
-  },
-  buttontext: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-    marginRight: 10,
-  },
+
 });
 
 export default AdminIndex;
