@@ -208,3 +208,70 @@ export const createStudents = async (req, res) => {
       .json({ message: "Error adding students ", error: err.message });
   }
 };
+export const updateStudent = async (req, res) => {
+  const { batchID } = req.params;
+  const { updates } = req.body;
+
+  try {
+    // Validate batch exists
+    const batch = await Batches.findById(batchID);
+    if (!batch) {
+      return res.status(404).json({ message: "Batch not found" });
+    }
+
+    // Update student
+    const updatedStudent = await User.findByIdAndUpdate(batchId, updates, {
+      new: true,
+      runValidators: true,
+    }).select("-password -__v");
+
+    if (!updatedStudent) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    res.status(200).json({
+      message: "Student updated successfully",
+      data: updatedStudent,
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Error updating student",
+      error: err.message,
+    });
+  }
+};
+export const deleteStudent = async (req, res) => {
+  const { batchID , studentID } = req.params;
+
+  try {
+    // Remove student from batch
+    const batch = await Batches.findByIdAndUpdate(
+      batchID,
+      { $pull: { students : studentID } },
+      { new: true }
+    );
+
+    if (!batch) {
+      return res.status(404).json({ message: "Batch not found" });
+    }
+
+    // Delete student
+    const deletedStudent = await User.findByIdAndDelete(studentID).select(
+      "-password -__v"
+    );
+
+    if (!deletedStudent) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    res.status(200).json({
+      message: "Teacher deleted successfully",
+      data: deletedStudent,
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Error deleting teacher",
+      error: err.message,
+    });
+  }
+};
