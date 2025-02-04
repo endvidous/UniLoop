@@ -34,7 +34,57 @@ export const createCourses = async (req, res) => {
       .json({ message: "Error creating courses ", error: err.message });
   }
 };
+export const editCourse = async (req, res) => {
+  const { courseId } = req.params; // Expecting a single course ID from the URL
+  const { name } = req.body; // Expecting the new name in the request body
 
+  try {
+    // Validate input
+    if (!courseId) {
+      return res.status(400).json({ message: "Course ID is required" });
+    }
+    if (!name) {
+      return res.status(400).json({ message: "New course name is required" });
+    }
+
+    // Update the course name
+    const updatedCourse = await Courses.findByIdAndUpdate(
+      courseId,
+      { name },
+      { new: true } // Return the updated document
+    );
+
+    if (!updatedCourse) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+
+    res.status(200).json({ message: "Course updated successfully", updatedCourse });
+  } catch (err) {
+    res.status(500).json({ message: `Error updating course: ${err.message}` });
+  }
+};
+// Delete Course Function
+export const deleteCourse = async (req, res) => {
+  const { courseId } = req.params; // Expecting a single course ID from the URL
+
+  try {
+    // Validate input
+    if (!courseId) {
+      return res.status(400).json({ message: "Course ID is required" });
+    }
+
+    // Delete the course
+    const deletedCourse = await Courses.findByIdAndDelete(courseId);
+
+    if (!deletedCourse) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+
+    res.status(200).json({ message: "Course deleted successfully", deletedCourse });
+  } catch (err) {
+    res.status(500).json({ message: `Error deleting course: ${err.message}` });
+  }
+};
 export const createBatches = async (req, res) => {
   const { courseId } = req.params;
   const { batches } = req.body;
@@ -70,6 +120,28 @@ export const createBatches = async (req, res) => {
     res
       .status(500)
       .json({ message: "Error creating batches", error: err.message });
+  }
+};
+// Delete Batch Function
+export const deleteBatch = async (req, res) => {
+  const { batchId } = req.params; // Expecting a single batch ID from the URL
+
+  try {
+    // Validate input
+    if (!batchId) {
+      return res.status(400).json({ message: "Batch ID is required" });
+    }
+
+    // Delete the batch
+    const deletedBatch = await Batches.findByIdAndDelete(batchId);
+
+    if (!deletedBatch) {
+      return res.status(404).json({ message: "Batch not found" });
+    }
+
+    res.status(200).json({ message: "Batch deleted successfully", deletedBatch });
+  } catch (err) {
+    res.status(500).json({ message: `Error deleting batch: ${err.message}` });
   }
 };
 
@@ -155,5 +227,42 @@ export const createSemester = async (req, res) => {
       message: "Error creating semester",
       error: err.message,
     });
+  }
+};
+// Delete Semester Function with Validation
+export const deleteSemester = async (req, res) => {
+  const { semesterId, semNo, courseID } = req.params; // Expecting semester ID, semester number, and course ID from the URL
+
+  try {
+    // Validate input
+    if (!semesterId || !semNo || !courseID) {
+      return res.status(400).json({ message: "All parameters (semesterId, semNo, courseID) are required." });
+    }
+
+    // Check if the semester exists in the database
+    const semester = await Semester.findById(semesterId);
+    if (!semester) {
+      return res.status(404).json({ message: "Semester not found." });
+    }
+
+    // Proceed to delete the semester
+    await Semester.findByIdAndDelete(semesterId);
+    return res.status(200).json({ message: "Semester deleted successfully." });
+
+  } catch (error) {
+    return res.status(500).json({ message: "An error occurred while deleting the semester.", error: error.message });
+  }
+};
+
+export const getCourses = async (req, res) => {
+  try {
+    const courses = await Courses.find(); // Fetch all courses from the database
+
+    res.status(200).json({
+      message: "Courses retrieved successfully",
+      data: courses,
+    });
+  } catch (err) {
+    res.status(500).json({ message: `Error retrieving courses: ${err.message}` });
   }
 };
