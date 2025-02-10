@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { User } from "./userModels.js";
 const Schema = mongoose.Schema;
 
 // Department Schema
@@ -104,6 +105,19 @@ const batchSchema = new Schema({
     {
       type: Schema.Types.ObjectId,
       ref: "User",
+    },
+  ],
+  classRepresentatives: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      validate: {
+        validator: async function (userId) {
+          const user = await User.findById(userId).select("classrep_of").lean();
+          return user?.classrep_of?.equals(this.parent()._id);
+        },
+        message: "User must be registered as classrep of this batch",
+      },
     },
   ],
   status: {

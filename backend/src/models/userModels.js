@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { Batches } from "./courseModels.js";
 const Schema = mongoose.Schema;
 
 const userSchema = new Schema(
@@ -28,7 +29,18 @@ const userSchema = new Schema(
     },
     classrep_of: {
       type: Schema.Types.ObjectId,
-      ref: "Courses",
+      ref: "Batches",
+      validate: {
+        validator: async function (v) {
+          if (this.role !== "student") return true;
+          const batch = await Batches.findOne({
+            _id: v,
+            students: this._id,
+          });
+          return !!batch;
+        },
+        message: "Student must be part of the batch they represent",
+      },
     },
     roll_no: {
       type: String,

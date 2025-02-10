@@ -220,7 +220,7 @@ export const updateStudent = async (req, res) => {
     }
 
     // Update student
-    const updatedStudent = await User.findByIdAndUpdate(batchId, updates, {
+    const updatedStudent = await User.findByIdAndUpdate(batchID, updates, {
       new: true,
       runValidators: true,
     }).select("-password -__v");
@@ -241,13 +241,13 @@ export const updateStudent = async (req, res) => {
   }
 };
 export const deleteStudent = async (req, res) => {
-  const { batchID , studentID } = req.params;
+  const { batchID, studentID } = req.params;
 
   try {
     // Remove student from batch
     const batch = await Batches.findByIdAndUpdate(
       batchID,
-      { $pull: { students : studentID } },
+      { $pull: { students: studentID } },
       { new: true }
     );
 

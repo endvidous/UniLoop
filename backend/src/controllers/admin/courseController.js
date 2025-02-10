@@ -58,7 +58,9 @@ export const editCourse = async (req, res) => {
       return res.status(404).json({ message: "Course not found" });
     }
 
-    res.status(200).json({ message: "Course updated successfully", updatedCourse });
+    res
+      .status(200)
+      .json({ message: "Course updated successfully", updatedCourse });
   } catch (err) {
     res.status(500).json({ message: `Error updating course: ${err.message}` });
   }
@@ -80,7 +82,9 @@ export const deleteCourse = async (req, res) => {
       return res.status(404).json({ message: "Course not found" });
     }
 
-    res.status(200).json({ message: "Course deleted successfully", deletedCourse });
+    res
+      .status(200)
+      .json({ message: "Course deleted successfully", deletedCourse });
   } catch (err) {
     res.status(500).json({ message: `Error deleting course: ${err.message}` });
   }
@@ -139,7 +143,9 @@ export const deleteBatch = async (req, res) => {
       return res.status(404).json({ message: "Batch not found" });
     }
 
-    res.status(200).json({ message: "Batch deleted successfully", deletedBatch });
+    res
+      .status(200)
+      .json({ message: "Batch deleted successfully", deletedBatch });
   } catch (err) {
     res.status(500).json({ message: `Error deleting batch: ${err.message}` });
   }
@@ -236,21 +242,29 @@ export const deleteSemester = async (req, res) => {
   try {
     // Validate input
     if (!semesterId || !semNo || !courseID) {
-      return res.status(400).json({ message: "All parameters (semesterId, semNo, courseID) are required." });
+      return res
+        .status(400)
+        .json({
+          message: "All parameters (semesterId, semNo, courseID) are required.",
+        });
     }
 
     // Check if the semester exists in the database
-    const semester = await Semester.findById(semesterId);
+    const semester = await Semesters.findById(semesterId);
     if (!semester) {
       return res.status(404).json({ message: "Semester not found." });
     }
 
     // Proceed to delete the semester
-    await Semester.findByIdAndDelete(semesterId);
+    await Semesters.findByIdAndDelete(semesterId);
     return res.status(200).json({ message: "Semester deleted successfully." });
-
   } catch (error) {
-    return res.status(500).json({ message: "An error occurred while deleting the semester.", error: error.message });
+    return res
+      .status(500)
+      .json({
+        message: "An error occurred while deleting the semester.",
+        error: error.message,
+      });
   }
 };
 
@@ -263,6 +277,8 @@ export const getCourses = async (req, res) => {
       data: courses,
     });
   } catch (err) {
-    res.status(500).json({ message: `Error retrieving courses: ${err.message}` });
+    res
+      .status(500)
+      .json({ message: `Error retrieving courses: ${err.message}` });
   }
 };

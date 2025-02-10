@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { User } from "../models/userModels.js";
+import { Batches, Courses, Departments } from "../models/courseModels.js";
 
 export const authMiddleware = async (req, res, next) => {
   try {
@@ -29,7 +30,10 @@ export const authMiddleware = async (req, res, next) => {
       return res.status(401).json({ message: "Not authorized, token failed" });
     }
   } catch (error) {
-    res.status(500).json({ message: "Server error in auth middleware" });
+    res.status(500).json({
+      message: "Server error in auth middleware",
+      error: error.message,
+    });
   }
 };
 
@@ -55,16 +59,79 @@ export const isStudent = (req, res, next) => {
   next();
 };
 
-export const isClassRep = (courseId) => (req, res, next) => {
-  if (!req.user || !req.user.isClassRepOf(courseId)) {
-    return res.status(403).json({ message: `Access denied` });
+export const isClassRep = async (req, res, next) => {
+  try {
+    // First check basic requirements
+    if (req.user.isStudent() || !req.user.classrep_of) {
+      return res
+        .status(403)
+        .json({ message: "Access denied: Not a class representative" });
+    }
+
+    // Verify batch association
+    const batch = await Batches.findOne({
+      course: req.user.classrep_of,
+      students: req.user._id,
+      status: "active",
+    }).populate("course", "name");
+
+    if (!batch) {
+      return res.status(403).json({
+        message: "Access denied",
+      });
+    }
+
+    // Attach batch info for downstream use
+    req.batchInfo = {
+      id: batch._id,
+      course: batch.course.name,
+      semester: batch.currentSemester,
+    };
+
+    next();
+  } catch (error) {
+    res.status(500).json({
+      message: "Server error during class representative verification",
+      error: error.message,
+    });
   }
-  next();
 };
 
-export const isMentor = (courseId) => (req, res, next) => {
-  if (!req.user || !req.user.isMentorOf(courseId)) {
-    return res.status(403).json({ message: `Access denied` });
+export const isMentor = async (req, res, next) => {
+  try {
+    // Basic role and field check
+    if (req.user.isTeacher() || !req.user.mentor_of) {
+      return res
+        .status(403)
+        .json({ message: "Access denied: Not a registered mentor" });
+    }
+
+    // Verify department association
+    const department = await Departments.findOne({
+      teachers: req.user._id,
+    }).populate("courses");
+
+    // Verify course mentorship
+    const course = await Courses.findById(req.user.mentor_of);
+
+    if (!department || !course) {
+      return res.status(403).json({
+        message: "Access denied",
+      });
+    }
+
+    // Attach mentorship context
+    req.mentorshipContext = {
+      departmentId: department._id,
+      courseId: course._id,
+      courseName: course.name,
+    };
+
+    next();
+  } catch (error) {
+    res.status(500).json({
+      message: "Server error during mentor verification",
+      error: error.message,
+    });
   }
-  next();
 };
