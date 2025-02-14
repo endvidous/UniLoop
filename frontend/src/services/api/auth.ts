@@ -23,7 +23,10 @@ export const authService = {
   validateToken: async () => {
     try {
       const response = await axios.get("/auth/validate");
-      return response.data;
+      return {
+        newToken: response.data.token,
+        user: response.data.user,
+      };
     } catch (error) {
       throw error;
     }

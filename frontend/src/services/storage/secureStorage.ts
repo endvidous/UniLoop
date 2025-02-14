@@ -18,6 +18,10 @@ export const appStorage = {
     return storage.getString(STORAGE_KEYS.AUTH_TOKEN) || null;
   },
 
+  removeToken: (): void => {
+    storage.delete(STORAGE_KEYS.AUTH_TOKEN);
+  },
+
   setUser: (user: User) => {
     storage.set(STORAGE_KEYS.USER, JSON.stringify(user));
   },
@@ -30,6 +34,9 @@ export const appStorage = {
       console.error("Failed to parse user data:", error);
       return null;
     }
+  },
+  removeUser: (): void => {
+    storage.delete(STORAGE_KEYS.USER);
   },
 
   // Theme methods

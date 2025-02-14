@@ -8,29 +8,41 @@ import { authService } from "@/src/services/api/auth";
 import { StatusBar } from "react-native";
 
 export default function RootLayout() {
-  const token = useStore((state) => state.token);
-  const isLoading = useStore((state) => state.isLoading);
-  const initializeState = useStore((state) => state.initializeState);
-  const clearAuth = useStore((state) => state.clearAuth);
+  const {
+    token,
+    isLoading,
+    setLoading,
+    initializeState,
+    clearAuth,
+    setToken,
+    setUser,
+  } = useStore();
 
+  // Single source of truth for initial state
   useEffect(() => {
-    async function initialize() {
-      if (token) {
-        try {
-          // Validate the token with the server
-          await authService.validateToken();
-        } catch (error) {
-          // If token validation fails, clear storage
-          clearAuth();
+    const initAuthState = async () => {
+      setLoading(true);
+      try {
+        await initializeState();
+
+        if (token) {
+          // Handle token validation and potential refresh
+          const { newToken, user } = await authService.validateToken();
+
+          if (newToken) {
+            setToken(newToken);
+            setUser(user);
+          }
         }
+      } catch (error) {
+        clearAuth();
+      } finally {
+        setLoading(false);
       }
+    };
 
-      // Initialize Zustand state
-      initializeState();
-    }
-
-    initialize();
-  }, [token, initializeState]);
+    initAuthState();
+  }, []);
 
   if (isLoading) {
     return <SplashScreen />;
