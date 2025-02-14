@@ -1,0 +1,422 @@
+import { Discussion } from "../../models/discussionModels.js";
+import {
+  buildDiscussionQuery,
+  validateDiscussionPosting,
+} from "../../services/discussionService.js";
+import mongoose from "mongoose";
+
+//Middleware
+export const discussionFilterValidator = (req, res, next) => {
+  const validFilters = [
+    "department",
+    "course",
+    "batch",
+    "search",
+    "sort",
+    "page",
+    "limit",
+  ];
+  const validSorts = ["newest", "popular", "controversial"];
+
+  const validateObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
+
+  if (req.query.department && !validateObjectId(req.query.department)) {
+    return res.status(400).json({ message: "Invalid department ID" });
+  }
+
+  if (req.query.batch && !validateObjectId(req.query.batch)) {
+    return res.status(400).json({ message: "Invalid Batch ID" });
+  }
+
+  if (req.query.course && !validateObjectId(req.query.course)) {
+    return res.status(400).json({ message: "Invalid Course ID" });
+  }
+
+  // Check for invalid parameters
+  const invalidParams = Object.keys(req.query).filter(
+    (param) => !validFilters.includes(param)
+  );
+
+  if (invalidParams.length > 0) {
+    return res.status(400).json({
+      message: `Invalid filter parameters: ${invalidParams.join(", ")}`,
+    });
+  }
+
+  // Validate sort value
+  if (req.query.sort && !validSorts.includes(req.query.sort)) {
+    return res.status(400).json({
+      message: `Invalid sort parameter. Valid options: ${validSorts.join(
+        ", "
+      )}`,
+    });
+  }
+
+  next();
+};
+
+// Helpers
+const getSortOption = (sort, hasSearch) => {
+  if (hasSearch) return { score: { $meta: "textScore" } };
+
+  const sortOptions = {
+    newest: "-createdAt",
+    popular: { upvotes: -1 },
+    controversial: { "comments.reports": -1 },
+  };
+
+  return sortOptions[sort] || "-createdAt";
+};
+
+//Discussion Controllers
+export const getOneDiscussion = async (req, res) => {
+  try {
+    const { discussionId } = req.params;
+
+    const discussion = await Discussion.findById(discussionId)
+      .populate("postedBy", "name role")
+      .populate("posted_to.id", "name code")
+      .populate({
+        path: "comments.postedBy",
+        select: "name role",
+      })
+      .lean();
+
+    if (!discussion) {
+      return res.status(404).json({ message: "Discussion not found" });
+    }
+
+    res.json(discussion);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error retrieving discussion", error: error.message });
+  }
+};
+
+export const getDiscussions = async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search, sort } = req.query;
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+    const skip = (pageNumber - 1) * limitNumber;
+
+    const baseQuery = await buildDiscussionQuery(req.user);
+    const finalQuery = { ...baseQuery };
+
+    if (search) {
+      finalQuery.$text = { $search: search };
+    }
+
+    // Only include the necessary fields for list view
+    const projection = {
+      title: 1,
+      description: 1,
+      postedBy: 1,
+      visibilityType: 1,
+      posted_to: 1,
+      upvotes: 1,
+      isClosed: 1,
+    };
+
+    const [discussions, total] = await Promise.all([
+      Discussion.find(finalQuery, projection)
+        .populate("postedBy", "name role")
+        .populate("posted_to.id", "name code")
+        .sort(getSortOption(sort, search))
+        .skip(skip)
+        .limit(limitNumber)
+        .lean(),
+      Discussion.countDocuments(finalQuery),
+    ]);
+
+    res.json({
+      discussions,
+      total,
+      page: pageNumber,
+      totalPages: Math.ceil(total / limitNumber),
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const createDiscussion = async (req, res) => {
+  try {
+    const { visibilityType, posted_to } = req.body;
+    const user = req.user;
+
+    const isValid = await validateDiscussionPosting(user, req.body);
+
+    if (!isValid) {
+      return res.status(403).json({ message: "Invalid posting target" });
+    }
+
+    const discussionData = {
+      ...req.body,
+      postedBy: user._id,
+      ...(visibilityType !== "General" && {
+        posted_to: {
+          model: posted_to.model,
+          id: new mongoose.Types.ObjectId(`${posted_to.id}`),
+        },
+      }),
+    };
+
+    const discussion = await Discussion.create(discussionData);
+    res
+      .status(201)
+      .json({ message: "Discussion created successfully", data: discussion });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateDiscussion = async (req, res) => {
+  try {
+    const { discussionId } = req.params;
+    const updates = req.body;
+    const user = req.user;
+
+    const discussion = await Discussion.findById(discussionId);
+    if (!discussion) {
+      return res.status(404).json({ message: "Discussion not found" });
+    }
+
+    if (!discussion.postedBy.equals(user._id)) {
+      return res
+        .status(403)
+        .json({ message: "Only author can update discussions" });
+    }
+
+    if (updates.visibilityType && !user.isAdmin()) {
+      const valid = await validateDiscussionPosting(user, {
+        ...discussion.toObject(),
+        ...updates,
+      });
+      if (!valid)
+        return res.status(403).json({ message: "Invalid visibility change" });
+    }
+
+    // Prevent closing through regular update
+    if ("isClosed" in updates) delete updates.isClosed;
+
+    const updatedDiscussion = await Discussion.findByIdAndUpdate(
+      discussionId,
+      updates,
+      { new: true, runValidators: true }
+    );
+
+    res.json(updatedDiscussion);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const deleteDiscussion = async (req, res) => {
+  try {
+    const { discussionId } = req.params;
+    const discussion = await Discussion.findById(discussionId);
+
+    if (!discussion) {
+      return res.status(404).json({ message: "Discussion not found" });
+    }
+
+    if (!discussion.postedBy.equals(req.user._id) && !req.user.isAdmin()) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    await discussion.deleteOne();
+    res.json({ message: "Discussion deleted" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const reportDiscussion = async (req, res) => {
+  try {
+    const { discussionId } = req.params;
+    const { reason } = req.body;
+
+    const updated = await Discussion.findOneAndUpdate(
+      {
+        _id: discussionId,
+        "reports.reportedBy": { $ne: req.user._id }, // Prevent duplicate
+      },
+      {
+        $push: {
+          reports: {
+            reportedBy: req.user._id,
+            reason,
+            createdAt: Date.now(),
+          },
+        },
+      },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(400).json({ message: "Already reported" });
+    }
+
+    res.json({ message: "Report registered", discussion: updated });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const upvoteDiscussion = async (req, res) => {
+  try {
+    const { discussionId } = req.params;
+
+    const updated = await Discussion.findByIdAndUpdate(
+      discussionId,
+      {
+        $addToSet: { upvotes: req.user._id },
+      },
+      { new: true }
+    );
+
+    res.json(updated);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+export const markAnswer = async (req, res) => {
+  try {
+    const { discussionId, commentId } = req.params;
+
+    // Fetch the discussion
+    const discussion = await Discussion.findById(discussionId);
+    if (!discussion) {
+      return res.status(404).json({ message: "Discussion not found" });
+    }
+
+    // Check if user is an admin or teacher
+    const isAuthorized = req.user.isAdmin || req.user.isTeacher;
+    if (!isAuthorized) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    // Update comment and close discussion
+    const updated = await Discussion.findOneAndUpdate(
+      { _id: discussionId, "comments._id": commentId },
+      {
+        $set: {
+          "comments.$.isAnswer": true,
+          isClosed: true,
+        },
+      },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ message: "Comment not found" });
+    }
+
+    res.json(updated);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// Comment controllers
+export const addComment = async (req, res) => {
+  try {
+    const { discussionId } = req.params;
+    const { content } = req.body;
+
+    // Check if discussion is closed
+    const discussion = await Discussion.findById(discussionId);
+    if (discussion.isClosed) {
+      return res.status(400).json({ message: "Discussion is closed" });
+    }
+
+    // Check for existing comment from user
+    const existingComment = discussion.comments.find((comment) =>
+      comment.postedBy.equals(req.user._id)
+    );
+
+    if (existingComment) {
+      return res.status(400).json({ message: "You already commented" });
+    }
+
+    const comment = {
+      content,
+      postedBy: req.user._id,
+    };
+
+    const updated = await Discussion.findByIdAndUpdate(
+      discussionId,
+      { $push: { comments: comment } },
+      { new: true }
+    );
+
+    res.json(updated);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+export const reportComment = async (req, res) => {
+  try {
+    const { discussionId, commentId } = req.params;
+    const { reason } = req.body;
+
+    const updated = await Discussion.findOneAndUpdate(
+      {
+        _id: discussionId,
+        "comments._id": commentId,
+        "comments.reports.reportedBy": { $ne: req.user._id },
+      },
+      {
+        $push: {
+          "comments.$.reports": {
+            reportedBy: req.user._id,
+            reason,
+            createdAt: Date.now(),
+          },
+        },
+      },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(400).json({ message: "Already reported" });
+    }
+
+    // Send a complete response with a body
+    return res.status(200).json({ message: "Report registered" });
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
+  }
+};
+
+export const upvoteComment = async (req, res) => {
+  try {
+    const { discussionId, commentId } = req.params;
+
+    const upvoted = await Discussion.findOneAndUpdate(
+      {
+        _id: discussionId,
+        "comments._id": commentId,
+        "comments.upvotes": { $ne: req.user._id },
+      },
+      {
+        $addToSet: { "comments.$.upvotes": req.user._id },
+      },
+      { new: true }
+    );
+
+    if (!upvoted) {
+      return res
+        .status(400)
+        .json({ message: "Unable to upvote or already upvoted" });
+    }
+
+    return res.status(200).json({ message: "Upvoted" });
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
+  }
+};
