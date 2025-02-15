@@ -63,6 +63,13 @@ const announcementsSchema = new Schema(
     timestamps: true, // Adds createdAt and updatedAt fields
   }
 );
+
+// Limit attachments to a maximum of 3
+announcementsSchema.path('attachments').validate(function (value) {
+  return !value || value.length <= 3;
+}, 'A maximum of 3 attachments is allowed.');
+
+
 announcementsSchema.index({ title: "text", description: "text" }); //For search performance
 announcementsSchema.index({ visibilityType: 1, "posted_to.model": 1 });
 announcementsSchema.index({ priority: -1, createdAt: -1 });

@@ -5,6 +5,8 @@ import { AuthHandler } from "@/src/components/auth/AuthHandler";
 import SplashScreen from "../src/components/SplashScreen/splashScreen";
 import { useStore } from "@/src/context/store";
 import { authService } from "@/src/services/api/auth";
+import { queryClient } from "@/src/services/api/queryClient";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { StatusBar } from "react-native";
 
 export default function RootLayout() {
@@ -49,10 +51,12 @@ export default function RootLayout() {
   }
 
   return (
-    <AuthProvider>
-      <StatusBar translucent={false} />
-      <Stack screenOptions={{ headerShown: false }} />
-      <AuthHandler />
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <StatusBar translucent={false} />
+        <Stack screenOptions={{ headerShown: false }} />
+        <AuthHandler />
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }

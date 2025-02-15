@@ -268,14 +268,30 @@ export const reportDiscussion = async (req, res) => {
 export const upvoteDiscussion = async (req, res) => {
   try {
     const { discussionId } = req.params;
+    const userId = req.user._id;
 
-    const updated = await Discussion.findByIdAndUpdate(
-      discussionId,
-      {
-        $addToSet: { upvotes: req.user._id },
-      },
-      { new: true }
-    );
+    // Get the discussion
+    const discussion = await Discussion.findById(discussionId);
+    if (!discussion) {
+      return res.status(404).json({ message: "Discussion not found" });
+    }
+
+    let updated;
+    if (discussion.upvotes.includes(userId)) {
+      // If user has already upvoted, remove their vote
+      updated = await Discussion.findByIdAndUpdate(
+        discussionId,
+        { $pull: { upvotes: userId } },
+        { new: true }
+      );
+    } else {
+      // Otherwise, add the user's upvote
+      updated = await Discussion.findByIdAndUpdate(
+        discussionId,
+        { $addToSet: { upvotes: userId } },
+        { new: true }
+      );
+    }
 
     res.json(updated);
   } catch (error) {
@@ -396,27 +412,39 @@ export const reportComment = async (req, res) => {
 export const upvoteComment = async (req, res) => {
   try {
     const { discussionId, commentId } = req.params;
+    const userId = req.user._id;
 
-    const upvoted = await Discussion.findOneAndUpdate(
-      {
-        _id: discussionId,
-        "comments._id": commentId,
-        "comments.upvotes": { $ne: req.user._id },
-      },
-      {
-        $addToSet: { "comments.$.upvotes": req.user._id },
-      },
-      { new: true }
-    );
-
-    if (!upvoted) {
-      return res
-        .status(400)
-        .json({ message: "Unable to upvote or already upvoted" });
+    // Retrieve the discussion
+    const discussion = await Discussion.findById(discussionId);
+    if (!discussion) {
+      return res.status(404).json({ message: "Discussion not found" });
     }
 
-    return res.status(200).json({ message: "Upvoted" });
+    // Locate the comment by its ID (using Mongoose subdocument helper)
+    const comment = discussion.comments.id(commentId);
+    if (!comment) {
+      return res.status(404).json({ message: "Comment not found" });
+    }
+
+    let updated;
+    if (comment.upvotes.includes(userId)) {
+      // Remove vote if already upvoted
+      updated = await Discussion.findOneAndUpdate(
+        { _id: discussionId, "comments._id": commentId },
+        { $pull: { "comments.$.upvotes": userId } },
+        { new: true }
+      );
+    } else {
+      // Otherwise, add the upvote
+      updated = await Discussion.findOneAndUpdate(
+        { _id: discussionId, "comments._id": commentId },
+        { $addToSet: { "comments.$.upvotes": userId } },
+        { new: true }
+      );
+    }
+
+    res.json(updated);
   } catch (error) {
-    return res.status(400).json({ message: error.message });
+    res.status(400).json({ message: error.message });
   }
 };
