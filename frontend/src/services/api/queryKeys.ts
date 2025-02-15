@@ -1,4 +1,13 @@
 export const queryKeys = {
+  //Academic Timelines
+  academicTimelines: {
+    all: ["academic-timelines"] as const,
+    lists: () => [...queryKeys.academicTimelines.all, "list"] as const,
+    details: () => [...queryKeys.academicTimelines.all, "detail"] as const,
+    detail: (id: string) =>
+      [...queryKeys.academicTimelines.details(), id] as const,
+  },
+
   // Announcements keys
   announcements: {
     all: ["announcements"] as const,

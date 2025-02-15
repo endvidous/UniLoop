@@ -1,6 +1,6 @@
 // service/api/fileUpload.ts
 import { AxiosResponse } from "axios";
-import axios from "./axiosConfig";
+import axiosInstance from "./axiosConfig";
 import { Platform } from "react-native";
 import { SelectedFile } from "@/src/utils/filePicker";
 
@@ -22,10 +22,10 @@ export const uploadFile = async (
 ): Promise<string | undefined> => {
   try {
     // Request presigned URL and fields from backend
-    const response: AxiosResponse<PresignedPostResponse> = await axios.post(
-      "/api/files/upload-url",
-      { fileType: file.type }
-    );
+    const response: AxiosResponse<PresignedPostResponse> =
+      await axiosInstance.post("/api/files/upload-url", {
+        fileType: file.type,
+      });
     const presignedData = response.data;
 
     const formData = new FormData();
@@ -47,7 +47,7 @@ export const uploadFile = async (
       } as any);
     }
 
-    const s3Response = await axios.post(presignedData.url, formData, {
+    const s3Response = await axiosInstance.post(presignedData.url, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
 
@@ -66,7 +66,7 @@ export const uploadFile = async (
 
 export const deleteFile = async (fileKey: string): Promise<any> => {
   try {
-    const response = await axios.delete("/api/files/delete", {
+    const response = await axiosInstance.delete("/api/files/delete", {
       data: { fileKey },
     });
     return response.data;

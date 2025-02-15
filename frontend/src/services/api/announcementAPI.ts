@@ -1,4 +1,4 @@
-import axios from "./axiosConfig";
+import axiosInstance from "./axiosConfig";
 
 interface CreateAnnouncementData {
   title: string;
@@ -37,13 +37,15 @@ export const announcementsService = {
     page?: number;
     limit?: number;
   }) => {
-    const response = await axios.get("/announcements", { params: filters });
+    const response = await axiosInstance.get("/announcements", {
+      params: filters,
+    });
     return response.data;
   },
 
   // Get single announcement
   getAnnouncement: async (id: string) => {
-    const response = await axios.get(`/announcements/${id}`);
+    const response = await axiosInstance.get(`/announcements/${id}`);
     return response.data;
   },
 
@@ -51,19 +53,19 @@ export const announcementsService = {
   createAnnouncement: async (
     data: CreateAnnouncementData & { attachments?: string[] }
   ) => {
-    const response = await axios.post("/announcements", data);
+    const response = await axiosInstance.post("/announcements", data);
     return response.data;
   },
 
   // Update announcement
   updateAnnouncement: async (id: string, data: UpdateAnnouncementData) => {
-    const response = await axios.patch(`/announcements/${id}`, data);
+    const response = await axiosInstance.patch(`/announcements/${id}`, data);
     return response.data;
   },
 
   // Delete announcement
   deleteAnnouncement: async (id: string) => {
-    const response = await axios.delete(`/announcements/${id}`);
+    const response = await axiosInstance.delete(`/announcements/${id}`);
     return response.data;
   },
 };
