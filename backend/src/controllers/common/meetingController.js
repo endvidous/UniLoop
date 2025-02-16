@@ -1,195 +1,236 @@
 import { Meetings } from "../models/meetingModel.js";
 import { User } from "../models/userModel.js";
-import {Batches} from "../models/courseModel.js";
-//import { Reminders } from "../models/reminderModel.js"; for later 
+import { Reminders } from "../../models/remindersModels.js";
 
- 
-  // 1. Create Meeting Request
-  export const createMeetingRequest = async (req, res) => {
-    const { requestedTo, reason, agenda, timing, venue } = req.body;
-    const requestedBy = req.user._id; // Assuming req.user contains the authenticated user
-  
-    // Check if the user is authenticated
-    if (!req.user) {
-      return res.status(401).json({ message: "User  is not authenticated." });
-    }
-  
-    try {
-      // Determine user roles
-      const userRole = req.user.role; // Assuming req.user.role contains the user's role
-      const requestedToRole = await User.findById(requestedTo).select('role'); // Fetch the role of the user being requested to
-  
-      // Validate required fields based on user role
-      if (req.user.isStudent()) {
-        if (!agenda) {
-          return res.status(400).json({ message: "Meeting Agenda is required." });
-        }
-      }
-  
-      if (userRole === 'teacher' || (userRole === 'admin')) {
-
-          return res.status(400).json({ message: "Timing and venue are required." });
-      }
-  
-      // Create meeting data
-      const meetingData = {
-        requestedBy,
-        requestedTo,
-        reason,
-        agenda: userRole == agenda,
-        timing,
-        venue,
-      };
-  
-      // Create the meeting
-      const meeting = await Meetings.create(meetingData);
-      res.status(201).json(meeting);
-    } catch (error) {
-      res.status(400).json({ message: `Error creating meeting request: ${error.message}` });
-    }
-  };
-  
-  // 2. Get Meeting Requests
-  export const getMeetingRequests = async (req, res) => {
-    const userId = req.user._id;
-  
-    // Check if the user is authenticated
-    if (!req.user) {
-      return res.status(401).json({ message: "User  is not authenticated." });
-    }
-  
-    try {
-      const meetings = await Meetings.find({
-        $or: [
-          { requestedBy: userId }, // Meetings requested by the user
-          { requestedTo: userId }, // Meetings where the user is the requested person
-        ],
-      }).lean();
-  
-      res.status(200).json(meetings);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  };//add search&filter work with frontend
-  
-  // 3. Update Meeting Request
-  export const updateMeetingRequest = async (req, res) => {
-    const { meetingId } = req.params;
-    const updates = req.body;
-  
-    // Check if the user is authenticated
-    if (!req.user) {
-      return res.status(401).json({ message: "User  is not authenticated." });
-    }
-  
-    try {
-      const meeting = await Meetings.findById(meetingId);
-      if (!meeting) {
-        return res.status(404).json({ message: "Meeting not found" });
-      }
-  
-      // Authorization check: Only the requester can update the meeting
-      if (!meeting.requestedBy.equals(req.user._id)) {
-        return res.status(403).json({ message: "Not authorized to update this meeting" });
-      } 
-  
-      // Update the meeting
-      const updatedMeeting = await Meetings.findByIdAndUpdate(meetingId, updates, { new: true, runValidators: true });
-      res.status(200).json(updatedMeeting);
-    } catch (error) {
-      res.status(400).json({ message: error.message });
-    }
-  };
-
-// 4. Update Meeting Status
-export const updateMeetingStatus = async (req, res) => {
+// Get Single Meeting
+export const getMeeting = async (req, res) => {
   const { meetingId } = req.params;
-  const { status, rejectionReason } = req.body;
-
-  // Check if the user is authenticated
-  if (!req.user) {
-    return res.status(401).json({ message: "User  is not authenticated." });
-  }
-
   try {
-    const meeting = await Meetings.findById(meetingId);
+    const meeting = await Meetings.findOne({
+      _id: meetingId,
+      $or: [{ requestedBy: req.user._id }, { requestedTo: req.user._id }],
+    })
+      .populate("requestedBy", "name email role")
+      .populate("requestedTo", "name email role");
+
     if (!meeting) {
-      return res.status(404).json({ message: "Meeting not found" });
-    }
-
-    // Check if the status is valid
-    if (!["pending", "approved", "rejected"].includes(status)) {
-      return res.status(400).json({ message: "Invalid status" });
-    }
-
-    // If rejected by student or class rep, require a rejection reason
-    if (status === 'rejected' && (req.user.role === 'student') && !rejectionReason) {
-      return res.status(400).json({ message: "Rejection reason is required." });
-    }
-
-    // Update the meeting status
-    meeting.status = status;
-    if (status === 'rejected') {
-      meeting.rejectionReason = rejectionReason;
-    }
-
-    // If the meeting is approved, add a reminder
-    if (status === "approved") {
-        await Reminders.create({
-          userId: meeting.requestedBy,
-          title: "Meeting Approved",
-          //description: `Meeting with ${meeting.requestedToRole} on ${meeting.timing}`,
-          dueDate: meeting.timing,
-        });
-      }
-  
-
-    // Save the updated meeting
-    await meeting.save();
-
-    // If the meeting is still pending, check for notifications
-    if (status === 'pending') {
-      const currentTime = new Date();
-      const deadline = new Date(meeting.timing); // Assuming timing is the deadline
-
-      // Check if the meeting is nearing its deadline (e.g., within 24 hours)
-      const timeDifference = deadline - currentTime;
-      if (timeDifference <= 24 * 60 * 60 * 1000) { // 24 hours
-        //sendNotification(meeting.requestedBy, `You have a pending meeting request: ${meeting.reason}`);
-      }
+      return res
+        .status(404)
+        .json({ message: "Meeting not found or unauthorized" });
     }
 
     res.status(200).json(meeting);
   } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get Meetings
+export const getMeetingRequests = async (req, res) => {
+  try {
+    const meetings = await Meetings.find({
+      $or: [{ requestedBy: req.user._id }, { requestedTo: req.user._id }],
+    })
+      .populate("requestedBy", "name email role")
+      .populate("requestedTo", "name email role");
+
+    res.status(200).json(meetings);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Create Meeting Request
+export const createMeetingRequest = async (req, res) => {
+  const { requestedTo, purpose, timing, venue } = req.body;
+  const requestedBy = req.user._id;
+
+  try {
+    // Validate required fields
+    if (!purpose) {
+      return res.status(400).json({ message: "Purpose is required" });
+    }
+
+    // Validate recipient existence
+    const recipient = await User.findById(requestedTo);
+    if (!recipient) {
+      return res.status(404).json({ message: "Recipient not found" });
+    }
+
+    // Role-based validation
+    if (req.user.isStudent()) {
+      if (!recipient.isTeacher()) {
+        return res
+          .status(403)
+          .json({ message: "Students can only request teachers" });
+      }
+    } else if (req.user.isTeacher() || req.user.isAdmin()) {
+      if (!recipient.isStudent()) {
+        return res
+          .status(403)
+          .json({ message: "Staff can only request students" });
+      }
+      if (!timing || !venue) {
+        return res.status(400).json({ message: "Timing and venue required" });
+      }
+    }
+
+    const meeting = await Meetings.create({
+      requestedBy,
+      requestedTo,
+      purpose,
+      ...(req.user.isTeacher() || req.user.isAdmin() ? { timing, venue } : {}),
+      status: "pending",
+    });
+
+    res.status(201).json(meeting);
+  } catch (error) {
+    res.status(400).json({ message: `Creation failed: ${error.message}` });
+  }
+};
+
+// Update Meeting
+export const updateMeetingRequest = async (req, res) => {
+  const { meetingId } = req.params;
+  try {
+    const meeting = await Meetings.findOne({
+      _id: meetingId,
+      $or: [{ requestedBy: req.user._id }, { requestedTo: req.user._id }],
+    });
+
+    if (!meeting) return res.status(404).json({ message: "Meeting not found or unauthorized" });
+
+    const [requester, recipient] = await Promise.all([
+      User.findById(meeting.requestedBy),
+      User.findById(meeting.requestedTo),
+    ]);
+
+    if (!requester || !recipient) return res.status(404).json({ message: "Invalid participants" });
+
+    const student = requester.isStudent() ? requester : recipient.isStudent() ? recipient : null;
+    const isRequester = meeting.requestedBy.equals(req.user._id);
+    const isRecipient = meeting.requestedTo.equals(req.user._id);
+
+    // Handle role-based updates
+    const handleStudentUpdates = () => {
+      if (!isRequester && !isRecipient) return;
+      if (isRequester && meeting.status !== "pending") {
+        throw new Error("Can only update pending requests");
+      }
+      if (req.body.purpose) meeting.purpose = req.body.purpose;
+      if (isRecipient && req.body.status === "rejected") {
+        if (!req.body.rejectionReason) throw new Error("Rejection reason required");
+        meeting.status = "rejected";
+        meeting.rejectionReason = req.body.rejectionReason;
+      }
+    };
+
+    const handleStaffUpdates = () => {
+      if (isRequester) {
+        if (req.body.purpose) meeting.purpose = req.body.purpose;
+        if (req.body.timing) meeting.timing = req.body.timing;
+        if (req.body.venue) meeting.venue = req.body.venue;
+      }
+      if (isRecipient && req.body.status) {
+        if (req.body.status === "rejected" && !req.body.rejectionReason) {
+          throw new Error("Rejection reason required");
+        }
+        meeting.status = req.body.status;
+        meeting.rejectionReason = req.body.rejectionReason;
+      }
+    };
+
+    req.user.isStudent() ? handleStudentUpdates() : handleStaffUpdates();
+
+    // Handle reminders
+    const updateExistingReminder = async () => {
+      await Reminders.updateOne(
+        {
+          _id: student._id,
+          "reminders.description": { $regex: `\\[Meeting ID: ${meeting._id}\\]` }
+        },
+        { $set: { "reminders.$": createReminderData(meeting) } }
+      );
+    };
+
+    const createNewReminder = async () => {
+      await Reminders.findOneAndUpdate(
+        { _id: student._id },
+        { $push: { reminders: createReminderData(meeting) } },
+        { upsert: true, new: true }
+      );
+    };
+
+    if (student) {
+      if (meeting.isModified(["timing", "venue"])) {
+        await updateExistingReminder();
+      }
+
+      if (req.body.status === "approved") {
+        const existingReminder = await Reminders.findOne({
+          _id: student._id,
+          "reminders.description": { $regex: `\\[Meeting ID: ${meeting._id}\\]` }
+        });
+        existingReminder ? await updateExistingReminder() : await createNewReminder();
+      }
+
+      if (req.body.status === "rejected" && requester.isStudent()) {
+        await Reminders.findOneAndUpdate(
+          { _id: student._id },
+          { $push: { 
+            reminders: createRejectionReminder(meeting) 
+          } },
+          { upsert: true, new: true }
+        );
+      }
+    }
+
+    await meeting.save();
+    res.status(200).json(meeting);
+  } catch (error) {
     res.status(400).json({ message: error.message });
   }
-}; 
-  // 5. Delete Meeting Request
-  export const deleteMeetingRequest = async (req, res) => {
-    const { meetingId } = req.params;
-  
-    // Check if the user is authenticated
-    if (!req.user) {
-      return res.status(401).json({ message: "User   is not authenticated." });
+};
+
+// Delete Meeting
+export const deleteMeetingRequest = async (req, res) => {
+  const { meetingId } = req.params;
+  try {
+    const meeting = await Meetings.findOne({
+      _id: meetingId,
+      requestedBy: req.user._id,
+    });
+
+    if (!meeting) {
+      return res
+        .status(404)
+        .json({ message: "Meeting not found or unauthorized" });
     }
-  
-    try {
-      const meeting = await Meetings.findById(meetingId);
-      if (!meeting) {
-        return res.status(404).json({ message: "Meeting not found" });
-      }
-  
-      // Authorization check: Only the requester can delete the meeting
-      if (!meeting.requestedBy.equals(req.user._id)) {
-        return res.status(403).json({ message: "Not authorized to delete this meeting" });
-      }
-  
-      await Meetings.findByIdAndDelete(meetingId);
-      res.status(200).json({ message: "Meeting deleted successfully" });
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  };
-  // 6.Function to send notifications
-//const sendNotification = (userId, message) => {
-  // Logic to send notification to the user
+
+    await meeting.remove();
+    res.status(200).json({ message: "Meeting deleted" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+//HELPER FUNCTIONS FOR REMINDERS
+const createReminderData = (meeting) => ({
+  title: `Upcoming Meeting: ${meeting.purpose}`,
+  description: `[Meeting ID: ${meeting._id}] Venue: ${meeting.venue}\nTime: ${meeting.timing.toLocaleString()}`,
+  deadline: meeting.timing,
+  priority: 2,
+  remind_at: [{
+    date_time: new Date(meeting.timing.getTime() - 3600000),
+    notified: false
+  }]
+});
+
+const createRejectionReminder = (meeting) => ({
+  title: `Meeting Request Rejected`,
+  description: `[Meeting ID: ${meeting._id}] Your request for "${meeting.purpose}" was rejected. Reason: ${meeting.rejectionReason}`,
+  deadline: new Date(),
+  priority: 1,
+  completed: true
+});
