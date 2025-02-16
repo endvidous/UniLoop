@@ -66,7 +66,7 @@ export const createTeachers = async (req, res) => {
           return newTeacher._id;
         } catch {
           throw new Error(
-            `Error creating student ${teacher.name}: ${teacher.email}`
+            `Error creating teacher ${teacher.name}: ${teacher.email}`
           );
         }
       })
@@ -161,7 +161,7 @@ export const deleteTeacher = async (req, res) => {
   }
 };
 
-//Student controllers
+//Student Controllers
 export const createStudents = async (req, res) => {
   const { batchID } = req.params;
   const { students } = req.body;
@@ -265,12 +265,51 @@ export const deleteStudent = async (req, res) => {
     }
 
     res.status(200).json({
-      message: "Teacher deleted successfully",
+      message: "Student deleted successfully",
       data: deletedStudent,
     });
   } catch (err) {
     res.status(500).json({
-      message: "Error deleting teacher",
+      message: "Error deleting Student",
+      error: err.message,
+    });
+  }
+};
+export const getBatchStudents = async (req, res) => {
+  const { batchID } = req.params; // Expecting a single batch ID from the URL
+
+  try {
+    // Validate batch ID format
+    if (!mongoose.Types.ObjectId.isValid(batchID)) {
+      return res.status(400).json({ message: "Invalid batch ID format" });
+    }
+
+    // Find the batch and populate the students
+    const batch = await Batches.findById(batchID).populate({
+      path: "students",
+      select: "name email roll_no", // Select only necessary fields
+      options: { sort: { name: 1 } }, // Sort students by name
+    });
+
+    if (!batch) {
+      return res.status(404).json({ message: "Batch not found" });
+    }
+
+    if (!batch.students || batch.students.length === 0) {
+      return res.status(404).json({
+        message: "No students found in this batch",
+        data: [],
+      });
+    }
+
+    res.status(200).json({
+      message: "Students retrieved successfully",
+      count: batch.students.length,
+      data: batch.students,
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Error retrieving students",
       error: err.message,
     });
   }
