@@ -12,16 +12,6 @@ const meetingSchema = new Schema({
     ref: "User",
     required: true,
   },
-  userRole: {
-    type: String,
-    enum: ["student", "classRep", "teacher", "admin"],
-    required: true,
-  },
-  requestedToRole: {
-    type: String,
-    enum: ["student", "classRep", "teacher", "admin"],
-    required: true,
-  },
   reason: {
     type: String,
     required: true,
@@ -29,7 +19,7 @@ const meetingSchema = new Schema({
   agenda: {
     type: String,
     required: function () {
-      return this.userRole === "student"; // Agenda required for students
+      return this.isStudent(); // Agenda required for students
     },
   },
   timing: {
@@ -37,9 +27,7 @@ const meetingSchema = new Schema({
     required: function () {
       // Timing required for teachers/admins requesting to classReps/teachers
       return (
-        this.userRole === "teacher" ||
-        (this.userRole === "admin" &&
-          (this.requestedToRole === "classRep" || this.requestedToRole === "teacher"))
+        this.isTeacher() || this.isAdmin()   
       );
     },
   },
@@ -48,9 +36,7 @@ const meetingSchema = new Schema({
     required: function () {
       // Venue required under same conditions as timing
       return (
-        this.userRole === "teacher" ||
-        (this.userRole === "admin" &&
-          (this.requestedToRole === "classRep" || this.requestedToRole === "teacher"))
+        this.isTeacher() || this.isAdmin() 
       );
     },
   },

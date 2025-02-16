@@ -1,6 +1,5 @@
 import express from "express";
 import {
-    canCreateMeetingRequest,
     createMeetingRequest,
     getMeetingRequests,
     updateMeetingRequest,
@@ -11,11 +10,10 @@ import {
 
 const router = express.Router();
 
-//Announcements routes
-router.get("/:meetingId", getMeetingRequests);
-router.post("/", canCreateMeetingRequest, createMeetingRequest);
+router.get("/:", getMeetingRequests);
+router.post("/", createMeetingRequest);
 router.patch("/:meetingId", updateMeetingRequest);
-router.patch("/:meetingId", updateMeetingStatus);
+router.patch("/:meetingId/status", updateMeetingStatus);
 router.delete("/:meetingId", deleteMeetingRequest);
 
 export default router;

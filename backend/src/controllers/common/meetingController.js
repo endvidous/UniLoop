@@ -1,29 +1,8 @@
 import { Meetings } from "../models/meetingModel.js";
 import { User } from "../models/userModel.js";
+import {Batches} from "../models/courseModel.js";
 //import { Reminders } from "../models/reminderModel.js"; for later 
 
-//authenticate user
-export const canCreateMeetingRequest = async (req, res, next) => {
-    try {
-      // Allow admins and teachers to create meeting requests
-      if (req.user.isAdmin() || req.user.isTeacher()) return next();
-  
-      // Allow class representatives to create meeting requests if they have a valid batch
-      if (req.user.isStudent() && req.user.classrep_of) {
-        const batch = await Batches.findOne({
-          _id: req.user.classrep_of,
-          students: req.user._id,
-        });
-  
-        if (batch) return next();
-      }
-  
-      // If none of the conditions are met, deny access
-      res.status(403).json({ message: "Not authorized to create meeting requests" });
-    } catch {
-      res.status(500).json({ message: "Server error during authorization" });
-    }
-  };
  
   // 1. Create Meeting Request
   export const createMeetingRequest = async (req, res) => {
@@ -41,26 +20,23 @@ export const canCreateMeetingRequest = async (req, res, next) => {
       const requestedToRole = await User.findById(requestedTo).select('role'); // Fetch the role of the user being requested to
   
       // Validate required fields based on user role
-      if (userRole === 'student') {
+      if (req.user.isStudent()) {
         if (!agenda) {
           return res.status(400).json({ message: "Meeting Agenda is required." });
         }
       }
   
-      if (userRole === 'teacher' || (userRole === 'admin' && (requestedToRole === 'classRep' || requestedToRole === 'teacher'))) {
-        if (!timing || !venue) {
+      if (userRole === 'teacher' || (userRole === 'admin')) {
+
           return res.status(400).json({ message: "Timing and venue are required." });
-        }
       }
   
       // Create meeting data
       const meetingData = {
         requestedBy,
         requestedTo,
-        userRole,
-        requestedToRole,
         reason,
-        agenda: userRole === 'student' ? agenda : undefined, // Only set agenda for students
+        agenda: userRole == agenda,
         timing,
         venue,
       };
@@ -94,7 +70,7 @@ export const canCreateMeetingRequest = async (req, res, next) => {
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
-  };
+  };//add search&filter work with frontend
   
   // 3. Update Meeting Request
   export const updateMeetingRequest = async (req, res) => {
@@ -115,7 +91,7 @@ export const canCreateMeetingRequest = async (req, res, next) => {
       // Authorization check: Only the requester can update the meeting
       if (!meeting.requestedBy.equals(req.user._id)) {
         return res.status(403).json({ message: "Not authorized to update this meeting" });
-      }
+      } 
   
       // Update the meeting
       const updatedMeeting = await Meetings.findByIdAndUpdate(meetingId, updates, { new: true, runValidators: true });
@@ -147,7 +123,7 @@ export const updateMeetingStatus = async (req, res) => {
     }
 
     // If rejected by student or class rep, require a rejection reason
-    if (status === 'rejected' && (req.user.role === 'student' || req.user.role === 'classRep') && !rejectionReason) {
+    if (status === 'rejected' && (req.user.role === 'student') && !rejectionReason) {
       return res.status(400).json({ message: "Rejection reason is required." });
     }
 
@@ -162,7 +138,7 @@ export const updateMeetingStatus = async (req, res) => {
         await Reminders.create({
           userId: meeting.requestedBy,
           title: "Meeting Approved",
-          description: `Meeting with ${meeting.requestedToRole} on ${meeting.timing}`,
+          //description: `Meeting with ${meeting.requestedToRole} on ${meeting.timing}`,
           dueDate: meeting.timing,
         });
       }
@@ -179,7 +155,7 @@ export const updateMeetingStatus = async (req, res) => {
       // Check if the meeting is nearing its deadline (e.g., within 24 hours)
       const timeDifference = deadline - currentTime;
       if (timeDifference <= 24 * 60 * 60 * 1000) { // 24 hours
-        sendNotification(meeting.requestedBy, `You have a pending meeting request: ${meeting.reason}`);
+        //sendNotification(meeting.requestedBy, `You have a pending meeting request: ${meeting.reason}`);
       }
     }
 
@@ -214,6 +190,6 @@ export const updateMeetingStatus = async (req, res) => {
       res.status(500).json({ message: error.message });
     }
   };
-  // Function to send notifications
+  // 6.Function to send notifications
 //const sendNotification = (userId, message) => {
   // Logic to send notification to the user
