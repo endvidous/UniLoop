@@ -12,15 +12,9 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import React from "react";
 
 const SettingsPage = () => {
-  const { user, signOut, updatePassword } = useAuth();
+  const { user, signOut } = useAuth();
   const [currentValue, setCurrentValue] = React.useState(false);
   const [isDropdownVisible, setIsDropdownVisible] = React.useState(false);
-  const [isResetPasswordVisible, setIsResetPasswordVisible] = React.useState(false);
-  const [currentPassword, setCurrentPassword] = React.useState('');
-  const [newPassword, setNewPassword] = React.useState('');
-  const [confirmNewPassword, setConfirmNewPassword] = React.useState('');
-  const [isConfirmDisabled, setIsConfirmDisabled] = React.useState(true);
-
   const data = [
     { id: "1", name: "Please send an email to :" },
     { id: "2", name: "henry@gmail.com" },
@@ -28,47 +22,19 @@ const SettingsPage = () => {
     { id: "4", name: "angela@gmail.com" },
     { id: "5", name: "ananyapkumar@gmail.com" },
   ];
-
   const toggleDropdown = () => {
     setIsDropdownVisible(!isDropdownVisible);
   };
-
-  const handleSignOut = () => {
-    setIsDropdownVisible(false);
-    signOut();
-  };
-
-  const handlePasswordChange = () => {
-    if (newPassword === confirmNewPassword) {
-      updatePassword(currentPassword, newPassword)
-        .then(() => {
-          Alert.alert("Password updated successfully");
-          setIsResetPasswordVisible(false); // Close the modal after success
-        })
-        .catch(() => {
-          Alert.alert("Error updating password. Please try again.");
-        });
-    } else {
-      Alert.alert("Passwords do not match.");
-    }
-  };
-
-  const handlePasswordInputChange = () => {
-    // Enable the "Confirm" button only if the new password matches the confirm password
-    setIsConfirmDisabled(newPassword !== confirmNewPassword);
-  };
-
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.nametitle}>{user?.name}</Text> 
+      <Text style={styles.nametitle}>{user?.name}</Text>
       <Text style={styles.mailtitle}>{user?.email}</Text>
-      
-      <TouchableOpacity style={[styles.dataButton, styles.shadow]} onPress={() => setIsResetPasswordVisible(true)} accessible={true} accessibilityLabel="Change password button">
-        <Text style={styles.buttontext}>Change Password</Text>
+      <TouchableOpacity style={[styles.dataButton, styles.shadow]}>
+        <Text style={styles.buttontext}>change Password</Text>
         <Ionicons name="key" size={24} color="#00100B" />
       </TouchableOpacity>
 
-      <TouchableOpacity style={[styles.dataButton, styles.shadow]} accessible={true} accessibilityLabel="Dark mode toggle">
+      <TouchableOpacity style={[styles.dataButton, styles.shadow]}>
         <Text style={styles.buttontext}>Dark mode</Text>
         <Switch
           value={currentValue}
@@ -76,7 +42,7 @@ const SettingsPage = () => {
         />
       </TouchableOpacity>
 
-      <TouchableOpacity style={[styles.dataButton, styles.shadow]} accessible={true} accessibilityLabel="Notifications settings">
+      <TouchableOpacity style={[styles.dataButton, styles.shadow]}>
         <Text style={styles.buttontext}>Notifications</Text>
         <Ionicons name="notifications-outline" size={24} color="#00100B" />
       </TouchableOpacity>
@@ -91,19 +57,6 @@ const SettingsPage = () => {
 
       {isDropdownVisible && (
         <View style={styles.dropdownContainer}>
-          <FlatList
-            data={data}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <View>
-                <Text style={styles.optionText}>{item.name}</Text>
-              </View>
-            )}
-          />
-        </View>
-      )}
-
-      <TouchableOpacity onPress={handleSignOut} style={[styles.dataButton, styles.shadow, isDropdownVisible && { marginTop: 20 }]} accessible={true} accessibilityLabel="Log out button">
           {data.map((item) => (
             <Text key={item.id} style={styles.optionText}>
               {item.name}
@@ -123,50 +76,6 @@ const SettingsPage = () => {
         <Text style={styles.buttontext}>Log out</Text>
         <Ionicons name="log-out-outline" size={24} color="#00100B" />
       </TouchableOpacity>
-
-      {/* Reset Password Modal */}
-      {isResetPasswordVisible && (
-        <View style={styles.resetPasswordCard}>
-          <Text style={styles.cardTitle}>Reset Password</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter current password"
-            secureTextEntry
-            value={currentPassword}
-            onChangeText={setCurrentPassword}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Enter new password"
-            secureTextEntry
-            value={newPassword}
-            onChangeText={(text) => {
-              setNewPassword(text);
-              handlePasswordInputChange();
-            }}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Confirm new password"
-            secureTextEntry
-            value={confirmNewPassword}
-            onChangeText={(text) => {
-              setConfirmNewPassword(text);
-              handlePasswordInputChange();
-            }}
-          />
-          <TouchableOpacity
-            style={[styles.confirmButton, isConfirmDisabled && { backgroundColor: '#ccc' }]}
-            onPress={handlePasswordChange}
-            disabled={isConfirmDisabled}
-          >
-            <Text style={styles.buttontext}>Confirm</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => setIsResetPasswordVisible(false)} style={styles.cancelButton}>
-            <Text style={styles.buttontext}>Cancel</Text>
-          </TouchableOpacity>
-        </View>
-      )}
     </ScrollView>
   );
 };
@@ -235,43 +144,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 10,
     fontSize: 17,
-  },
-  resetPasswordCard: {
-    width: '80%',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    marginTop: 20,
-  },
-  cardTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    marginBottom: 20,
-    color: "#00100B",
-    textAlign: 'center',
-  },
-  input: {
-    height: 40,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    marginBottom: 15,
-    borderRadius: 6,
-    paddingLeft: 10,
-  },
-  confirmButton: {
-    backgroundColor: '#00100B',
-    paddingVertical: 10,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  cancelButton: {
-    backgroundColor: '#f0f0f0',
-    paddingVertical: 10,
-    borderRadius: 6,
-    marginTop: 10,
-    alignItems: 'center',
   },
 });
 
