@@ -19,10 +19,10 @@ const SettingsPage = () => {
   };
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.nametitle}>{user?.name}</Text>
+      <Text style={styles.nametitle}>{user?.name}</Text> //getting user name from the database
       <Text style={styles.mailtitle}>{user?.email}</Text>
       <TouchableOpacity style={[styles.dataButton, styles.shadow]}>
-        <Text style={styles.buttontext}>Edit Password</Text>
+        <Text style={styles.buttontext}>Change Password</Text>
         <Ionicons name="key" size={24} color="#00100B" />
       </TouchableOpacity>
 
