@@ -1,5 +1,5 @@
-import { Meetings } from "../models/meetingModel.js";
-import { User } from "../models/userModel.js";
+import { Meetings } from "../../models/meetingModels.js";
+import { User } from "../../models/userModels.js";
 import { Reminders } from "../../models/remindersModels.js";
 
 // Get Single Meeting
@@ -98,16 +98,24 @@ export const updateMeetingRequest = async (req, res) => {
       $or: [{ requestedBy: req.user._id }, { requestedTo: req.user._id }],
     });
 
-    if (!meeting) return res.status(404).json({ message: "Meeting not found or unauthorized" });
+    if (!meeting)
+      return res
+        .status(404)
+        .json({ message: "Meeting not found or unauthorized" });
 
     const [requester, recipient] = await Promise.all([
       User.findById(meeting.requestedBy),
       User.findById(meeting.requestedTo),
     ]);
 
-    if (!requester || !recipient) return res.status(404).json({ message: "Invalid participants" });
+    if (!requester || !recipient)
+      return res.status(404).json({ message: "Invalid participants" });
 
-    const student = requester.isStudent() ? requester : recipient.isStudent() ? recipient : null;
+    const student = requester.isStudent()
+      ? requester
+      : recipient.isStudent()
+      ? recipient
+      : null;
     const isRequester = meeting.requestedBy.equals(req.user._id);
     const isRecipient = meeting.requestedTo.equals(req.user._id);
 
@@ -119,7 +127,8 @@ export const updateMeetingRequest = async (req, res) => {
       }
       if (req.body.purpose) meeting.purpose = req.body.purpose;
       if (isRecipient && req.body.status === "rejected") {
-        if (!req.body.rejectionReason) throw new Error("Rejection reason required");
+        if (!req.body.rejectionReason)
+          throw new Error("Rejection reason required");
         meeting.status = "rejected";
         meeting.rejectionReason = req.body.rejectionReason;
       }
@@ -147,7 +156,9 @@ export const updateMeetingRequest = async (req, res) => {
       await Reminders.updateOne(
         {
           _id: student._id,
-          "reminders.description": { $regex: `\\[Meeting ID: ${meeting._id}\\]` }
+          "reminders.description": {
+            $regex: `\\[Meeting ID: ${meeting._id}\\]`,
+          },
         },
         { $set: { "reminders.$": createReminderData(meeting) } }
       );
@@ -169,17 +180,23 @@ export const updateMeetingRequest = async (req, res) => {
       if (req.body.status === "approved") {
         const existingReminder = await Reminders.findOne({
           _id: student._id,
-          "reminders.description": { $regex: `\\[Meeting ID: ${meeting._id}\\]` }
+          "reminders.description": {
+            $regex: `\\[Meeting ID: ${meeting._id}\\]`,
+          },
         });
-        existingReminder ? await updateExistingReminder() : await createNewReminder();
+        existingReminder
+          ? await updateExistingReminder()
+          : await createNewReminder();
       }
 
       if (req.body.status === "rejected" && requester.isStudent()) {
         await Reminders.findOneAndUpdate(
           { _id: student._id },
-          { $push: { 
-            reminders: createRejectionReminder(meeting) 
-          } },
+          {
+            $push: {
+              reminders: createRejectionReminder(meeting),
+            },
+          },
           { upsert: true, new: true }
         );
       }
@@ -214,17 +231,20 @@ export const deleteMeetingRequest = async (req, res) => {
   }
 };
 
-
 //HELPER FUNCTIONS FOR REMINDERS
 const createReminderData = (meeting) => ({
   title: `Upcoming Meeting: ${meeting.purpose}`,
-  description: `[Meeting ID: ${meeting._id}] Venue: ${meeting.venue}\nTime: ${meeting.timing.toLocaleString()}`,
+  description: `[Meeting ID: ${meeting._id}] Venue: ${
+    meeting.venue
+  }\nTime: ${meeting.timing.toLocaleString()}`,
   deadline: meeting.timing,
   priority: 2,
-  remind_at: [{
-    date_time: new Date(meeting.timing.getTime() - 3600000),
-    notified: false
-  }]
+  remind_at: [
+    {
+      date_time: new Date(meeting.timing.getTime() - 3600000),
+      notified: false,
+    },
+  ],
 });
 
 const createRejectionReminder = (meeting) => ({
@@ -232,5 +252,5 @@ const createRejectionReminder = (meeting) => ({
   description: `[Meeting ID: ${meeting._id}] Your request for "${meeting.purpose}" was rejected. Reason: ${meeting.rejectionReason}`,
   deadline: new Date(),
   priority: 1,
-  completed: true
+  completed: true,
 });
