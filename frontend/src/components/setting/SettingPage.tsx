@@ -35,7 +35,9 @@ const SettingsPage = () => {
       </TouchableOpacity>
 
       <TouchableOpacity style={[styles.dataButton, styles.shadow]}>
-        <Text style={styles.buttontext}>Dark mode</Text>
+        <Text style={styles.buttontext}>
+          {theme.charAt(0).toUpperCase() + theme.slice(1)} mode
+        </Text>
         <Switch
           value={theme === "dark"}
           onValueChange={toggleTheme}

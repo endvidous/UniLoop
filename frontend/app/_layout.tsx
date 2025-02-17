@@ -55,7 +55,6 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ThemeProvider>
-          <StatusBar translucent={false} />
           <Stack
             screenOptions={{
               headerShown: false,
