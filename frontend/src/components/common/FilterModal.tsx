@@ -10,8 +10,7 @@ import {
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { useUserAssociations } from "@/src/hooks/api/useAssociations";
-import { debounce } from "lodash";
-import { Checkbox, TextInput } from "react-native-paper";
+import { Checkbox } from "react-native-paper";
 import { useEffect, useState } from "react";
 
 type Department = { _id: string; name: string };
