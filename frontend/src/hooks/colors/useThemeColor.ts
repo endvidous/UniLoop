@@ -1,21 +1,34 @@
-/**
- * Learn more about light and dark modes:
- * https://docs.expo.dev/guides/color-schemes/
- */
+import { useStore } from "@/src/context/store";
+import { ColorSchemeName } from "react-native";
 
-import { Colors } from "@/src/styles/Colors";
-import { useColorScheme } from "@/src/hooks/useColorScheme";
+const tintColorLight = "#0a7ea4";
+const tintColorDark = "#fff";
 
-export function useThemeColor(
-  props: { light?: string; dark?: string },
-  colorName: keyof typeof Colors.light & keyof typeof Colors.dark
-) {
-  const theme = useColorScheme() ?? "light";
-  const colorFromProps = props[theme];
+const LightTheme = {
+  text: "#11181C",
+  background: "#fff",
+  tint: tintColorLight,
+  icon: "#687076",
+  tabIconDefault: "#687076",
+  tabIconSelected: tintColorLight,
+};
+const DarkTheme = {
+  text: "#ECEDEE",
+  background: "#151718",
+  tint: tintColorDark,
+  icon: "#9BA1A6",
+  tabIconDefault: "#9BA1A6",
+  tabIconSelected: tintColorDark,
+};
+export const useTheme = () => {
+  const { theme, setTheme } = useStore((state) => ({
+    theme: state.theme,
+    setTheme: state.setTheme,
+  }));
+  const toggleTheme = () => {
+    setTheme(theme === "light" ? "dark" : "light");
+  };
+  const colors = theme === "light" ? LightTheme : DarkTheme;
 
-  if (colorFromProps) {
-    return colorFromProps;
-  } else {
-    return Colors[theme][colorName];
-  }
-}
+  return { theme, setTheme, toggleTheme, colors };
+};
