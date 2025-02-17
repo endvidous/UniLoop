@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import { User } from "../models/userModels.js";
-import { Batches, Courses, Departments } from "../models/courseModels.js";
+import { Batches } from "../models/courseModels.js";
 
 export const authMiddleware = async (req, res, next) => {
   try {
@@ -61,37 +61,41 @@ export const isStudent = (req, res, next) => {
 
 export const isClassRep = async (req, res, next) => {
   try {
-    // First check basic requirements
-    if (req.user.isStudent() || !req.user.classrep_of) {
+    // Basic checks (schema validation ensures valid assignment)
+    if (!req.user?.isStudent() || !req.user.classrep_of) {
       return res
         .status(403)
         .json({ message: "Access denied: Not a class representative" });
     }
 
-    // Verify batch association
-    const batch = await Batches.findOne({
-      course: req.user.classrep_of,
-      students: req.user._id,
-      status: "active",
-    }).populate("course", "name");
+    // Get batch details for downstream use
+    const batch = await Batches.findById(req.user.classrep_of)
+      .select("course currentSemester status")
+      .populate("course", "name");
 
     if (!batch) {
+      return res.status(404).json({ message: "Associated batch not found" });
+    }
+
+    // If route requires specific batch access
+    if (req.params.batchId && !batch._id.equals(req.params.batchId)) {
       return res.status(403).json({
-        message: "Access denied",
+        message: "Not authorized for this specific batch",
       });
     }
 
-    // Attach batch info for downstream use
+    // Attach essential batch context for downstream use
     req.batchInfo = {
       id: batch._id,
       course: batch.course.name,
       semester: batch.currentSemester,
+      status: batch.status,
     };
 
     next();
   } catch (error) {
     res.status(500).json({
-      message: "Server error during class representative verification",
+      message: "Class representative verification failed",
       error: error.message,
     });
   }
@@ -99,38 +103,41 @@ export const isClassRep = async (req, res, next) => {
 
 export const isMentor = async (req, res, next) => {
   try {
-    // Basic role and field check
-    if (req.user.isTeacher() || !req.user.mentor_of) {
-      return res
-        .status(403)
-        .json({ message: "Access denied: Not a registered mentor" });
+    // Basic role check
+    if (!req.user?.isTeacher()) {
+      return res.status(403).json({ message: "Teacher access required" });
     }
 
-    // Verify department association
-    const department = await Departments.findOne({
-      teachers: req.user._id,
-    }).populate("courses");
+    // Get assigned mentorship
+    const mentorBatch = await Batches.findById(req.user.mentor_of)
+      .populate("course", "name type")
+      .lean();
 
-    // Verify course mentorship
-    const course = await Courses.findById(req.user.mentor_of);
-
-    if (!department || !course) {
+    if (!mentorBatch) {
       return res.status(403).json({
-        message: "Access denied",
+        message: "Not assigned as mentor to any batch",
       });
     }
 
-    // Attach mentorship context
-    req.mentorshipContext = {
-      departmentId: department._id,
-      courseId: course._id,
-      courseName: course.name,
+    // If route requires specific batch access
+    if (req.params.batchId && !mentorBatch._id.equals(req.params.batchId)) {
+      return res.status(403).json({
+        message: "Not authorized for this specific batch",
+      });
+    }
+
+    // Attach batch for downstream use
+    req.batchInfo = {
+      batchId: mentorBatch._id,
+      course: mentorBatch.course.name,
+      courseType: mentorBatch.course.type,
+      currentSemester: mentorBatch.currentSemester,
     };
 
     next();
   } catch (error) {
     res.status(500).json({
-      message: "Server error during mentor verification",
+      message: "Mentor verification failed",
       error: error.message,
     });
   }

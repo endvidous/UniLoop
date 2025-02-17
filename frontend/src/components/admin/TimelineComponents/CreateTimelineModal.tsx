@@ -17,6 +17,19 @@ interface CreateTimelineModalProps {
   onSubmit: (data: any) => void;
 }
 
+const parseDate = (dateStr: string) => {
+  try {
+    const [year, month, day] = dateStr.split("/").map(Number);
+    return new Date(year, month - 1, day);
+  } catch (error) {
+    return new Date(NaN); // Return invalid date
+  }
+};
+
+const isValidDate = (d: Date) => {
+  return d instanceof Date && !isNaN(d.getTime());
+};
+
 const CreateTimelineModal: React.FC<CreateTimelineModalProps> = ({
   visible,
   onClose,
@@ -53,6 +66,7 @@ const CreateTimelineModal: React.FC<CreateTimelineModalProps> = ({
     }
   }, [visible]);
 
+  // Update the academic year auto-fill format
   useEffect(() => {
     if (
       dates.academicYear.length === 9 &&
@@ -64,14 +78,9 @@ const CreateTimelineModal: React.FC<CreateTimelineModalProps> = ({
         setEndYear(end);
         setDates((prev) => ({
           ...prev,
-          oddSemStart: `${start}-01-01`, // Auto-fill odd semester start date
-          evenSemEnd: `${end}-12-31`, // Auto-fill even semester end date
+          oddSemStart: `${start}/01/01`, // Changed to slashes
+          evenSemEnd: `${end}/12/31`, // Changed to slashes
         }));
-      } else {
-        Alert.alert(
-          "Invalid Academic Year",
-          "The end year must be one year after the start year."
-        );
       }
     }
   }, [dates.academicYear]);
@@ -104,6 +113,30 @@ const CreateTimelineModal: React.FC<CreateTimelineModalProps> = ({
     const { academicYear, oddSemStart, oddSemEnd, evenSemStart, evenSemEnd } =
       dates;
 
+    // Enhanced date validation
+    const isValid = Object.values(dates).every((date) =>
+      /\d{4}\/\d{2}\/\d{2}/.test(date)
+    );
+
+    if (!isValid) {
+      Alert.alert("Invalid dates", "All dates must be in YYYY/MM/DD format");
+      return;
+    }
+
+    // Convert all dates to Date objects
+    const dateObjects = {
+      oddSemStart: parseDate(dates.oddSemStart),
+      oddSemEnd: parseDate(dates.oddSemEnd),
+      evenSemStart: parseDate(dates.evenSemStart),
+      evenSemEnd: parseDate(dates.evenSemEnd),
+    };
+
+    // Validate all dates
+    if (Object.values(dateObjects).some((d) => !isValidDate(d))) {
+      Alert.alert("Invalid dates", "Please check all date fields");
+      return;
+    }
+
     // Validate academic year format
     if (!/^\d{4}-\d{4}$/.test(academicYear)) {
       Alert.alert(
@@ -114,7 +147,7 @@ const CreateTimelineModal: React.FC<CreateTimelineModalProps> = ({
     }
 
     // Validate odd semester dates
-    if (new Date(oddSemStart) >= new Date(oddSemEnd)) {
+    if (parseDate(oddSemStart) >= parseDate(oddSemEnd)) {
       Alert.alert(
         "Invalid Odd Semester Dates",
         "Odd semester start date must be before the end date."
@@ -123,7 +156,7 @@ const CreateTimelineModal: React.FC<CreateTimelineModalProps> = ({
     }
 
     // Validate even semester dates
-    if (new Date(evenSemStart) >= new Date(evenSemEnd)) {
+    if (parseDate(evenSemStart) >= parseDate(evenSemEnd)) {
       Alert.alert(
         "Invalid Even Semester Dates",
         "Even semester start date must be before the end date."
@@ -160,7 +193,7 @@ const CreateTimelineModal: React.FC<CreateTimelineModalProps> = ({
       setStartYear(null);
       setEndYear(null);
     }
-  }, [visible]);
+  }, [visible]);
 
   return (
     <Modal

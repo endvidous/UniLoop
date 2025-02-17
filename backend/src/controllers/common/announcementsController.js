@@ -1,7 +1,7 @@
 import { Announcements } from "../../models/announcementsModels.js";
 import {
   buildAnnouncementQuery,
-  validateTeacherPosting,
+  validateAnnouncementPosting,
 } from "../../services/announcementService.js";
 import { Batches } from "../../models/courseModels.js";
 import mongoose from "mongoose";
@@ -78,23 +78,37 @@ export const announcementFilterValidator = (req, res, next) => {
 };
 
 //Announcement controllers
+export const getOneAnnouncement = async (req, res) => {
+  try {
+    const { announcementId } = req.params;
+
+    // Find the announcement and populate necessary fields
+    const announcement = await Announcements.findById(announcementId)
+      .populate("postedBy", "name role")
+      .populate("posted_to.id", "name code")
+      .lean();
+
+    if (!announcement) {
+      return res.status(404).json({ message: "Announcement not found" });
+    }
+
+    res.json(announcement);
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: "Error retrieving announcement", error: err.message });
+  }
+};
+
 export const getAnnouncements = async (req, res) => {
   try {
-    // Define priority mapping
-    const priorityMap = {
-      High: 3,
-      Normal: 2,
-      Low: 1,
-    };
-
-    // Define sort options
+    const priorityMap = { High: 3, Normal: 2, Low: 1 };
     const sortOptions = {
       newest: "-createdAt",
       priority: { priority: -1 },
       urgent: { priority: -1, createdAt: -1 },
     };
 
-    // Pagination parameters
     const page = parseInt(req.query.page) || 1;
     const limit = Math.min(parseInt(req.query.limit) || 20, 100);
     const skip = (page - 1) * limit;
@@ -108,71 +122,29 @@ export const getAnnouncements = async (req, res) => {
       search: req.query.search,
     };
 
-    // Convert priority strings to numbers
     const numericPriorities = filters.priority?.map((p) => priorityMap[p]);
     const finalQuery = {
       ...baseQuery,
       ...(numericPriorities && { priority: { $in: numericPriorities } }),
-      ...(filters.department && {
-        $or: [
-          {
-            "posted_to.id": filters.department,
-            "posted_to.model": "Departments",
-          },
-          { visibilityType: "General" },
-        ],
-      }),
-      ...(filters.batch && {
-        $or: [
-          {
-            "posted_to.id": filters.batch,
-            "posted_to.model": "Batches",
-          },
-          { visibilityType: "General" },
-        ],
-      }),
-      ...(filters.course && {
-        $or: [
-          {
-            "posted_to.id": filters.course,
-            "posted_to.model": "Courses",
-          },
-          { visibilityType: "General" },
-        ],
-      }),
-      ...(filters.search && {
-        $text: { $search: filters.search },
-      }),
+      ...(filters.department && { "posted_to.id": filters.department }),
+      ...(filters.batch && { "posted_to.id": filters.batch }),
+      ...(filters.course && { "posted_to.id": filters.course }),
+      ...(filters.search && { $text: { $search: filters.search } }),
     };
 
-    // Determine sorting
     const sortBy = filters.search
       ? { score: { $meta: "textScore" } }
       : sortOptions[req.query.sort] || "-createdAt";
 
-    const projection = filters.search ? { score: { $meta: "textScore" } } : {};
-
-    // Build the population options dynamically
-    let populateOptions = {
-      path: "posted_to.id",
-      select: "name code",
+    const projection = {
+      title: 1,
+      priority: 1,
+      createdAt: 1,
     };
-
-    // Only add the match condition if at least one filter exists
-    if (filters.department || filters.course || filters.batch) {
-      populateOptions.match = {
-        $or: [
-          filters.department ? { _id: filters.department } : null,
-          filters.course ? { _id: filters.course } : null,
-          filters.batch ? { _id: filters.batch } : null,
-        ].filter(Boolean), // remove nulls
-      };
-    }
 
     const [announcements, total] = await Promise.all([
       Announcements.find(finalQuery, projection)
-        .populate("postedBy", "name role")
-        .populate(populateOptions)
+        .populate("postedBy", "name role") // Fixed collision issue
         .sort(sortBy)
         .skip(skip)
         .limit(limit)
@@ -180,7 +152,6 @@ export const getAnnouncements = async (req, res) => {
       Announcements.countDocuments(finalQuery),
     ]);
 
-    // Calculate total pages
     const totalPages = Math.ceil(total / limit);
 
     res.json({
@@ -190,7 +161,9 @@ export const getAnnouncements = async (req, res) => {
       totalPages,
     });
   } catch (err) {
-    res.status(500).json({ message: "Error", error: err.message });
+    res
+      .status(500)
+      .json({ message: "Error retrieving announcements", error: err.message });
   }
 };
 
@@ -198,8 +171,6 @@ export const createAnnouncement = async (req, res) => {
   try {
     const { visibilityType, posted_to, ...rest } = req.body;
     const user = req.user;
-
-    console.log("Request body:", req.body.posted_to); // <-- Debug log
 
     // Base announcement data
     const announcementData = {
@@ -248,7 +219,7 @@ export const createAnnouncement = async (req, res) => {
 
     // Validate teacher permissions
     if (user.isTeacher()) {
-      const isValid = await validateTeacherPosting(user._id, announcementData);
+      const isValid = await validateAnnouncementPosting(user, announcementData);
       if (!isValid) {
         return res
           .status(403)
@@ -300,7 +271,7 @@ export const updateAnnouncement = async (req, res) => {
     // Validate teacher permissions if modifying target
     if (req.user.isTeacher() && (updates.posted_to || updates.visibilityType)) {
       const updatedData = { ...announcement.toObject(), ...updates };
-      const isValid = await validateTeacherPosting(req.user._id, updatedData);
+      const isValid = await validateAnnouncementPosting(req.user, updatedData);
       if (!isValid) {
         return res.status(403).json({
           message: "Invalid update for announcement target",

@@ -89,6 +89,20 @@ export const deleteCourse = async (req, res) => {
     res.status(500).json({ message: `Error deleting course: ${err.message}` });
   }
 };
+export const getCourses = async (req, res) => {
+  try {
+    const courses = await Courses.find(); // Fetch all courses from the database
+
+    res.status(200).json({
+      message: "Courses retrieved successfully",
+      data: courses,
+    });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: `Error retrieving courses: ${err.message}` });
+  }
+};
 export const createBatches = async (req, res) => {
   const { courseId } = req.params;
   const { batches } = req.body;
@@ -150,7 +164,29 @@ export const deleteBatch = async (req, res) => {
     res.status(500).json({ message: `Error deleting batch: ${err.message}` });
   }
 };
+export const getOneBatch = async (req, res) => {
+  const { batchId } = req.params; // Expecting a single batch ID from the URL
 
+  try {
+    // Validate input
+    if (!batchId) {
+      return res.status(400).json({ message: "Batch ID is required" });
+    }
+
+    // Find the batch by ID
+    const batch = await Batches.findById(batchId);
+    if (!batch) {
+      return res.status(404).json({ message: "Batch not found" });
+    }
+
+    res.status(200).json({
+      message: "Batch retrieved successfully",
+      data: batch,
+    });
+  } catch (err) {
+    res.status(500).json({ message: `Error retrieving batch: ${err.message}` });
+  }
+};
 export const createSemester = async (req, res) => {
   const { courseID, sem_no } = req.params;
   const { papers } = req.body;
@@ -267,18 +303,26 @@ export const deleteSemester = async (req, res) => {
       });
   }
 };
+export const getOneSemester = async (req, res) => {
+  const { semesterId } = req.params; // Expecting a single semester ID from the URL
 
-export const getCourses = async (req, res) => {
   try {
-    const courses = await Courses.find(); // Fetch all courses from the database
+    // Validate input
+    if (!semesterId) {
+      return res.status(400).json({ message: "Semester ID is required" });
+    }
+
+    // Find the semester by ID
+    const semester = await Semesters.findById(semesterId).populate('papers.paper teacher'); // Populate papers and teacher details if needed
+    if (!semester) {
+      return res.status(404).json({ message: "Semester not found" });
+    }
 
     res.status(200).json({
-      message: "Courses retrieved successfully",
-      data: courses,
+      message: "Semester retrieved successfully",
+      data: semester,
     });
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: `Error retrieving courses: ${err.message}` });
+    res.status(500).json({ message: `Error retrieving semester: ${err.message}` });
   }
 };

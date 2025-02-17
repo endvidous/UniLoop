@@ -34,6 +34,10 @@ axiosInstance.interceptors.request.use(
 // Response interceptor
 axiosInstance.interceptors.response.use(
   (response) => {
+    const newToken = response.headers["authorization"];
+    if (newToken) {
+      useStore.getState().setToken(newToken.split(" ")[1]);
+    }
     return response;
   },
   (error) => {

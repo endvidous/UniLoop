@@ -5,42 +5,58 @@ import { AuthHandler } from "@/src/components/auth/AuthHandler";
 import SplashScreen from "../src/components/SplashScreen/splashScreen";
 import { useStore } from "@/src/context/store";
 import { authService } from "@/src/services/api/auth";
+import { queryClient } from "@/src/services/api/queryClient";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { StatusBar } from "react-native";
 
 export default function RootLayout() {
-  const token = useStore((state) => state.token);
-  const isLoading = useStore((state) => state.isLoading);
-  const initializeState = useStore((state) => state.initializeState);
-  const clearAuth = useStore((state) => state.clearAuth);
+  const {
+    token,
+    isLoading,
+    setLoading,
+    initializeState,
+    clearAuth,
+    setToken,
+    setUser,
+  } = useStore();
 
+  // Single source of truth for initial state
   useEffect(() => {
-    async function initialize() {
-      if (token) {
-        try {
-          // Validate the token with the server
-          await authService.validateToken();
-        } catch (error) {
-          // If token validation fails, clear storage
-          clearAuth();
+    const initAuthState = async () => {
+      setLoading(true);
+      try {
+        await initializeState();
+
+        if (token) {
+          // Handle token validation and potential refresh
+          const { newToken, user } = await authService.validateToken();
+
+          if (newToken) {
+            setToken(newToken);
+            setUser(user);
+          }
         }
+      } catch (error) {
+        clearAuth();
+      } finally {
+        setLoading(false);
       }
+    };
 
-      // Initialize Zustand state
-      initializeState();
-    }
-
-    initialize();
-  }, [token, initializeState]);
+    initAuthState();
+  }, []);
 
   if (isLoading) {
     return <SplashScreen />;
   }
 
   return (
-    <AuthProvider>
-      <StatusBar translucent={false} />
-      <Stack screenOptions={{ headerShown: false }} />
-      <AuthHandler />
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <StatusBar translucent={false} />
+        <Stack screenOptions={{ headerShown: false }} />
+        <AuthHandler />
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }

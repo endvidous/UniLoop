@@ -8,6 +8,14 @@ interface TimelineCardProps {
   evenSemester: { start: string; end: string };
 }
 
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  const day = date.getDate().toString().padStart(2, "0");
+  const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Month is 0-indexed
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
 const TimelineCard: React.FC<TimelineCardProps> = ({
   academicYear,
   oddSemester,
@@ -17,10 +25,12 @@ const TimelineCard: React.FC<TimelineCardProps> = ({
     <Card style={styles.card}>
       <Text style={styles.text}>Academic Year: {academicYear}</Text>
       <Text style={styles.text}>
-        Odd Semester: {oddSemester.start} - {oddSemester.end}
+        Odd Semester: {formatDate(oddSemester.start)} -{" "}
+        {formatDate(oddSemester.end)}
       </Text>
       <Text style={styles.text}>
-        Even Semester: {evenSemester.start} - {evenSemester.end}
+        Even Semester: {formatDate(evenSemester.start)} -{" "}
+        {formatDate(evenSemester.end)}
       </Text>
     </Card>
   );

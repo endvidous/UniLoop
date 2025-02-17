@@ -2,55 +2,87 @@ import { create } from "zustand";
 import { appStorage } from "@/src/services/storage/secureStorage";
 import { User } from "@/src/utils/interfaces";
 
-interface AppState {
-  theme: "light" | "dark";
+interface AuthState {
   token: string | null;
   user: User | null;
   isLoading: boolean;
-  setUser: (user: User) => void;
-  setTheme: (theme: "light" | "dark") => void;
-  setToken: (token: string) => void;
+}
+
+interface ThemeState {
+  theme: "light" | "dark";
+}
+
+interface AppState extends AuthState, ThemeState {
+  // Auth Actions
+  setUser: (user: User | null) => void;
+  setToken: (token: string | null) => void;
   setLoading: (isLoading: boolean) => void;
   clearAuth: () => void;
-  initializeState: () => void;
+  initializeState: () => Promise<void>;
+
+  // Theme Actions
+  setTheme: (theme: "light" | "dark") => void;
+
+  // Utility
+  isAuthenticated: () => boolean;
 }
 
 export const useStore = create<AppState>((set, get) => ({
-  theme: appStorage.getTheme(),
-  token: appStorage.getToken(),
-  user: appStorage.getUser(),
+  // Initial State
+  theme: "light",
+  token: null,
+  user: null,
   isLoading: true,
 
+  // Auth Actions
   setUser: (user) => {
-    appStorage.setUser(user);
+    if (user) appStorage.setUser(user);
+    else appStorage.removeUser();
     set({ user });
   },
 
+  setToken: (token) => {
+    if (token) appStorage.setToken(token);
+    else appStorage.removeToken();
+    set({ token });
+  },
+
+  setLoading: (isLoading) => set({ isLoading }),
+
+  clearAuth: () => {
+    appStorage.removeToken();
+    appStorage.removeUser();
+    set({ token: null, user: null });
+  },
+
+  initializeState: async () => {
+    try {
+      const [theme, token, user] = await Promise.all([
+        appStorage.getTheme(),
+        appStorage.getToken(),
+        appStorage.getUser(),
+      ]);
+
+      set({
+        theme: theme || "light",
+        token,
+        user,
+        isLoading: false,
+      });
+    } catch (error) {
+      console.error("Failed to initialize state:", error);
+      set({ isLoading: false });
+    }
+  },
+
+  // Theme Actions
   setTheme: (theme) => {
     appStorage.setTheme(theme);
     set({ theme });
   },
 
-  setToken: (token) => {
-    appStorage.setToken(token);
-    set({ token });
-  },
-
-  setLoading: (isLoading) => {
-    set({ isLoading });
-  },
-
-  clearAuth: () => {
-    appStorage.clearAll();
-    set({ token: null, user: null, theme: "light" }); // Reset all states
-  },
-
-  initializeState: () => {
-    set({
-      theme: appStorage.getTheme(),
-      token: appStorage.getToken(),
-      user: appStorage.getUser(),
-      isLoading: false,
-    });
+  // Utility
+  isAuthenticated: () => {
+    return !!get().token && !!get().user;
   },
 }));

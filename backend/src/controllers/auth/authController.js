@@ -35,50 +35,82 @@ export const login = async (req, res) => {
 // Validate User Function
 export const validateUser = async (req, res) => {
   try {
-    const token = req.headers.authorization?.split(" ")[1]; // Extract Bearer token
+    const authHeader = req.headers.authorization;
 
-    if (!token) {
-      return res.status(401).json({ message: "Token not provided" });
+    // Validate authorization header format
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Invalid authentication header" });
     }
 
+    const token = authHeader.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id).select("-password"); // Fetch user without password
 
+    // Validate token payload structure
+    if (!decoded?.id || !decoded?.exp) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Invalid token structure" });
+    }
+
+    const user = await User.findById(decoded.id).select("-password -__v");
+
+    // Check user existence and status
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res
+        .status(401)
+        .json({ success: false, error: "Account does not exist" });
     }
-    // Check if the token is about to expire (e.g., within the next 5 minutes)
-    const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
-    const tokenExpirationTime = decoded.exp; // Expiration time from the token
 
-    // If the token is about to expire in the next 5 minutes (300 seconds)
-    if (tokenExpirationTime - currentTime < 300) {
-      const newToken = generateToken(user._id); // Generate a new token
-      res.json({
-        success: true,
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        },
-        token: newToken, // Return the new token
-      });
-    } else {
-      res.json({
-        success: true,
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        },
-      });
+    const currentTime = Math.floor(Date.now() / 1000);
+    const tokenExpirationTime = decoded.exp;
+    const refreshThreshold = process.env.TOKEN_REFRESH_THRESHOLD || 300; // 5 minutes
+
+    const responsePayload = {
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+      token: null,
+    };
+
+    // Refresh logic
+    if (tokenExpirationTime - currentTime < refreshThreshold) {
+      const newToken = generateToken(user._id);
+      responsePayload.token = newToken;
+
+      // Set new token in headers
+      res.setHeader("Authorization", `Bearer ${newToken}`);
     }
+
+    // Add security headers
+    res.setHeader(
+      "Strict-Transport-Security",
+      "max-age=31536000; includeSubDomains"
+    );
+    res.setHeader("Content-Security-Policy", "default-src 'self'");
+
+    return res.json(responsePayload);
   } catch (err) {
-    if (err.name === "TokenExpiredError") {
-      return res.status(401).json({ message: "Token expired" });
-    }
-    res.status(401).json({ message: "Invalid token" });
+    // Centralized error logging
+    console.error(`Auth Error: ${err.message}`, {
+      timestamp: new Date().toISOString(),
+      endpoint: req.originalUrl,
+    });
+
+    const errorResponse = {
+      success: false,
+      error: "Authentication failed",
+      details:
+        err.name === "TokenExpiredError"
+          ? "Session expired"
+          : "Invalid credentials",
+    };
+
+    return res.status(401).json(errorResponse);
   }
 };

@@ -1,45 +1,80 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   View,
   Text,
   FlatList,
   StyleSheet,
   TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+  RefreshControl,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import CreateTimelineModal from "@/src/components/admin/TimelineComponents/CreateTimelineModal";
 import TimelineCard from "@/src/components/admin/TimelineComponents/TimelineCard";
-
-interface Timeline {
-  academicYear: string;
-  oddSemester: { start: string; end: string };
-  evenSemester: { start: string; end: string };
-}
+import {
+  useAcademicTimelines,
+  useCreateAcademicTimeline,
+} from "@/src/hooks/api/useAcademicTimelines";
 
 const TimelinePage = () => {
-  const [showModal, setShowModal] = useState(false);
-  const [timelines, setTimelines] = useState<Timeline[]>([]);
+  const [showModal, setShowModal] = React.useState(false);
+  const [refreshing, setRefreshing] = React.useState(false);
+  const { data, isLoading, isError, error, refetch } = useAcademicTimelines();
+  const createMutation = useCreateAcademicTimeline();
 
-  const handleSubmit = (newDates: any) => {
-    const { academicYear, oddSemStart, oddSemEnd, evenSemStart, evenSemEnd } =
-      newDates;
-
-    // Create new timeline (validation is already handled in CreateTimelineModal)
-    const newTimeline: Timeline = {
-      academicYear,
-      oddSemester: { start: oddSemStart, end: oddSemEnd },
-      evenSemester: { start: evenSemStart, end: evenSemEnd },
-    };
-
-    setTimelines((prev) => [...prev, newTimeline]);
-    setShowModal(false);
+  const handleSubmit = async (newDates: any) => {
+    try {
+      await createMutation.mutateAsync({
+        academicYear: newDates.academicYear,
+        oddSemester: {
+          start: newDates.oddSemStart,
+          end: newDates.oddSemEnd,
+        },
+        evenSemester: {
+          start: newDates.evenSemStart,
+          end: newDates.evenSemEnd,
+        },
+      });
+      setShowModal(false);
+    } catch (error: any) {
+      const errorMessage =
+        error?.response?.data?.error ||
+        error.message ||
+        "An unexpected error occurred";
+      Alert.alert("Error", errorMessage);
+    }
   };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  };
+
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>
+          Error loading timelines: {error.message}
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <FlatList
-        data={timelines}
-        keyExtractor={(item) => item.academicYear}
+        data={data?.data || []}
+        keyExtractor={(item) => item._id}
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
@@ -53,6 +88,9 @@ const TimelinePage = () => {
             evenSemester={item.evenSemester}
           />
         )}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       />
 
       <TouchableOpacity
@@ -105,6 +143,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 5,
+  },
+  errorText: {
+    color: "red",
+    fontSize: 16,
+    textAlign: "center",
+    marginTop: 20,
   },
 });
 

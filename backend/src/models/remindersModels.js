@@ -25,8 +25,11 @@ const remindersSchema = new Schema({
         default: false,
       },
       priority: {
-        type: String,
-        enum: ["High", "Normal", "Low"],
+        type: Number, // 0=Low, 1=Normal, 2=High
+        min: 0,
+        max: 2,
+        default: 1,
+        index: true,
       },
       remind_at: [
         {
@@ -43,5 +46,8 @@ const remindersSchema = new Schema({
     },
   ],
 });
+
+remindersSchema.index({ "reminders.deadline": 1 });
+remindersSchema.index({ "reminders.title": 1 });
 
 export const Reminders = mongoose.model("Reminders", remindersSchema);

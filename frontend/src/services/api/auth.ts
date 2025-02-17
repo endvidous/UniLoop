@@ -1,9 +1,12 @@
-import axios from "./axiosConfig";
+import axiosInstance from "./axiosConfig";
 
 export const authService = {
   login: async (email: string, password: string) => {
     try {
-      const response = await axios.post("/auth/login", { email, password });
+      const response = await axiosInstance.post("/auth/login", {
+        email,
+        password,
+      });
       return response.data;
     } catch (error: any) {
       console.log(error.message);
@@ -13,7 +16,7 @@ export const authService = {
 
   logout: async () => {
     try {
-      const response = await axios.post("/auth/index.ts");
+      const response = await axiosInstance.post("/auth/index.ts");
       return response.data;
     } catch (error) {
       throw error;
@@ -22,8 +25,11 @@ export const authService = {
 
   validateToken: async () => {
     try {
-      const response = await axios.get("/auth/validate");
-      return response.data;
+      const response = await axiosInstance.get("/auth/validate");
+      return {
+        newToken: response.data.token,
+        user: response.data.user,
+      };
     } catch (error) {
       throw error;
     }

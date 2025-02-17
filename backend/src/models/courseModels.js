@@ -15,7 +15,7 @@ const departmentSchema = new Schema({
     },
   ],
 });
-departmentSchema.index({ name: 1 });
+departmentSchema.index({ name: 1, teachers: 1 });
 
 //Paper schema
 const paperSchema = new Schema({
@@ -113,10 +113,47 @@ const batchSchema = new Schema({
       ref: "User",
       validate: {
         validator: async function (userId) {
-          const user = await User.findById(userId).select("classrep_of").lean();
-          return user?.classrep_of?.equals(this.parent()._id);
+          const user = await User.findById(userId);
+          return user?.isStudent() && this.students.includes(userId);
         },
-        message: "User must be registered as classrep of this batch",
+        message: "Class rep must be a student in this batch",
+      },
+    },
+  ],
+  mentors: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      validate: {
+        validator: async function (teacherId) {
+          // 1. Find departments containing this teacher
+          const teacherDepartments = await Departments.find({
+            teachers: teacherId,
+          });
+          if (teacherDepartments.length === 0) return false;
+
+          // 2. Get batch's course with semesters and papers
+          const batch = await Batches.findById(this._id).populate({
+            path: "course",
+            populate: {
+              path: "semesters",
+              populate: {
+                path: "papers.paper",
+                select: "department",
+              },
+            },
+          });
+
+          // 3. Check if any paper in course belongs to teacher's departments
+          return batch.course.semesters.some((semester) =>
+            semester.papers.some((p) =>
+              teacherDepartments.some((dept) =>
+                p.paper.department.equals(dept._id)
+              )
+            )
+          );
+        },
+        message: "The teacher is not related to this department",
       },
     },
   ],

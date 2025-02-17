@@ -1,144 +1,15 @@
-// import { Text, TouchableOpacity, View, StyleSheet, Switch, FlatList, ScrollView } from "react-native";
-// import { useAuth } from "@/src/context/AuthContext";
-// import Ionicons from "@expo/vector-icons/Ionicons";
-// import React from 'react';
-
-// const SettingsPage = () => {
-//   const { user, signOut } = useAuth();
-//   const [currentValue, setCurrentValue] = React.useState(false);
-//   const [isDropdownVisible, setIsDropdownVisible] = React.useState(false);
-//   const data = [
-//     { id: '1', name: 'Please send an email to :' },
-//     { id: '2', name: 'henry@gmail.com' },
-//     { id: '3', name: 'medhabv@gmail.com' },
-//     { id: '4', name: 'angela@gmail.com' },
-//     { id: '5', name: 'ananyapkumar@gmail.com' },
-//   ];
-//   const toggleDropdown = () => {
-//     setIsDropdownVisible(!isDropdownVisible);
-//   };
-//   return (
-//     <ScrollView contentContainerStyle={styles.container}>
-//       <Text style={styles.nametitle}>{user?.name}</Text> //getting user name from the database
-//       <Text style={styles.mailtitle}>{user?.email}</Text>
-      
-//       <TouchableOpacity style={[styles.dataButton, styles.shadow]}>
-//         <Text style={styles.buttontext}>Change Password</Text>
-//         <Ionicons name="key" size={24} color="#00100B" />
-//       </TouchableOpacity>
-
-//       <TouchableOpacity style={[styles.dataButton, styles.shadow]}>
-//         <Text style={styles.buttontext}>Dark mode</Text>
-//         <Switch
-//           value={currentValue}
-//           onValueChange={(value) => setCurrentValue(value)}
-//         />
-//       </TouchableOpacity>
-
-//       <TouchableOpacity style={[styles.dataButton, styles.shadow]}>
-//         <Text style={styles.buttontext}>Notifications</Text>
-//         <Ionicons name="notifications-outline" size={24} color="#00100B" />
-//       </TouchableOpacity>
-
-//       <TouchableOpacity style={[styles.dataButton, styles.shadow]} onPress={toggleDropdown}>
-//         <Text style={styles.buttontext}>Tech support</Text>
-//         <Ionicons name="call-outline" size={24} color="#00100B" />
-//       </TouchableOpacity>
-
-//       {isDropdownVisible && (
-//         <View style={styles.dropdownContainer}>
-//           <FlatList
-//             data={data}
-//             keyExtractor={(item) => item.id}
-//             renderItem={({ item }) => (
-//               <View >
-//                 <Text style={styles.optionText} >{item.name}</Text>
-//               </View>
-//             )}
-//           />
-//         </View>
-//       )}
-
-//       <TouchableOpacity onPress={signOut} style={[styles.dataButton, styles.shadow, isDropdownVisible && { marginTop: 20 }]}>
-//         <Text style={styles.buttontext}>Log out</Text>
-//         <Ionicons name="log-out-outline" size={24} color="#00100B" />
-//       </TouchableOpacity>
-//     </ScrollView>
-//   );
-// };
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flexGrow: 1,
-//     backgroundColor: "#fff",
-//     alignItems: "center",
-//     justifyContent: "center",
-//     paddingVertical: 20,
-//   },
-//   shadow: {
-//     shadowColor: "#000",
-//     shadowOffset: {
-//       width: 0,
-//       height: 4,
-//     },
-//     shadowOpacity: 0.2,
-//     shadowRadius: 4,
-//     elevation: 5,
-//   },
-//   nametitle: {
-//     fontSize: 40,
-//     fontWeight: "400",
-//     color: "#00100B",
-//     marginBottom: 10,
-//   },
-//   mailtitle: {
-//     fontSize: 20,
-//     fontWeight: "300",
-//     color: "#00100B",
-//     marginBottom: 20,
-//   },
-//   dataButton: {
-//     flexDirection: "row",
-//     width: "80%",
-//     height: 60,
-//     backgroundColor: "#ffffff",
-//     borderRadius: 12,
-//     justifyContent: "space-between",
-//     alignItems: "center",
-//     paddingHorizontal: 30,
-//     marginTop: 30,
-//   },
-//   buttontext: {
-//     color: "#00100B",
-//     fontSize: 17,
-//     fontWeight: "600",
-//     marginRight: 10,
-//   },
-//   dropdownContainer: {
-//     width: '80%',
-//     backgroundColor: '#fff',
-//     borderRadius: 10,
-//     borderWidth: 1,
-//     borderColor: '#ccc',
-//     marginTop: 0,
-//   },
-//   option: {
-//     padding: 10,
-//     borderBottomWidth: 1,
-//     borderBottomColor: '#ccc',
-//   },
-//   optionText: {
-//     paddingHorizontal: 15,
-//     paddingVertical:10,
-//     fontSize: 17,
-//   },
-// });
-
-// export default SettingsPage;
-import { Text, TouchableOpacity, View, StyleSheet, Switch, FlatList, ScrollView, TextInput, Alert } from "react-native";
+import {
+  Text,
+  TouchableOpacity,
+  View,
+  StyleSheet,
+  Switch,
+  FlatList,
+  ScrollView,
+} from "react-native";
 import { useAuth } from "@/src/context/AuthContext";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import React from 'react';
+import React from "react";
 
 const SettingsPage = () => {
   const { user, signOut, updatePassword } = useAuth();
@@ -151,11 +22,11 @@ const SettingsPage = () => {
   const [isConfirmDisabled, setIsConfirmDisabled] = React.useState(true);
 
   const data = [
-    { id: '1', name: 'Please send an email to :' },
-    { id: '2', name: 'henry@gmail.com' },
-    { id: '3', name: 'medhabv@gmail.com' },
-    { id: '4', name: 'angela@gmail.com' },
-    { id: '5', name: 'ananyapkumar@gmail.com' },
+    { id: "1", name: "Please send an email to :" },
+    { id: "2", name: "henry@gmail.com" },
+    { id: "3", name: "medhabv@gmail.com" },
+    { id: "4", name: "angela@gmail.com" },
+    { id: "5", name: "ananyapkumar@gmail.com" },
   ];
 
   const toggleDropdown = () => {
@@ -210,7 +81,10 @@ const SettingsPage = () => {
         <Ionicons name="notifications-outline" size={24} color="#00100B" />
       </TouchableOpacity>
 
-      <TouchableOpacity style={[styles.dataButton, styles.shadow]} onPress={toggleDropdown} accessible={true} accessibilityLabel="Tech support">
+      <TouchableOpacity
+        style={[styles.dataButton, styles.shadow]}
+        onPress={toggleDropdown}
+      >
         <Text style={styles.buttontext}>Tech support</Text>
         <Ionicons name="call-outline" size={24} color="#00100B" />
       </TouchableOpacity>
@@ -230,6 +104,22 @@ const SettingsPage = () => {
       )}
 
       <TouchableOpacity onPress={handleSignOut} style={[styles.dataButton, styles.shadow, isDropdownVisible && { marginTop: 20 }]} accessible={true} accessibilityLabel="Log out button">
+          {data.map((item) => (
+            <Text key={item.id} style={styles.optionText}>
+              {item.name}
+            </Text>
+          ))}
+        </View>
+      )}
+
+      <TouchableOpacity
+        onPress={signOut}
+        style={[
+          styles.dataButton,
+          styles.shadow,
+          isDropdownVisible && { marginTop: 20 },
+        ]}
+      >
         <Text style={styles.buttontext}>Log out</Text>
         <Ionicons name="log-out-outline" size={24} color="#00100B" />
       </TouchableOpacity>
@@ -329,17 +219,17 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   dropdownContainer: {
-    width: '80%',
-    backgroundColor: '#fff',
+    width: "80%",
+    backgroundColor: "#fff",
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     marginTop: 0,
   },
   option: {
     padding: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    borderBottomColor: "#ccc",
   },
   optionText: {
     paddingHorizontal: 15,
