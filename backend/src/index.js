@@ -5,6 +5,7 @@ import announcementRoutes from "./routes/common/announcementRoutes.js";
 import discussionRoutes from "./routes/common/discussionRoutes.js";
 import fileRoutes from "./routes/common/fileRoutes.js";
 import meetingRoutes from "./routes/common/meetingRoutes.js";
+import associationsRoutes from "./routes/common/associationsRoutes.js";
 import { authMiddleware, isAdmin } from "./middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -15,6 +16,7 @@ router.use("/admin", authMiddleware, isAdmin, adminRoutes);
 router.use("/announcements", authMiddleware, announcementRoutes);
 router.use("/discussions", authMiddleware, discussionRoutes);
 router.use("/files", authMiddleware, fileRoutes);
-router.use("/meetings",authMiddleware,meetingRoutes);
+router.use("/meetings", authMiddleware, meetingRoutes);
+router.use("/associations", authMiddleware, associationsRoutes);
 
 export default router;
