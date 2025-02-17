@@ -142,7 +142,6 @@ const FilterModal = ({
                     }
                     style={styles.picker}
                   >
-                    <Picker.Item label="All Types" value="" />
                     <Picker.Item label="General" value="General" />
                     <Picker.Item label="Department" value="Department" />
                     <Picker.Item label="Batch" value="Batch" />
