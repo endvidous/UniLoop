@@ -9,10 +9,11 @@ import {
 import Ionicons from "@expo/vector-icons/Ionicons";
 import React from "react";
 import { useAuth } from "@/src/context/AuthContext";
+import { useTheme } from "@/src/hooks/colors/useThemeColor";
 
 const SettingsPage = () => {
   const { user, signOut } = useAuth();
-  const [currentValue, setCurrentValue] = React.useState(false);
+  const { theme, colors, toggleTheme } = useTheme();
   const [isDropdownVisible, setIsDropdownVisible] = React.useState(false);
   const data = [
     { id: "1", name: "Please send an email to :" },
@@ -36,8 +37,13 @@ const SettingsPage = () => {
       <TouchableOpacity style={[styles.dataButton, styles.shadow]}>
         <Text style={styles.buttontext}>Dark mode</Text>
         <Switch
-          value={currentValue}
-          onValueChange={(value) => setCurrentValue(value)}
+          value={theme === "dark"}
+          onValueChange={toggleTheme}
+          thumbColor={colors.icon}
+          trackColor={{
+            true: colors.tint,
+            false: colors.tabIconDefault,
+          }}
         />
       </TouchableOpacity>
 

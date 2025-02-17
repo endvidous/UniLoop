@@ -21,14 +21,11 @@ const DarkTheme = {
   tabIconSelected: tintColorDark,
 };
 export const useTheme = () => {
-  const { theme, setTheme } = useStore((state) => ({
-    theme: state.theme,
-    setTheme: state.setTheme,
-  }));
-  const toggleTheme = () => {
-    setTheme(theme === "light" ? "dark" : "light");
-  };
+  const theme = useStore((state) => state.theme);
+
+  const toggleTheme = useStore((state) => state.toggleTheme);
+
   const colors = theme === "light" ? LightTheme : DarkTheme;
 
-  return { theme, setTheme, toggleTheme, colors };
+  return { theme, toggleTheme, colors };
 };
