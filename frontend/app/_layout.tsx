@@ -8,6 +8,7 @@ import { authService } from "@/src/services/api/auth";
 import { queryClient } from "@/src/services/api/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { StatusBar } from "react-native";
+import { ThemeProvider } from "@/src/context/ThemeProvider";
 
 export default function RootLayout() {
   const {
@@ -53,9 +54,14 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <StatusBar translucent={false} />
-        <Stack screenOptions={{ headerShown: false }} />
-        <AuthHandler />
+        <ThemeProvider>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+            }}
+          />
+          <AuthHandler />
+        </ThemeProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

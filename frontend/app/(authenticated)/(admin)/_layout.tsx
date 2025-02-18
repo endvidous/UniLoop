@@ -1,5 +1,6 @@
 import { Tabs } from "expo-router";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { MaterialIcons } from "@expo/vector-icons";
 
 const TabLayout = () => {
   return (
@@ -14,9 +15,18 @@ const TabLayout = () => {
         options={{
           title: "Home",
           tabBarIcon: ({ color }) => (
-            <FontAwesome size={28} name="home" color={color} />
+            <MaterialIcons size={28} name="home" color={color} />
           ),
           headerShown: false,
+        }}
+      />
+      <Tabs.Screen
+        name="Announcements"
+        options={{
+          title: "Announcements",
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons size={28} name="announcement" color={color} />
+          ),
         }}
       />
       <Tabs.Screen
