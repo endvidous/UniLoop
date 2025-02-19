@@ -124,6 +124,7 @@ export const getAnnouncements = async (req, res) => {
 
     const finalQuery = {
       ...baseQuery,
+      ...(filters.visibilityType && { visibilityType: filters.visibilityType }),
       ...(filters.priority && { priority: { $in: filters.priority } }),
       ...(filters.department && { "posted_to.id": filters.department }),
       ...(filters.batch && { "posted_to.id": filters.batch }),
