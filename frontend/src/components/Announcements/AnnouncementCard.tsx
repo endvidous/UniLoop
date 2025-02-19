@@ -1,33 +1,57 @@
-import { View, Text, TouchableOpacity, Alert, StyleSheet } from "react-native";
-import { useDeleteAnnouncement } from "@/src/hooks/api/useAnnouncements";
+import React from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 
-const AnnouncementCard = ({ announcement }: { announcement: any }) => {
-  const { mutate: deleteAnnouncement } = useDeleteAnnouncement();
+interface Announcement {
+  _id: string;
+  title: string;
+  description: string;
+  priority: number;
+  createdAt: string;
+  postedBy: { id: string; name: string; role: string };
+}
 
-  const handleDelete = () => {
-    Alert.alert(
-      "Delete Announcement",
-      "Are you sure you want to delete this announcement?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Delete", onPress: () => deleteAnnouncement(announcement._id) },
-      ]
-    );
+interface AnnouncementCardProps {
+  announcement: Announcement;
+  onPress: (id: string) => void;
+}
+
+const AnnouncementCard = ({ announcement, onPress }: AnnouncementCardProps) => {
+  // Map numeric priority to a label and color
+  const getPriorityData = (priority: number) => {
+    switch (priority) {
+      case 3:
+        return { label: "High", color: "#dc2626" }; // red
+      case 2:
+        return { label: "Normal", color: "#16a34a" }; // green
+      case 1:
+        return { label: "Low", color: "#3b82f6" }; // blue
+      default:
+        return { label: "Normal", color: "#16a34a" };
+    }
   };
 
+  const { label, color } = getPriorityData(announcement.priority);
+
   return (
-    <View style={styles.cardContainer}>
-      <Text style={styles.title}>{announcement.title}</Text>
-      <Text style={styles.description}>{announcement.description}</Text>
+    <TouchableOpacity
+      style={styles.cardContainer}
+      onPress={() => onPress(announcement._id)}
+    >
+      <View style={styles.header}>
+        <Text style={styles.title}>{announcement.title}</Text>
+        <View style={[styles.priorityBadge, { backgroundColor: color }]}>
+          <Text style={styles.priorityText}>{label}</Text>
+        </View>
+      </View>
       <View style={styles.footer}>
         <Text style={styles.date}>
           {new Date(announcement.createdAt).toLocaleDateString()}
         </Text>
-        <TouchableOpacity onPress={handleDelete}>
-          <Text style={styles.deleteButton}>Delete</Text>
-        </TouchableOpacity>
+        <Text style={styles.postedBy}>
+          Posted by: {announcement.postedBy.name}
+        </Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -41,17 +65,34 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3, // For Android
+    elevation: 3, // Android shadow
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
   },
   title: {
     fontSize: 18,
     fontWeight: "600",
-    marginBottom: 8,
-    color: "#1f2937", // Tailwind's gray-800
+    color: "#1f2937",
+    flex: 1,
+  },
+  priorityBadge: {
+    borderRadius: 4,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    marginLeft: 8,
+  },
+  priorityText: {
+    color: "#fff",
+    fontWeight: "500",
+    fontSize: 12,
   },
   description: {
     fontSize: 14,
-    color: "#4b5563", // Tailwind's gray-600
+    color: "#4b5563",
     lineHeight: 20,
   },
   footer: {
@@ -61,12 +102,11 @@ const styles = StyleSheet.create({
   },
   date: {
     fontSize: 12,
-    color: "#6b7280", // Tailwind's gray-500
+    color: "#6b7280",
   },
-  deleteButton: {
-    color: "#ef4444", // Tailwind's red-500
-    fontSize: 14,
-    fontWeight: "500",
+  postedBy: {
+    fontSize: 12,
+    color: "#6b7280",
   },
 });
 

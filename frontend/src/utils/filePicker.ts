@@ -7,6 +7,7 @@ export interface SelectedFile {
   uri: string;
   name: string;
   type: string;
+  size?: number;
 }
 
 /**
@@ -39,6 +40,7 @@ export async function pickPdfDocument(): Promise<SelectedFile | null> {
       uri: result.assets[0].uri,
       name: result.assets[0].name,
       type: result.assets[0].mimeType || "application/pdf",
+      size: result.assets[0].size,
     };
 
     return null;
@@ -82,8 +84,9 @@ export async function pickImage(): Promise<SelectedFile | null> {
       // For simplicity, we assume JPEG. Adjust based on your needs.
       return {
         uri: result.assets[0].uri,
-        name,
-        type: "image/jpeg",
+        name: result.assets[0].fileName || "Image",
+        type: result.assets[0].mimeType || "image/jpeg",
+        size: result.assets[0].fileSize,
       };
     }
     return null;

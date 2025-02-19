@@ -102,13 +102,12 @@ export const getOneAnnouncement = async (req, res) => {
 
 export const getAnnouncements = async (req, res) => {
   try {
-    console.log("Reached here");
     const sortOptions = {
       newest: "-createdAt",
       priority: { priority: -1 },
       urgent: { priority: -1, createdAt: -1 },
     };
-    console.log(req.query);
+
     const page = parseInt(req.query.page) || 1;
     const limit = Math.min(parseInt(req.query.limit) || 20, 100);
     const skip = (page - 1) * limit;
@@ -170,8 +169,15 @@ export const getAnnouncements = async (req, res) => {
 
 export const createAnnouncement = async (req, res) => {
   try {
-    const { visibilityType, posted_to, ...rest } = req.body;
+    const { visibilityType, posted_to, attachments, ...rest } = req.body;
     const user = req.user;
+
+    // Validate attachments if present
+    if (attachments && !Array.isArray(attachments)) {
+      return res.status(400).json({
+        message: "Attachments must be an array",
+      });
+    }
 
     // Base announcement data
     const announcementData = {
@@ -179,6 +185,7 @@ export const createAnnouncement = async (req, res) => {
       postedBy: user._id,
       visibilityType,
       posted_to,
+      attachments: attachments || [],
     };
 
     // For non-General announcements, explicitly cast posted_to.id to ObjectId
@@ -231,6 +238,7 @@ export const createAnnouncement = async (req, res) => {
     const announcement = await Announcements.create(announcementData);
     res.status(201).json(announcement);
   } catch (error) {
+    console.log(error);
     res.status(400).json({ message: error.message });
   }
 };

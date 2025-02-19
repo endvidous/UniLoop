@@ -11,11 +11,17 @@ import { useAnnouncements } from "@/src/hooks/api/useAnnouncements";
 import { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import AnnouncementCard from "./AnnouncementCard";
+import CreateAnnouncement from "./CreateAnnouncement";
 import { FilterState } from "../common/FilterModal";
 import SearchFilterHeader from "../common/SearchFilter";
+import { useRouter } from "expo-router";
+import { useAuth } from "@/src/context/AuthContext";
+import type { RelativePathString } from "expo-router";
+import { Modal } from "react-native";
 
 const AnnouncementsPage = () => {
-  const [showFilterModal, setShowFilterModal] = useState(false);
+  const { user } = useAuth();
+  const router = useRouter();
   const [filters, setFilters] = useState<FilterState>({
     department: "",
     course: "",
@@ -34,6 +40,20 @@ const AnnouncementsPage = () => {
     setRefreshing(true);
     await refetch();
     setRefreshing(false);
+  };
+
+  const handleAnnouncementCreated = () => {
+    setShowModal(false);
+    refetch(); // Refresh the announcements list
+  };
+
+  const onPress = (id: string) => {
+    const basepath =
+      `/(authenticated)/(${user?.role})/Announcements/[announcementId]` as RelativePathString;
+    router.push({
+      pathname: basepath,
+      params: { announcementId: id },
+    });
   };
 
   if (isLoading) {
@@ -69,7 +89,9 @@ const AnnouncementsPage = () => {
             <Text style={styles.noTimelinesText}>No Announcements Made</Text>
           </View>
         }
-        renderItem={({ item }) => <AnnouncementCard announcement={item} />}
+        renderItem={({ item }) => (
+          <AnnouncementCard announcement={item} onPress={onPress} />
+        )}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -83,6 +105,14 @@ const AnnouncementsPage = () => {
       >
         <Ionicons name="add" size={30} color="white" />
       </TouchableOpacity>
+
+      <Modal
+        visible={showModal}
+        animationType="slide"
+        onRequestClose={() => setShowModal(false)}
+      >
+        <CreateAnnouncement onDismiss={handleAnnouncementCreated} />
+      </Modal>
     </View>
   );
 };
