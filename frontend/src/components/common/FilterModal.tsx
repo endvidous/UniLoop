@@ -96,7 +96,7 @@ const FilterModal = ({
                 <View style={styles.filterGroup}>
                   <Text style={styles.filterLabel}>Priority</Text>
                   <View style={styles.checkboxContainer}>
-                    {[3, 2, 1].map((priority) => (
+                    {[1, 2, 3].map((priority) => (
                       <View key={priority} style={styles.checkboxWrapper}>
                         <Checkbox.Android
                           status={
@@ -108,7 +108,7 @@ const FilterModal = ({
                           color="#007BFF"
                         />
                         <Text style={styles.checkboxLabel}>
-                          {["High", "Normal", "Low"][priority - 1]}
+                          {["Low", "Normal", "High"][priority - 1]}
                         </Text>
                       </View>
                     ))}
