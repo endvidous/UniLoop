@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 const Schema = mongoose.Schema;
 
 // Helper function: converts minutes since midnight to a 12-hour time string.
-function formatTime(minutes) {
+export function formatTime(minutes) {
   const hours24 = Math.floor(minutes / 60);
   const mins = minutes % 60;
   const amPm = hours24 >= 12 ? "pm" : "am";
@@ -12,7 +12,7 @@ function formatTime(minutes) {
 
 // Helper function: converts a time string to minutes since midnight.
 // Accepts "5:30pm", "17:30", etc.
-function parseTime(time) {
+export function parseTime(time) {
   if (typeof time === "number") {
     return time;
   }
