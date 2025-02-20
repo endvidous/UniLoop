@@ -61,6 +61,7 @@ const discussionSchema = new Schema(
         ref: "User",
       },
     ],
+    //add downvotes?
     isClosed: {
       type: Boolean,
       default: false,

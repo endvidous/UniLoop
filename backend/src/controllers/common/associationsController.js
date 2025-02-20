@@ -1,4 +1,4 @@
-//NOT ASSOCIATIONS, ASSOCIATED field to particular dept, course & batches for announcements
+//NOT ASSOCIATIONS, ASSOCIATED fields to particular dept, course & batches for announcements
 import {
   findTeacherDetails,
   findStudentDetails,

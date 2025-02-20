@@ -1,3 +1,4 @@
+//FUNCTIONS TO BE ADDED: updateComments
 import { Discussion } from "../../models/discussionModels.js";
 import {
   buildDiscussionQuery,

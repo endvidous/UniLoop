@@ -1,8 +1,8 @@
+//FUNCTINS TO BE ADDED: approve booking, reject booking
 import mongoose from "mongoose";
 import {
   Classroom,
   ClassroomBooking,
-  formatTime,
   parseTime,
 } from "../models/classroomModels.js";
 import { Batches } from "../../models/courseModels.js";
@@ -65,7 +65,7 @@ export const getClassroomById = async (req, res) => {
       .json({ message: "Error retrieving classroom", error: error.message });
   }
 };
-//get all classrooms
+//get all classrooms HAS TO BE CHANGEDDDDD
 export const getAllClassrooms = async (req, res) => {
   const { block, time, date } = req.query; // Extract query parameters
 
