@@ -2,10 +2,8 @@ import { Text, TouchableOpacity, View, StyleSheet } from "react-native";
 import React from 'react';
 import { Link } from "expo-router";
 // import Ionicons from "@expo/vector-icons/Ionicons";
-import { useAuth } from "@/src/context/AuthContext";
 
 const AdminIndex = () => {
-  const { signOut } = useAuth();
   return (
     <View style={styles.container}>
       
