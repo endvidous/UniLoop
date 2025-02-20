@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  Modal,
 } from "react-native";
 import { useAnnouncements } from "@/src/hooks/api/useAnnouncements";
 import { useState } from "react";
@@ -17,7 +18,6 @@ import SearchFilterHeader from "../common/SearchFilter";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/src/context/AuthContext";
 import type { RelativePathString } from "expo-router";
-import { Modal } from "react-native";
 
 const AnnouncementsPage = () => {
   const { user } = useAuth();

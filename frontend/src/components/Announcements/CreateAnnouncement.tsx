@@ -1,28 +1,27 @@
-import { useState } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-  TextInput,
-  ActivityIndicator,
-} from "react-native";
-import { Picker } from "@react-native-picker/picker";
-import { useForm, Controller } from "react-hook-form";
-import { MaterialIcons } from "@expo/vector-icons";
-import { useUserAssociations } from "@/src/hooks/api/useAssociations";
-import { useFileUpload, useFileDelete } from "@/src/hooks/api/useFiles";
+import CalendarModal from "@/src/components/calendar/calendarModal";
+import { useAuth } from "@/src/context/AuthContext";
 import { useCreateAnnouncement } from "@/src/hooks/api/useAnnouncements";
+import { useUserAssociations } from "@/src/hooks/api/useAssociations";
+import { useFileDelete, useFileUpload } from "@/src/hooks/api/useFiles";
 import {
   pickImage,
   pickPdfDocument,
   SelectedFile,
 } from "@/src/utils/filePicker";
-import CalendarModal from "@/src/components/calendar/calendarModal";
-import { useAuth } from "@/src/context/AuthContext";
-import { useRouter } from "expo-router";
+import { MaterialIcons } from "@expo/vector-icons";
+import { Picker } from "@react-native-picker/picker";
+import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import {
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 type FormData = {
   title: string;
