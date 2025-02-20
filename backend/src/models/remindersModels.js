@@ -18,7 +18,6 @@ const remindersSchema = new Schema({
       created_at: { type: Date, default: Date.now },
       deadline: {
         type: Date,
-        required: true,
       },
       completed: {
         type: Boolean,
