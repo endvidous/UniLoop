@@ -75,7 +75,16 @@ const convertTimeToMinutes = (time: string): number => {
   }
 };
 
-// Get weekday number (0-6) from day name
+// Clean and normalize day string
+const cleanDayString = (day: string): string => {
+  return day
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, "") // Remove all whitespace
+    .replace(/[^A-Z]/g, ""); // Remove any non-letter characters
+};
+
+// Get weekday number (0-6) from day name with better error handling
 const getWeekdayNumber = (day: string): number => {
   const days: { [key: string]: number } = {
     SUNDAY: 0,
@@ -87,77 +96,103 @@ const getWeekdayNumber = (day: string): number => {
     SATURDAY: 6,
   };
 
-  const weekday = days[day.toUpperCase()];
+  const cleanedDay = cleanDayString(day);
+  const weekday = days[cleanedDay];
+
   if (weekday === undefined) {
+    console.error(`Invalid day found: "${day}" (cleaned: "${cleanedDay}")`);
     throw new Error(`Invalid day: ${day}`);
   }
 
   return weekday;
 };
 
-export const processCSVFile = async (fileUri: string): Promise<Classroom[]> => {
+// Check if a row is empty or contains only whitespace
+const isEmptyRow = (row: CSVRow): boolean => {
+  return Object.values(row).every((value) => !value || value.trim() === "");
+};
+
+// Check if a row has the minimum required data
+const hasRequiredFields = (row: CSVRow): boolean => {
+  return !!(
+    row["BLOCK NAME"]?.trim() &&
+    row["Room No."]?.trim() &&
+    row["DAYS"]?.trim()
+  );
+};
+
+export const classroomCSVCleaner = async (
+  fileUri: string
+): Promise<Classroom[]> => {
   try {
     // Read the file content
     const fileContent = await FileSystem.readAsStringAsync(fileUri);
 
-    // Parse CSV using Papa Parse
+    // Parse CSV using Papa Parse with more flexible options
     const { data, errors } = Papa.parse<CSVRow>(fileContent, {
       header: true,
       skipEmptyLines: true,
+      transform: (value) => value.trim(), // Trim all values
+      transformHeader: (header) => header.trim(), // Trim headers
     });
 
     if (errors.length > 0) {
+      console.error("CSV parsing errors:", errors);
       throw new Error(`CSV parsing errors: ${JSON.stringify(errors)}`);
     }
 
-    // Transform data into the schema format
-    const transformedData: Classroom[] = data.map((row: CSVRow) => {
-      // Validate required fields
-      if (!row["BLOCK NAME"] || !row["Room No."] || !row["DAYS"]) {
-        throw new Error(
-          `Missing required fields in row: ${JSON.stringify(row)}`
-        );
-      }
+    // Filter out empty rows and transform valid data
+    const transformedData: Classroom[] = data
+      .filter((row) => !isEmptyRow(row) && hasRequiredFields(row))
+      .map((row: CSVRow) => {
+        // Extract basic info
+        const classroom: Classroom = {
+          block: row["BLOCK NAME"].trim(),
+          room_num: row["Room No."].trim(),
+          availability: [],
+        };
 
-      // Extract basic info
-      const classroom: Classroom = {
-        block: row["BLOCK NAME"],
-        room_num: row["Room No."],
-        availability: [],
-      };
+        try {
+          // Get the weekday number
+          const weekday = getWeekdayNumber(row["DAYS"]);
 
-      // Get the weekday number
-      const weekday = getWeekdayNumber(row["DAYS"]);
+          // Process time slots
+          const timeSlots: TimeSlot[] = [];
+          Object.entries(row).forEach(([header, value]) => {
+            // Check if the header is a time range
+            if (isTimeRangeHeader(header)) {
+              const timeRange = parseTimeRange(header);
+              if (timeRange) {
+                timeSlots.push({
+                  startTime: timeRange.startMinutes,
+                  endTime: timeRange.endMinutes,
+                  occupied: value.trim() !== "", // Empty value means unoccupied
+                });
+              }
+            }
+          });
 
-      // Process time slots
-      const timeSlots: TimeSlot[] = [];
-      Object.entries(row).forEach(([header, value]) => {
-        // Check if the header is a time range
-        if (isTimeRangeHeader(header)) {
-          const timeRange = parseTimeRange(header);
-          if (timeRange) {
-            timeSlots.push({
-              startTime: timeRange.startMinutes,
-              endTime: timeRange.endMinutes,
-              occupied: value.trim() !== "",
-            });
-          }
+          // Add availability for the day
+          classroom.availability.push({
+            weekday,
+            slots: timeSlots,
+          });
+        } catch (error) {
+          console.error("Error processing row:", row);
+          console.error("Error details:", error);
+          return null;
         }
-      });
 
-      // Add availability for the day
-      classroom.availability.push({
-        weekday,
-        slots: timeSlots,
-      });
-
-      return classroom;
-    });
+        return classroom;
+      })
+      .filter((classroom): classroom is Classroom => classroom !== null);
 
     // Remove duplicates and merge availability for same classrooms
     const mergedData = transformedData.reduce<Classroom[]>((acc, curr) => {
       const existing = acc.find(
-        (item) => item.block === curr.block && item.room_num === curr.room_num
+        (item) =>
+          item.block.toLowerCase() === curr.block.toLowerCase() &&
+          item.room_num.toLowerCase() === curr.room_num.toLowerCase()
       );
 
       if (existing) {
