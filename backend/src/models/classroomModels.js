@@ -67,14 +67,12 @@ const classroomSchema = new Schema({
             required: true,
             min: 0,
             max: 1440,
-            set: parseTime,
           },
           endTime: {
             type: Number,
             required: true,
             min: 0,
             max: 1440,
-            set: parseTime,
           },
           occupied: {
             type: Boolean,
@@ -87,7 +85,7 @@ const classroomSchema = new Schema({
 });
 
 // Index for quick lookup by block and classroom number
-classroomSchema.index({ block: 1, classroom_num: 1 }, { unique: true });
+classroomSchema.index({ block: 1, room_num: 1 }, { unique: true });
 
 // Virtual for formatted availability (for frontend display)
 classroomSchema.virtual("formattedAvailability").get(function () {
@@ -96,12 +94,19 @@ classroomSchema.virtual("formattedAvailability").get(function () {
     slots: day.slots.map((slot) => ({
       startTime: formatTime(slot.startTime),
       endTime: formatTime(slot.endTime),
+      occupied: slot.occupied,
     })),
   }));
 });
 
-// Include virtuals when converting to JSON
-classroomSchema.set("toJSON", { virtuals: true });
+// Include virtuals when converting to JSON and removed availability field only adds the formatted field
+classroomSchema.set("toJSON", {
+  virtuals: true,
+  transform: (doc, ret) => {
+    delete ret.availability;
+    return ret;
+  },
+});
 
 // Classroom booking schema
 // Now allows booking for one slot on a given date with startTime and endTime.
@@ -110,6 +115,11 @@ const classroomBookingSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "Classroom",
     required: true,
+  },
+  purpose: {
+    type: String,
+    required: true,
+    trim: true,
   },
   requestedBy: {
     type: Schema.Types.ObjectId,

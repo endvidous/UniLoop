@@ -8,7 +8,6 @@ connectDB();
 
 const app = express();
 app.use(cors());
-app.use(express.json()); // For parsing application/json
 
 app.use("/api", AllRoutes);
 
