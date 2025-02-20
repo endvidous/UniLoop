@@ -107,7 +107,6 @@ export const getAnnouncements = async (req, res) => {
       priority: { priority: -1 },
       urgent: { priority: -1, createdAt: -1 },
     };
-    console.log(req.query);
     const page = parseInt(req.query.page) || 1;
     const limit = Math.min(parseInt(req.query.limit) || 20, 100);
     const skip = (page - 1) * limit;
@@ -247,6 +246,7 @@ export const updateAnnouncement = async (req, res) => {
   const { announcementId } = req.params;
   const updates = req.body;
   try {
+    console.log(updates);
     const announcement = await Announcements.findById(announcementId);
     if (!announcement) {
       return res.status(404).json({ message: "Announcement not found" });
@@ -296,6 +296,7 @@ export const updateAnnouncement = async (req, res) => {
 
     res.json(updatedAnnouncement);
   } catch (error) {
+    console.log(error);
     res.status(400).json({ message: error.message });
   }
 };

@@ -22,7 +22,7 @@ import { useUserAssociations } from "@/src/hooks/api/useAssociations";
 import { useRouter } from "expo-router";
 import AttachmentViewer from "../common/AttachmentViewer";
 type PostedTo = {
-  model: string;
+  model: string | null;
   id?: {
     _id: string;
     name: string;
@@ -35,7 +35,7 @@ type AnnouncementData = {
   description: string;
   priority: number;
   visibilityType: string;
-  posted_to: PostedTo;
+  posted_to: PostedTo | null;
   expiresAt: string;
   postedBy: {
     _id: string;
@@ -104,7 +104,7 @@ const AnnouncementDetailComponent = ({ id }: { id: string }) => {
         description: data.description,
         priority: data.priority,
         visibilityType: data.visibilityType,
-        postedToModel: data.posted_to?.model || "General",
+        postedToModel: data.posted_to?.model || null,
         postedToId: data.posted_to?.id?._id || null,
         expiresAt: new Date(data.expiresAt),
       });
@@ -120,10 +120,12 @@ const AnnouncementDetailComponent = ({ id }: { id: string }) => {
           description: formData.description,
           priority: formData.priority,
           visibilityType: formData.visibilityType,
-          posted_to: {
-            model: formData.postedToModel,
-            id: formData.postedToId,
-          },
+          ...(formData.visibilityType !== "General" && {
+            posted_to: {
+              model: formData.postedToModel,
+              id: formData.postedToId,
+            },
+          }),
           expiresAt: formData.expiresAt.toISOString(),
         },
       });
@@ -232,9 +234,9 @@ const AnnouncementDetailComponent = ({ id }: { id: string }) => {
               }
               style={styles.picker}
             >
-              <Picker.Item label="High (3)" value={3} />
-              <Picker.Item label="Normal (2)" value={2} />
-              <Picker.Item label="Low (1)" value={1} />
+              <Picker.Item label="High" value={3} />
+              <Picker.Item label="Normal" value={2} />
+              <Picker.Item label="Low" value={1} />
             </Picker>
           </View>
 
