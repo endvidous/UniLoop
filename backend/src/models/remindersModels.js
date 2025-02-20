@@ -25,9 +25,9 @@ const remindersSchema = new Schema({
       },
       priority: {
         type: Number, // 0=Low, 1=Normal, 2=High
-        min: 0,
-        max: 2,
-        default: 1,
+        min: 1,
+        max: 3,
+        default: 2,
         index: true,
       },
       remind_at: [

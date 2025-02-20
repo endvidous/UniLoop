@@ -71,6 +71,10 @@ const courseSchema = new Schema({
     type: String,
     required: true,
   },
+  code: {
+    type: String,
+    required: true,
+  },
   type: {
     type: String,
     enum: ["UG", "PG"],
@@ -92,6 +96,9 @@ const batchSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "Courses",
     required: true,
+  },
+  code: {
+    type: String,
   },
   startYear: {
     type: Number,
@@ -163,6 +170,7 @@ const batchSchema = new Schema({
     default: "active",
   },
 });
+
 batchSchema.index({ course: 1, startYear: 1 }); // Common query pattern
 batchSchema.index({ currentSemester: 1 }); // For semester-based queries
 batchSchema.index({ status: 1 }); // For active/completed filtering
@@ -233,6 +241,26 @@ batchSchema.pre("save", async function (next) {
     next(err);
   }
 });
+batchSchema.pre('save', async function (next) {
+  // Only generate a code if it’s not already set.
+  if (!this.code) {
+    try {
+      // Fetch the related course's code.
+      const course = await mongoose.model('Courses').findById(this.course).select('code');
+      if (!course) {
+        return next(new Error('Referenced course not found'));
+      }
+      // Generate the batch code based on course code and startYear.
+      this.code = `${course.code}-${this.startYear}`;
+      next();
+    } catch (err) {
+      next(err);
+    }
+  } else {
+    next();
+  }
+});
+
 
 // Semester Schema (connects subjects, teachers, and batches)
 const semesterSchema = new Schema({

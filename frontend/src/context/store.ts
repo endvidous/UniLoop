@@ -22,6 +22,7 @@ interface AppState extends AuthState, ThemeState {
 
   // Theme Actions
   setTheme: (theme: "light" | "dark") => void;
+  toggleTheme: () => void;
 
   // Utility
   isAuthenticated: () => boolean;
@@ -79,6 +80,12 @@ export const useStore = create<AppState>((set, get) => ({
   setTheme: (theme) => {
     appStorage.setTheme(theme);
     set({ theme });
+  },
+
+  toggleTheme: () => {
+    const newTheme = get().theme === "light" ? "dark" : "light";
+    appStorage.setTheme(newTheme);
+    set({ theme: newTheme });
   },
 
   // Utility

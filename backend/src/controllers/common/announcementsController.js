@@ -29,14 +29,15 @@ export const canCreateAnnouncement = async (req, res, next) => {
 
 export const announcementFilterValidator = (req, res, next) => {
   const validFilters = [
-    "priority",
     "department",
     "course",
     "batch",
     "search",
+    "priority",
     "sort",
     "page",
     "limit",
+    "visibilityType",
   ];
   const validSorts = ["newest", "priority", "urgent"];
 
@@ -81,7 +82,6 @@ export const announcementFilterValidator = (req, res, next) => {
 export const getOneAnnouncement = async (req, res) => {
   try {
     const { announcementId } = req.params;
-
     // Find the announcement and populate necessary fields
     const announcement = await Announcements.findById(announcementId)
       .populate("postedBy", "name role")
@@ -102,30 +102,30 @@ export const getOneAnnouncement = async (req, res) => {
 
 export const getAnnouncements = async (req, res) => {
   try {
-    const priorityMap = { High: 3, Normal: 2, Low: 1 };
+    console.log("Reached here");
     const sortOptions = {
       newest: "-createdAt",
       priority: { priority: -1 },
       urgent: { priority: -1, createdAt: -1 },
     };
-
+    console.log(req.query);
     const page = parseInt(req.query.page) || 1;
     const limit = Math.min(parseInt(req.query.limit) || 20, 100);
     const skip = (page - 1) * limit;
 
     const baseQuery = await buildAnnouncementQuery(req.user);
     const filters = {
-      priority: req.query.priority?.split(","),
+      priority: req.query.priority,
       department: req.query.department,
       course: req.query.course,
       batch: req.query.batch,
       search: req.query.search,
+      visibilityType: req.query.visibilityType,
     };
 
-    const numericPriorities = filters.priority?.map((p) => priorityMap[p]);
     const finalQuery = {
       ...baseQuery,
-      ...(numericPriorities && { priority: { $in: numericPriorities } }),
+      ...(filters.priority && { priority: { $in: filters.priority } }),
       ...(filters.department && { "posted_to.id": filters.department }),
       ...(filters.batch && { "posted_to.id": filters.batch }),
       ...(filters.course && { "posted_to.id": filters.course }),
@@ -161,6 +161,7 @@ export const getAnnouncements = async (req, res) => {
       totalPages,
     });
   } catch (err) {
+    console.log(err.message);
     res
       .status(500)
       .json({ message: "Error retrieving announcements", error: err.message });
