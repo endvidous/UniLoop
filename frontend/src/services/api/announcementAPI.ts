@@ -5,11 +5,17 @@ interface CreateAnnouncementData {
   description: string;
   priority: number;
   visibilityType: string;
+  postedBy: string;
   posted_to?: {
     model: string;
     id: string;
   };
   expiresAt: Date;
+  attachments: Array<{
+    name: string;
+    key: string;
+    type: string;
+  }>;
 }
 
 interface UpdateAnnouncementData {
@@ -50,9 +56,7 @@ export const announcementsService = {
   },
 
   // Create announcement
-  createAnnouncement: async (
-    data: CreateAnnouncementData & { attachments?: string[] }
-  ) => {
+  createAnnouncement: async (data: CreateAnnouncementData) => {
     const response = await axiosInstance.post("/announcements", data);
     return response.data;
   },

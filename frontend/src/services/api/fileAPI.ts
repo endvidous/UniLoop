@@ -1,77 +1,83 @@
-// service/api/fileUpload.ts
-import { AxiosResponse } from "axios";
+// fileAPI.ts
+import axios, { AxiosResponse } from "axios";
 import axiosInstance from "./axiosConfig";
 import { Platform } from "react-native";
 import { SelectedFile } from "@/src/utils/filePicker";
 
 interface PresignedPostResponse {
   url: string;
-  fields: {
-    [key: string]: string;
-  };
+  fields: Record<string, string>;
   key: string;
 }
 
-/**
- * Universal file upload function.
- * Accepts a file object that always has { uri, name, type }.
- * On web, converts the URI to a Blob before appending.
- */
-export const uploadFile = async (
-  file: SelectedFile
-): Promise<string | undefined> => {
+interface FileListResponse {
+  files: Array<{
+    Key: string;
+    LastModified: string;
+    Size: number;
+  }>;
+  nextToken?: string;
+}
+
+export const uploadFile = async (file: SelectedFile): Promise<string> => {
   try {
-    // Request presigned URL and fields from backend
-    const response: AxiosResponse<PresignedPostResponse> =
-      await axiosInstance.post("/api/files/upload-url", {
-        fileType: file.type,
-      });
-    const presignedData = response.data;
+    // Get presigned URL from backend
+    const { data } = await axiosInstance.post<PresignedPostResponse>(
+      "/files/upload-url",
+      { fileType: file.type }
+    );
 
     const formData = new FormData();
-    Object.entries(presignedData.fields).forEach(([key, value]) => {
+    Object.entries(data.fields).forEach(([key, value]) => {
       formData.append(key, value);
     });
 
+    // Handle file differently for web vs native
     if (Platform.OS === "web") {
-      //Fetch the file's binary data as a Blob if website
       const blob = await fetch(file.uri).then((r) => r.blob());
-      // Option 1: Append the blob directly with a filename
+      // Explicitly set Content-Type for web
       formData.append("file", blob, file.name);
     } else {
-      // Simply pass the file object
+      // For native platforms
       formData.append("file", {
         uri: file.uri,
         name: file.name,
         type: file.type,
+        size: file.size,
       } as any);
     }
 
-    const s3Response = await axiosInstance.post(presignedData.url, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
+    // Upload to S3
+    await axios.post(data.url, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
     });
 
-    if (s3Response.status === 204) {
-      return presignedData.key;
-    } else {
-      console.warn("Unexpected response from S3:", s3Response);
-    }
-  } catch (error) {
-    console.error("Error during file upload:", error);
-    throw error;
+    return data.key;
+  } catch (error: any) {
+    throw new Error("File upload failed");
   }
 };
 
-// Delete a file from S3 by calling your backend's delete endpoint.
+export const deleteFile = async (fileKey: string): Promise<void> => {
+  await axiosInstance.delete(`/files`, { params: fileKey });
+};
 
-export const deleteFile = async (fileKey: string): Promise<any> => {
-  try {
-    const response = await axiosInstance.delete("/api/files/delete", {
-      data: { fileKey },
-    });
-    return response.data;
-  } catch (error) {
-    console.error("Error deleting file:", error);
-    throw error;
-  }
+export const bulkDeleteFiles = async (keys: string[]): Promise<void> => {
+  await axiosInstance.delete("/files", { data: { keys } });
+};
+
+export const getDownloadUrl = async (fileKey: string): Promise<string> => {
+  console.log(fileKey);
+  const { data } = await axiosInstance.get<{ url: string }>(
+    `/files/download-url`,
+    { params: { fileKey } }
+  );
+  return data.url;
+};
+
+export const listFiles = async (): Promise<FileListResponse> => {
+  const { data } = await axiosInstance.get<FileListResponse>("/files");
+  return data;
 };

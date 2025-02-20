@@ -1,6 +1,24 @@
 import mongoose from "mongoose";
 const Schema = mongoose.Schema;
 
+const attachmentSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+    },
+    key: {
+      type: String,
+      required: true,
+    },
+    type: {
+      type: String,
+      required: true,
+    },
+  },
+  { _id: false }
+);
+
 //Annoucements schema
 const announcementsSchema = new Schema(
   {
@@ -51,13 +69,7 @@ const announcementsSchema = new Schema(
       ),
     },
     expiresAt: Date,
-    attachments: [
-      {
-        name: String,
-        key: String,
-        type: String,
-      },
-    ],
+    attachments: [attachmentSchema],
   },
   {
     timestamps: true, // Adds createdAt and updatedAt fields
@@ -65,10 +77,9 @@ const announcementsSchema = new Schema(
 );
 
 // Limit attachments to a maximum of 3
-announcementsSchema.path('attachments').validate(function (value) {
+announcementsSchema.path("attachments").validate(function (value) {
   return !value || value.length <= 3;
-}, 'A maximum of 3 attachments is allowed.');
-
+}, "A maximum of 3 attachments is allowed.");
 
 announcementsSchema.index({ title: "text", description: "text" }); //For search performance
 announcementsSchema.index({ visibilityType: 1, "posted_to.model": 1 });
