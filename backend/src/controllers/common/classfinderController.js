@@ -33,24 +33,87 @@ export const canCreateClassroomBookings = async (req, res, next) => {
 //Get a single classroom
 export const getClassroomById = async (req, res) => {
   const { classroomId } = req.params;
+  const { date } = req.query; // optional: user can specify a date to check
 
   try {
     const classroom = await Classroom.findById(classroomId);
-
     if (!classroom) {
       return res.status(404).json({ message: "Classroom not found." });
     }
 
-    // Convert document to a plain object
+    // Convert document to plain object
     const classroomObj = classroom.toObject();
-    // Remove the availability field
+
+    // Determine date range for booking checks
+    let startDate, endDate;
+    if (date) {
+      // Use the provided date (from start to end of day)
+      startDate = new Date(date);
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date(date);
+      endDate.setHours(23, 59, 59, 999);
+    } else {
+      // Compute the current week's start and end (assuming week starts on Sunday)
+      const today = new Date();
+      const dayOfWeek = today.getDay(); // 0 (Sun) to 6 (Sat)
+      startDate = new Date(today);
+      startDate.setDate(today.getDate() - dayOfWeek);
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date(startDate);
+      endDate.setDate(startDate.getDate() + 6);
+      endDate.setHours(23, 59, 59, 999);
+    }
+
+    // Retrieve all approved bookings for this classroom within the date range
+    const bookings = await ClassroomBooking.find({
+      classroom: classroomId,
+      date: { $gte: startDate, $lte: endDate },
+      status: "approved",
+    });
+
+    // Group bookings by weekday for easier lookup
+    const bookingsByWeekday = {};
+    bookings.forEach((booking) => {
+      const bookingDate = new Date(booking.date);
+      const weekday = bookingDate.getDay();
+      if (!bookingsByWeekday[weekday]) {
+        bookingsByWeekday[weekday] = [];
+      }
+      bookingsByWeekday[weekday].push(booking);
+    });
+
+    // Update each day's slots in formattedAvailability based on bookings
+    if (classroomObj.formattedAvailability) {
+      classroomObj.formattedAvailability =
+        classroomObj.formattedAvailability.map((dayAvailability) => {
+          const weekday = dayAvailability.weekday;
+          const relevantBookings = bookingsByWeekday[weekday] || [];
+          const updatedSlots = dayAvailability.slots.map((slot) => {
+            // Convert formatted time strings back to minutes
+            const slotStart = parseTime(slot.startTime);
+            const slotEnd = parseTime(slot.endTime);
+            let isOccupied = false;
+            // Check for overlapping bookings
+            for (let booking of relevantBookings) {
+              if (booking.startTime < slotEnd && booking.endTime > slotStart) {
+                isOccupied = true;
+                break;
+              }
+            }
+            return { ...slot, occupied: isOccupied };
+          });
+          return { ...dayAvailability, slots: updatedSlots };
+        });
+    }
+
     delete classroomObj.availability;
 
     res.status(200).json({ classroom: classroomObj });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error retrieving classroom", error: error.message });
+    res.status(500).json({
+      message: "Error retrieving classroom",
+      error: error.message,
+    });
   }
 };
 
