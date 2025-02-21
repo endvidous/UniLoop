@@ -30,6 +30,15 @@ const TabLayout = () => {
         }}
       />
       <Tabs.Screen
+        name="Discussions"
+        options={{
+          title: "Discussions",
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons size={28} name="chat" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="Settings"
         options={{
           title: "Settings",

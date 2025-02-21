@@ -1,3 +1,4 @@
+import { DiscussionsResponse } from "@/src/utils/interfaces";
 import axiosInstance from "./axiosConfig";
 
 interface CreateDiscussionData {
@@ -21,18 +22,9 @@ interface UpdateDiscussionData {
 }
 
 export const discussionsService = {
-  getDiscussions: async (filters?: {
-    department?: string;
-    course?: string;
-    batch?: string;
-    search?: string;
-    sort?: string;
-    page?: number;
-    limit?: number;
-  }) => {
-    const response = await axiosInstance.get("/discussions", {
-      params: filters,
-    });
+  getDiscussions: async (params: any): Promise<DiscussionsResponse> => {
+    const response = await axiosInstance.get("/discussions", { params });
+    console.log(response);
     return response.data;
   },
 
@@ -68,9 +60,26 @@ export const discussionsService = {
     return response.data;
   },
 
+  downvoteDiscussion: async (id: string) => {
+    const response = await axiosInstance.post(`/discussions/${id}/downvote`);
+    return response.data;
+  },
+
   addComment: async (discussionId: string, content: string) => {
     const response = await axiosInstance.post(
       `/discussions/${discussionId}/comments`,
+      { content }
+    );
+    return response.data;
+  },
+
+  updateComment: async (
+    discussionId: string,
+    commentId: string,
+    content: string
+  ) => {
+    const response = await axiosInstance.patch(
+      `/discussions/${discussionId}/comments/${commentId}`,
       { content }
     );
     return response.data;
@@ -91,6 +100,13 @@ export const discussionsService = {
   upvoteComment: async (discussionId: string, commentId: string) => {
     const response = await axiosInstance.post(
       `/discussions/${discussionId}/comments/${commentId}/upvote`
+    );
+    return response.data;
+  },
+
+  downvoteComment: async (discussionId: string, commentId: string) => {
+    const response = await axiosInstance.post(
+      `/discussions/${discussionId}/comments/${commentId}/downvote`
     );
     return response.data;
   },

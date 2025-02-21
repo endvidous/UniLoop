@@ -61,7 +61,14 @@ const discussionSchema = new Schema(
         ref: "User",
       },
     ],
-    //add downvotes?
+    upvotesCount: { type: Number, default: 0 },
+    downvotes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    downvotesCount: { type: Number, default: 0 },
     isClosed: {
       type: Boolean,
       default: false,
@@ -89,6 +96,14 @@ const discussionSchema = new Schema(
             ref: "User",
           },
         ],
+        upvotesCount: { type: Number, default: 0 },
+        downvotes: [
+          {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+          },
+        ],
+        downvotesCount: { type: Number, default: 0 },
         reports: [
           {
             reportedBy: mongoose.Schema.Types.ObjectId,

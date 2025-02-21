@@ -79,6 +79,7 @@ const AnnouncementsPage = () => {
         filters={filters}
         setFilters={setFilters}
         placeholder="Search announcements..."
+        configType="Announcements"
       />
       <FlatList
         data={data?.announcements || []}

@@ -12,6 +12,7 @@ export const discussionFilterValidator = (req, res, next) => {
     "department",
     "course",
     "batch",
+    "visibilityType",
     "search",
     "sort",
     "page",
@@ -61,12 +62,12 @@ const getSortOption = (sort, hasSearch) => {
   if (hasSearch) return { score: { $meta: "textScore" } };
 
   const sortOptions = {
-    newest: "-createdAt",
-    popular: { upvotes: -1 },
-    controversial: { "comments.reports": -1 },
+    newest: { createdAt: -1 },
+    popular: { upvotesCount: -1 }, // sort by the count of upvotes
+    controversial: { downvotesCount: -1 }, // sort by the count of downvotes
   };
 
-  return sortOptions[sort] || "-createdAt";
+  return sortOptions[sort] || { createdAt: -1 };
 };
 
 //Discussion Controllers
@@ -103,11 +104,22 @@ export const getDiscussions = async (req, res) => {
     const skip = (pageNumber - 1) * limitNumber;
 
     const baseQuery = await buildDiscussionQuery(req.user);
-    const finalQuery = { ...baseQuery };
+    const filters = {
+      department: req.query.department,
+      course: req.query.course,
+      batch: req.query.batch,
+      search: req.query.search,
+      visibilityType: req.query.visibilityType,
+    };
 
-    if (search) {
-      finalQuery.$text = { $search: search };
-    }
+    const finalQuery = {
+      ...baseQuery,
+      ...(filters.visibilityType && { visibilityType: filters.visibilityType }),
+      ...(filters.department && { "posted_to.id": filters.department }),
+      ...(filters.batch && { "posted_to.id": filters.batch }),
+      ...(filters.course && { "posted_to.id": filters.course }),
+      ...(filters.search && { $text: { $search: filters.search } }),
+    };
 
     // Only include the necessary fields for list view
     const projection = {
@@ -116,7 +128,8 @@ export const getDiscussions = async (req, res) => {
       postedBy: 1,
       visibilityType: 1,
       posted_to: 1,
-      upvotes: 1,
+      upvotesCount: 1,
+      downvotesCount: 1,
       isClosed: 1,
     };
 
@@ -131,13 +144,14 @@ export const getDiscussions = async (req, res) => {
       Discussion.countDocuments(finalQuery),
     ]);
 
-    res.json({
+    res.status(200).json({
       discussions,
       total,
       page: pageNumber,
       totalPages: Math.ceil(total / limitNumber),
     });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -271,7 +285,6 @@ export const upvoteDiscussion = async (req, res) => {
     const { discussionId } = req.params;
     const userId = req.user._id;
 
-    // Get the discussion
     const discussion = await Discussion.findById(discussionId);
     if (!discussion) {
       return res.status(404).json({ message: "Discussion not found" });
@@ -279,19 +292,76 @@ export const upvoteDiscussion = async (req, res) => {
 
     let updated;
     if (discussion.upvotes.includes(userId)) {
-      // If user has already upvoted, remove their vote
+      // Toggle off: remove upvote and decrement count
       updated = await Discussion.findByIdAndUpdate(
         discussionId,
-        { $pull: { upvotes: userId } },
+        {
+          $pull: { upvotes: userId },
+          $inc: { upvotesCount: -1 },
+        },
         { new: true }
       );
     } else {
-      // Otherwise, add the user's upvote
+      // Toggle on: add upvote and increment count
+      let updateQuery = {
+        $addToSet: { upvotes: userId },
+        $inc: { upvotesCount: 1 },
+      };
+
+      // If a downvote exists, remove it and decrement downvotesCount
+      if (discussion.downvotes.includes(userId)) {
+        updateQuery.$pull = { downvotes: userId };
+        updateQuery.$inc.downvotesCount = -1;
+      }
+
+      updated = await Discussion.findByIdAndUpdate(discussionId, updateQuery, {
+        new: true,
+      });
+    }
+
+    res.json(updated);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+export const downvoteDiscussion = async (req, res) => {
+  try {
+    const { discussionId } = req.params;
+    const userId = req.user._id;
+
+    const discussion = await Discussion.findById(discussionId);
+    if (!discussion) {
+      return res.status(404).json({ message: "Discussion not found" });
+    }
+
+    let updated;
+    if (discussion.downvotes.includes(userId)) {
+      // Toggle off: remove downvote and decrement count
       updated = await Discussion.findByIdAndUpdate(
         discussionId,
-        { $addToSet: { upvotes: userId } },
+        {
+          $pull: { downvotes: userId },
+          $inc: { downvotesCount: -1 },
+        },
         { new: true }
       );
+    } else {
+      // Toggle on: add downvote and increment count
+      let updateQuery = {
+        $addToSet: { downvotes: userId },
+        $inc: { downvotesCount: 1 },
+      };
+
+      // If an upvote exists, remove it and decrement upvotesCount
+      if (discussion.upvotes.includes(userId)) {
+        updateQuery.$pull = { upvotes: userId };
+        updateQuery.$inc.upvotesCount = -1;
+      }
+
+      updated = await Discussion.findByIdAndUpdate(discussionId, updateQuery, {
+        new: true,
+      });
     }
 
     res.json(updated);
@@ -459,13 +529,11 @@ export const upvoteComment = async (req, res) => {
     const { discussionId, commentId } = req.params;
     const userId = req.user._id;
 
-    // Retrieve the discussion
     const discussion = await Discussion.findById(discussionId);
     if (!discussion) {
       return res.status(404).json({ message: "Discussion not found" });
     }
 
-    // Locate the comment by its ID (using Mongoose subdocument helper)
     const comment = discussion.comments.id(commentId);
     if (!comment) {
       return res.status(404).json({ message: "Comment not found" });
@@ -473,17 +541,85 @@ export const upvoteComment = async (req, res) => {
 
     let updated;
     if (comment.upvotes.includes(userId)) {
-      // Remove vote if already upvoted
+      // Toggle off: remove upvote and decrement count
       updated = await Discussion.findOneAndUpdate(
         { _id: discussionId, "comments._id": commentId },
-        { $pull: { "comments.$.upvotes": userId } },
+        {
+          $pull: { "comments.$.upvotes": userId },
+          $inc: { "comments.$.upvotesCount": -1 },
+        },
         { new: true }
       );
     } else {
-      // Otherwise, add the upvote
+      // Toggle on: add upvote and increment count
+      let updateQuery = {
+        $addToSet: { "comments.$.upvotes": userId },
+        $inc: { "comments.$.upvotesCount": 1 },
+      };
+
+      // Remove downvote if exists
+      if (comment.downvotes.includes(userId)) {
+        updateQuery.$pull = { "comments.$.downvotes": userId };
+        updateQuery.$inc["comments.$.downvotesCount"] = -1;
+      }
+
       updated = await Discussion.findOneAndUpdate(
         { _id: discussionId, "comments._id": commentId },
-        { $addToSet: { "comments.$.upvotes": userId } },
+        updateQuery,
+        { new: true }
+      );
+    }
+
+    res.json(updated);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+export const downvoteComment = async (req, res) => {
+  try {
+    const { discussionId, commentId } = req.params;
+    const userId = req.user._id;
+
+    // Retrieve the discussion
+    const discussion = await Discussion.findById(discussionId);
+    if (!discussion) {
+      return res.status(404).json({ message: "Discussion not found" });
+    }
+
+    // Locate the comment using Mongoose subdocument helper
+    const comment = discussion.comments.id(commentId);
+    if (!comment) {
+      return res.status(404).json({ message: "Comment not found" });
+    }
+
+    let updated;
+    if (comment.downvotes.includes(userId)) {
+      // Toggle off: remove upvote and decrement count
+      updated = await Discussion.findOneAndUpdate(
+        { _id: discussionId, "comments._id": commentId },
+        {
+          $pull: { "comments.$.downvotes": userId },
+          $inc: { "comments.$.downvotesCount": -1 },
+        },
+        { new: true }
+      );
+    } else {
+      // Toggle on: add upvote and increment count
+      let updateQuery = {
+        $addToSet: { "comments.$.downvotes": userId },
+        $inc: { "comments.$.downvotesCount": 1 },
+      };
+
+      // Remove downvote if exists
+      if (comment.upvotes.includes(userId)) {
+        updateQuery.$pull = { "comments.$.upvotes": userId };
+        updateQuery.$inc["comments.$.upvotesCount"] = -1;
+      }
+
+      updated = await Discussion.findOneAndUpdate(
+        { _id: discussionId, "comments._id": commentId },
+        updateQuery,
         { new: true }
       );
     }

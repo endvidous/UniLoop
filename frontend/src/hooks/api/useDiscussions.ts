@@ -1,14 +1,25 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+} from "@tanstack/react-query";
 import { discussionsService } from "@/src/services/api/discussionAPI";
 import { queryKeys } from "../../services/api/queryKeys";
-import { useAuth } from "@/src/context/AuthContext";
-
-const { user } = useAuth();
+import { User } from "@/src/utils/interfaces";
 
 export const useDiscussions = (filters = {}) => {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: queryKeys.discussions.list(filters),
-    queryFn: () => discussionsService.getDiscussions(filters),
+    queryFn: ({ pageParam = 1 }) =>
+      discussionsService.getDiscussions({ ...filters, page: pageParam }),
+    getNextPageParam: (lastPage) => {
+      if (lastPage.page < lastPage.totalPages) {
+        return lastPage.page + 1;
+      }
+      return undefined;
+    },
+    initialPageParam: 1,
   });
 };
 
@@ -65,7 +76,7 @@ export const useReportDiscussion = () => {
   });
 };
 
-export const useUpvoteDiscussion = () => {
+export const useUpvoteDiscussion = (user: User | null) => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -76,21 +87,21 @@ export const useUpvoteDiscussion = () => {
         queryKey: queryKeys.discussions.detail(id),
       });
 
-      // Snapshot of the previous value.
+      // Snapshot the previous discussion data.
       const previousDiscussion = queryClient.getQueryData(
         queryKeys.discussions.detail(id)
       );
 
-      // Optimistically update the discussion data.
+      // Optimistically update the upvotes.
       queryClient.setQueryData(queryKeys.discussions.detail(id), (old: any) => {
         if (!old) return old;
-        const userId = user?.id; // Replace with the actual user id
+        const userId = user?.id;
         let newUpvotes;
         if (old.upvotes.includes(userId)) {
-          // Remove the vote
+          // Toggle off: remove the upvote.
           newUpvotes = old.upvotes.filter((id: string) => id !== userId);
         } else {
-          // Add the vote
+          // Toggle on: add the upvote.
           newUpvotes = [...old.upvotes, userId];
         }
         return { ...old, upvotes: newUpvotes };
@@ -108,7 +119,49 @@ export const useUpvoteDiscussion = () => {
     onSettled: (data, error, id) => {
       // Invalidate to ensure fresh data.
       queryClient.invalidateQueries({
+        queryKey: queryKeys.discussions.all,
+      });
+    },
+  });
+};
+
+export const useDownvoteDiscussion = (user: User | null) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => discussionsService.downvoteDiscussion(id),
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({
         queryKey: queryKeys.discussions.detail(id),
+      });
+      const previousDiscussion = queryClient.getQueryData(
+        queryKeys.discussions.detail(id)
+      );
+      // Optimistically update the downvotes.
+      queryClient.setQueryData(queryKeys.discussions.detail(id), (old: any) => {
+        if (!old) return old;
+        const userId = user?.id;
+        let newDownvotes;
+        if (old.downvotes.includes(userId)) {
+          // Toggle off: remove the downvote.
+          newDownvotes = old.downvotes.filter((id: string) => id !== userId);
+        } else {
+          // Toggle on: add the downvote.
+          newDownvotes = [...old.downvotes, userId];
+        }
+        return { ...old, downvotes: newDownvotes };
+      });
+      return { previousDiscussion };
+    },
+    onError: (err, id, context) => {
+      queryClient.setQueryData(
+        queryKeys.discussions.detail(id),
+        context?.previousDiscussion
+      );
+    },
+    onSettled: (data, error, id) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.discussions.all,
       });
     },
   });
@@ -133,6 +186,27 @@ export const useAddComment = () => {
   });
 };
 
+export const useUpdateComment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      discussionId,
+      commentId,
+      content,
+    }: {
+      discussionId: string;
+      commentId: string;
+      content: string;
+    }) => discussionsService.updateComment(discussionId, commentId, content),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.discussions.detail(variables.discussionId),
+      });
+    },
+  });
+};
+
 export const useReportComment = () => {
   return useMutation({
     mutationFn: ({
@@ -147,7 +221,7 @@ export const useReportComment = () => {
   });
 };
 
-export const useUpvoteComment = () => {
+export const useUpvoteComment = (user: User) => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -163,21 +237,74 @@ export const useUpvoteComment = () => {
       await queryClient.cancelQueries({ queryKey });
       const previousDiscussion = queryClient.getQueryData(queryKey);
 
-      // Optimistically update the comment's upvotes.
+      // Optimistically update the comment upvotes.
       queryClient.setQueryData(queryKey, (old: any) => {
         if (!old) return old;
-        const userId = "optimistic-user-id"; // Replace with actual user id
+        const userId = user?.id;
         const newComments = old.comments.map((comment: any) => {
           if (comment._id === commentId) {
             let newUpvotes;
             if (comment.upvotes.includes(userId)) {
               newUpvotes = comment.upvotes.filter(
-                (id: string) => id !== userId
+                (uid: string) => uid !== userId
               );
             } else {
               newUpvotes = [...comment.upvotes, userId];
             }
             return { ...comment, upvotes: newUpvotes };
+          }
+          return comment;
+        });
+        return { ...old, comments: newComments };
+      });
+
+      return { previousDiscussion };
+    },
+    onError: (err, variables, context) => {
+      queryClient.setQueryData(
+        queryKeys.discussions.detail(variables.discussionId),
+        context?.previousDiscussion
+      );
+    },
+    onSettled: (data, error, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.discussions.detail(variables.discussionId),
+      });
+    },
+  });
+};
+
+export const useDownvoteComment = (user: User) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      discussionId,
+      commentId,
+    }: {
+      discussionId: string;
+      commentId: string;
+    }) => discussionsService.downvoteComment(discussionId, commentId),
+    onMutate: async ({ discussionId, commentId }) => {
+      const queryKey = queryKeys.discussions.detail(discussionId);
+      await queryClient.cancelQueries({ queryKey });
+      const previousDiscussion = queryClient.getQueryData(queryKey);
+
+      // Optimistically update the comment downvotes.
+      queryClient.setQueryData(queryKey, (old: any) => {
+        if (!old) return old;
+        const userId = user?.id;
+        const newComments = old.comments.map((comment: any) => {
+          if (comment._id === commentId) {
+            let newDownvotes;
+            if (comment.downvotes.includes(userId)) {
+              newDownvotes = comment.downvotes.filter(
+                (uid: string) => uid !== userId
+              );
+            } else {
+              newDownvotes = [...comment.downvotes, userId];
+            }
+            return { ...comment, downvotes: newDownvotes };
           }
           return comment;
         });

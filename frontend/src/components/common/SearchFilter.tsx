@@ -11,12 +11,14 @@ type SearchFilterHeaderProps = {
   filters: FilterState;
   setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
   placeholder?: string;
+  configType: string;
 };
 
 const SearchFilterHeader = ({
   filters,
   setFilters,
   placeholder = "Search...",
+  configType,
 }: SearchFilterHeaderProps) => {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState(filters.search);
@@ -47,6 +49,27 @@ const SearchFilterHeader = ({
     setSearchQuery(filters.search);
   }, [filters.search]);
 
+  const DiscussionConfig = {
+    includePriority: false, // Hide priority for discussions
+    sortOptions: [
+      { label: "Newest", value: "newest" },
+      { label: "Popular", value: "popular" },
+      { label: "Controversial", value: "controversial" },
+    ],
+  };
+
+  const AnnouncementConfig = {
+    includePriority: true,
+    sortOptions: [
+      { label: "Newest", value: "newest" },
+      { label: "Priority", value: "priority" },
+      { label: "Urgent", value: "urgent" },
+    ],
+  };
+
+  const config =
+    "Announcements" === configType ? AnnouncementConfig : DiscussionConfig;
+
   return (
     <View style={styles.container}>
       <TextInput
@@ -69,6 +92,7 @@ const SearchFilterHeader = ({
         onClose={() => setShowFilterModal(false)}
         filters={filters}
         setFilters={setFilters}
+        config={config}
       />
     </View>
   );

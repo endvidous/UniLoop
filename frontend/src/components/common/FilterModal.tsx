@@ -22,9 +22,15 @@ export type FilterState = {
   course: string;
   batch: string;
   search: string;
-  priority: number[];
-  sort: "newest" | "priority" | "urgent";
+  priority: number[]; // For announcements; will be ignored for discussions
+  sort: string;       // Now a generic string value
   visibilityType: "General" | "Department" | "Batch" | "Course" | "";
+};
+
+export type FilterConfig = {
+  includePriority?: boolean;
+  sortOptions: { label: string; value: string }[];
+  // Optionally add flags to hide/show other fields if needed.
 };
 
 type FilterModalProps = {
@@ -32,6 +38,7 @@ type FilterModalProps = {
   onClose: () => void;
   filters: FilterState;
   setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
+  config: FilterConfig;
 };
 
 const FilterModal = ({
@@ -39,16 +46,15 @@ const FilterModal = ({
   onClose,
   filters,
   setFilters,
+  config,
 }: FilterModalProps) => {
   const { data: associations, isLoading, isError } = useUserAssociations();
   const departments = associations?.departments || [];
   const courses = associations?.courses || [];
   const batches = associations?.batches || [];
 
-  // Add local state to track temporary filter changes
   const [tempFilters, setTempFilters] = useState<FilterState>(filters);
 
-  // Update temp filters when the modal becomes visible
   useEffect(() => {
     if (visible) {
       setTempFilters(filters);
@@ -74,9 +80,9 @@ const FilterModal = ({
       department: "",
       course: "",
       batch: "",
-      search: filters.search, // Preserve search
+      search: filters.search, // Preserve search if needed
       priority: [],
-      sort: "newest",
+      sort: config.sortOptions[0]?.value || "newest",
       visibilityType: "",
     };
     setTempFilters(resetFilters);
@@ -92,29 +98,31 @@ const FilterModal = ({
             <View style={styles.modalContent}>
               {isLoading && <ActivityIndicator size="large" />}
               <ScrollView>
-                {/* Priority Filter */}
-                <View style={styles.filterGroup}>
-                  <Text style={styles.filterLabel}>Priority</Text>
-                  <View style={styles.checkboxContainer}>
-                    {[1, 2, 3].map((priority) => (
-                      <View key={priority} style={styles.checkboxWrapper}>
-                        <Checkbox.Android
-                          status={
-                            tempFilters.priority.includes(priority)
-                              ? "checked"
-                              : "unchecked"
-                          }
-                          onPress={() => handlePriorityChange(priority)}
-                          color="#007BFF"
-                        />
-                        <Text style={styles.checkboxLabel}>
-                          {["Low", "Normal", "High"][priority - 1]}
-                        </Text>
-                      </View>
-                    ))}
+                {/* Only show Priority filter if configured */}
+                {config.includePriority && (
+                  <View style={styles.filterGroup}>
+                    <Text style={styles.filterLabel}>Priority</Text>
+                    <View style={styles.checkboxContainer}>
+                      {[1, 2, 3].map((priority) => (
+                        <View key={priority} style={styles.checkboxWrapper}>
+                          <Checkbox.Android
+                            status={
+                              tempFilters.priority.includes(priority)
+                                ? "checked"
+                                : "unchecked"
+                            }
+                            onPress={() => handlePriorityChange(priority)}
+                            color="#007BFF"
+                          />
+                          <Text style={styles.checkboxLabel}>
+                            {["Low", "Normal", "High"][priority - 1]}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
                   </View>
-                </View>
-                {/* Sort By */}
+                )}
+                {/* Sort By using config-provided options */}
                 <View style={styles.filterGroup}>
                   <Text style={styles.filterLabel}>Sort By</Text>
                   <Picker
@@ -124,9 +132,13 @@ const FilterModal = ({
                     }
                     style={styles.picker}
                   >
-                    <Picker.Item label="Newest First" value="newest" />
-                    <Picker.Item label="Priority" value="priority" />
-                    <Picker.Item label="Urgent First" value="urgent" />
+                    {config.sortOptions.map((option) => (
+                      <Picker.Item
+                        key={option.value}
+                        label={option.label}
+                        value={option.value}
+                      />
+                    ))}
                   </Picker>
                 </View>
                 {/* Visibility Type */}
@@ -253,6 +265,7 @@ const FilterModal = ({
     </Modal>
   );
 };
+
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
@@ -307,15 +320,6 @@ const styles = StyleSheet.create({
     color: "red",
     textAlign: "center",
     marginVertical: 10,
-  },
-  searchInput: {
-    height: 40,
-    borderColor: "#ddd",
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    marginBottom: 16,
-    backgroundColor: "#fff",
   },
   checkboxContainer: {
     flexDirection: "row",
