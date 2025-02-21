@@ -17,13 +17,20 @@ export const login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: "Wrong password" });
 
+    const userResponse = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    };
+    if (user.classrep_of) {
+      userResponse.classrep_of = user.classrep_of;
+    }
+    if (user.mentor_of) {
+      userResponse.mentor_of = user.mentor_of;
+    }
     res.json({
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
+      user: userResponse,
       token: generateToken(user._id),
     });
   } catch (err) {
@@ -77,6 +84,14 @@ export const validateUser = async (req, res) => {
       },
       token: null,
     };
+
+    // Add additional fields if they exist
+    if (user.classrep_of) {
+      responsePayload.user.classrep_of = user.classrep_of;
+    }
+    if (user.mentor_of) {
+      responsePayload.user.mentor_of = user.mentor_of;
+    }
 
     // Refresh logic
     if (tokenExpirationTime - currentTime < refreshThreshold) {

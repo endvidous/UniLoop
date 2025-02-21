@@ -376,6 +376,50 @@ export const addComment = async (req, res) => {
   }
 };
 
+export const updateComment = async (req, res) => {
+  const { discussionId, commentId } = req.params;
+  const { content } = req.body;
+  const user = req.user;
+  try {
+    // Find the discussion by its ID
+    const discussion = await Discussion.findById(discussionId);
+    if (!discussion) {
+      return res.status(404).json({ message: "Discussion not found" });
+    }
+
+    // Check if the discussion is closed
+    if (discussion.isClosed) {
+      return res.status(400).json({ message: "Discussion is closed" });
+    }
+
+    // Find the comment within the discussion's comments array
+    const comment = discussion.comments.id(commentId);
+    if (!comment) {
+      return res.status(404).json({ message: "Comment not found" });
+    }
+
+    if (!comment.postedBy.equals(user._id)) {
+      return res
+        .status(403)
+        .json({ message: "Only the posted user can update a comment" });
+    }
+
+    // Update the comment's content
+    comment.content = content;
+
+    // Save the updated discussion document
+    await discussion.save();
+
+    res.status(200).json({
+      message: "Comment updated successfully",
+    });
+  } catch (error) {
+    res
+      .status(400)
+      .json({ message: "Error while updating comment", error: error.message });
+  }
+};
+
 export const reportComment = async (req, res) => {
   try {
     const { discussionId, commentId } = req.params;
