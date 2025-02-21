@@ -7,7 +7,26 @@ import { checkIfEmpty } from "../../utils/helpers.js";
 import { User } from "../../models/userModels.js";
 import mongoose from "mongoose";
 
-//Teacher controllers
+/*------------------------------Teacher Controllers------------------------------*/
+export const getOneTeacher = async (req, res) => {
+  const { teacherId } = req.params;
+  try {
+    const teacher = await User.findById(teacherId).select(
+      "name email role mentor_of"
+    );
+    if (!teacher) {
+      return res.status(404).json({ message: "No teacher found" });
+    }
+    res
+      .status(200)
+      .json({ message: "Success retrieving the teacher", data: teacher });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Error finding the teacher", error: error.message });
+  }
+};
+
 export const getDepartmentTeachers = async (req, res) => {
   const { departmentId } = req.params;
 
@@ -161,7 +180,70 @@ export const deleteTeacher = async (req, res) => {
   }
 };
 
-//Student Controllers
+/*------------------------------Student Controllers------------------------------*/
+
+//Get one student
+export const getOneStudent = async (req, res) => {
+  const { studentId } = req.params;
+  try {
+    const student = await User.findById(studentId).select(
+      "name email role classrep_of"
+    );
+    if (!student) {
+      return res.status(404).json({ message: "No student found" });
+    }
+    res
+      .status(200)
+      .json({ message: "Success retrieving the student", data: student });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Error finding the student", error: error.message });
+  }
+};
+
+//Get all the students in a batch
+export const getBatchStudents = async (req, res) => {
+  const { batchID } = req.params; // Expecting a single batch ID from the URL
+
+  try {
+    // Validate batch ID format
+    if (!mongoose.Types.ObjectId.isValid(batchID)) {
+      return res.status(400).json({ message: "Invalid batch ID format" });
+    }
+
+    // Find the batch and populate the students
+    const batch = await Batches.findById(batchID).populate({
+      path: "students",
+      select: "name email roll_no", // Select only necessary fields
+      options: { sort: { name: 1 } }, // Sort students by name
+    });
+
+    if (!batch) {
+      return res.status(404).json({ message: "Batch not found" });
+    }
+
+    if (!batch.students || batch.students.length === 0) {
+      return res.status(404).json({
+        message: "No students found in this batch",
+        data: [],
+      });
+    }
+
+    res.status(200).json({
+      message: "Students retrieved successfully",
+      count: batch.students.length,
+      data: batch.students,
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Error retrieving students",
+      error: err.message,
+    });
+  }
+};
+
+//Create students for a batch
 export const createStudents = async (req, res) => {
   const { batchID } = req.params;
   const { students } = req.body;
@@ -208,6 +290,8 @@ export const createStudents = async (req, res) => {
       .json({ message: "Error adding students ", error: err.message });
   }
 };
+
+//Update a student in the batch
 export const updateStudent = async (req, res) => {
   const { batchID } = req.params;
   const { updates } = req.body;
@@ -240,14 +324,16 @@ export const updateStudent = async (req, res) => {
     });
   }
 };
+
+//Delete the student in the batch
 export const deleteStudent = async (req, res) => {
-  const { batchID, studentID } = req.params;
+  const { batchID, studentId } = req.params;
 
   try {
     // Remove student from batch
     const batch = await Batches.findByIdAndUpdate(
       batchID,
-      { $pull: { students: studentID } },
+      { $pull: { students: studentId } },
       { new: true }
     );
 
@@ -256,7 +342,7 @@ export const deleteStudent = async (req, res) => {
     }
 
     // Delete student
-    const deletedStudent = await User.findByIdAndDelete(studentID).select(
+    const deletedStudent = await User.findByIdAndDelete(studentId).select(
       "-password -__v"
     );
 
@@ -271,45 +357,6 @@ export const deleteStudent = async (req, res) => {
   } catch (err) {
     res.status(500).json({
       message: "Error deleting Student",
-      error: err.message,
-    });
-  }
-};
-export const getBatchStudents = async (req, res) => {
-  const { batchID } = req.params; // Expecting a single batch ID from the URL
-
-  try {
-    // Validate batch ID format
-    if (!mongoose.Types.ObjectId.isValid(batchID)) {
-      return res.status(400).json({ message: "Invalid batch ID format" });
-    }
-
-    // Find the batch and populate the students
-    const batch = await Batches.findById(batchID).populate({
-      path: "students",
-      select: "name email roll_no", // Select only necessary fields
-      options: { sort: { name: 1 } }, // Sort students by name
-    });
-
-    if (!batch) {
-      return res.status(404).json({ message: "Batch not found" });
-    }
-
-    if (!batch.students || batch.students.length === 0) {
-      return res.status(404).json({
-        message: "No students found in this batch",
-        data: [],
-      });
-    }
-
-    res.status(200).json({
-      message: "Students retrieved successfully",
-      count: batch.students.length,
-      data: batch.students,
-    });
-  } catch (err) {
-    res.status(500).json({
-      message: "Error retrieving students",
       error: err.message,
     });
   }

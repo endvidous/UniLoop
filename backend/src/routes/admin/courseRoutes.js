@@ -1,20 +1,46 @@
 import express from "express";
+import {
+  // Course Controllers
+  getOneCourse,
+  getCourses,
+  createCourses,
+  editCourse,
+  deleteCourse,
+  // Batch Controllers
+  getOneBatch,
+  getBatches,
+  createBatches,
+  editBatch,
+  deleteBatch,
+  // Semester Controllers
+  getOneSemester,
+  getSemesters,
+  createSemester,
+  editSemester,
+  deleteSemester,
+} from "../../controllers/admin/courseController.js";
 
 const router = express.Router();
 
-import {
-  createCourses,
-  createBatches,
-  createSemester,
-} from "../../controllers/admin/courseController.js";
-
-//Course Operations
+/* ---------------------- COURSE ROUTES ---------------------- */
+router.get("/", getCourses);
+router.get("/:courseId", getOneCourse);
 router.post("/", createCourses);
+router.patch("/:courseId", editCourse);
+router.delete("/:courseId", deleteCourse);
 
-//Batch Operations
+/* ---------------------- BATCH ROUTES ---------------------- */
+router.get("/:courseId/batches", getBatches);
 router.post("/:courseId/batches", createBatches);
+router.get("/batches/:batchId", getOneBatch);
+router.patch("/batches/:batchId", editBatch);
+router.delete("/batches/:batchId", deleteBatch);
 
-//Semester Operations
-router.post("/:courseId/:sem_no/papers", createSemester);
+/* ---------------------- SEMESTER ROUTES ---------------------- */
+router.get("/:courseId/semesters", getSemesters);
+router.get("/semesters/:semesterId", getOneSemester);
+router.post("/:courseId/semesters/:sem_no", createSemester);
+router.patch("/semesters/:semesterId", editSemester);
+router.delete("/:courseId/semesters/:semNo/:semesterId", deleteSemester);
 
 export default router;
