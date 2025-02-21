@@ -7,7 +7,7 @@ import {
 } from "../../models/classroomModels.js";
 import { Batches } from "../../models/courseModels.js";
 
-//Middleware
+/*------------------------------Middleware------------------------------*/
 export const canCreateClassroomBookings = async (req, res, next) => {
   try {
     if (req.user.isAdmin() || req.user.isTeacher()) return next();
@@ -28,25 +28,7 @@ export const canCreateClassroomBookings = async (req, res, next) => {
   }
 };
 
-//Create classrooms(deletes existing classrooms each time)
-export const createBulkClassrooms = async (req, res) => {
-  try {
-    // Delete all existing classrooms
-    await Classroom.deleteMany({});
-
-    // Create new classrooms from the request body
-    const classroomsData = req.body; // Expecting an array of classroom objects
-    await Classroom.insertMany(classroomsData);
-
-    res.status(201).json({
-      message: "Classrooms created successfully.",
-    });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error creating classrooms", error: error.message });
-  }
-};
+/*------------------------------Controllers------------------------------*/
 
 //Get a single classroom
 export const getClassroomById = async (req, res) => {
@@ -59,7 +41,12 @@ export const getClassroomById = async (req, res) => {
       return res.status(404).json({ message: "Classroom not found." });
     }
 
-    res.status(200).json({ classroom });
+    // Convert document to a plain object
+    const classroomObj = classroom.toObject();
+    // Remove the availability field
+    delete classroomObj.availability;
+
+    res.status(200).json({ classroom: classroomObj });
   } catch (error) {
     res
       .status(500)
@@ -155,12 +142,49 @@ export const getAllClassrooms = async (req, res) => {
       }
     });
 
-    res.status(200).json({ classrooms: availableClassrooms });
+    // Transform each classroom so that only the availability for the specified weekday is returned
+    const transformedClassrooms = availableClassrooms.map((classroom) => {
+      // Convert the Mongoose document to a plain object
+      const classroomObj = classroom.toObject();
+
+      //Delete classroom availability
+      delete classroomObj.availability;
+
+      // Filter the raw availability array to only include the current day (or the provided filter day)
+      const formattedAvailability = classroom.formattedAvailability.filter(
+        (day) => day.weekday === dayOfWeek
+      );
+
+      // Overwrite the virtual field with the filtered data
+      return { ...classroomObj, formattedAvailability };
+    });
+
+    res.status(200).json({ classrooms: transformedClassrooms });
   } catch (error) {
     res.status(500).json({
       message: "Error retrieving classrooms",
       error: error.message,
     });
+  }
+};
+
+//Create classrooms(deletes existing classrooms each time)
+export const createBulkClassrooms = async (req, res) => {
+  try {
+    // Delete all existing classrooms
+    await Classroom.deleteMany({});
+
+    // Create new classrooms from the request body
+    const classroomsData = req.body; // Expecting an array of classroom objects
+    await Classroom.insertMany(classroomsData);
+
+    res.status(201).json({
+      message: "Classrooms created successfully.",
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error creating classrooms", error: error.message });
   }
 };
 

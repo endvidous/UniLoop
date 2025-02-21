@@ -100,13 +100,8 @@ classroomSchema.virtual("formattedAvailability").get(function () {
 });
 
 // Include virtuals when converting to JSON and removed availability field only adds the formatted field
-classroomSchema.set("toJSON", {
-  virtuals: true,
-  transform: (doc, ret) => {
-    delete ret.availability;
-    return ret;
-  },
-});
+classroomSchema.set("toJSON", { virtuals: true });
+classroomSchema.set("toObject", { virtuals: true });
 
 // Classroom booking schema
 // Now allows booking for one slot on a given date with startTime and endTime.
