@@ -13,6 +13,7 @@ import { ThemeProvider } from "@/src/context/ThemeProvider";
 export default function RootLayout() {
   const {
     token,
+    user,
     isLoading,
     setLoading,
     initializeState,
@@ -30,11 +31,13 @@ export default function RootLayout() {
 
         if (token) {
           // Handle token validation and potential refresh
-          const { newToken, user } = await authService.validateToken();
-
+          const { newToken, user: validatedUser } =
+            await authService.validateToken();
           if (newToken) {
             setToken(newToken);
-            setUser(user);
+          }
+          if (JSON.stringify(user) !== JSON.stringify(validatedUser)) {
+            setUser(validatedUser);
           }
         }
       } catch (error) {
