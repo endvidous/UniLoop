@@ -3,4 +3,6 @@ export interface User {
   name: string;
   email: string;
   role: string;
+  classrep_of?: string;
+  mentor_of?: string;
 }
