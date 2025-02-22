@@ -75,6 +75,12 @@ const SearchFilterHeader = ({
       <TextInput
         style={styles.searchInput}
         placeholder={placeholder}
+        placeholderTextColor="black"
+        textColor="black"
+        cursorColor="black"
+        underlineColor="black"
+        underlineColorAndroid="black"
+        activeUnderlineColor="grey"
         onChangeText={handleTextChange}
         value={searchQuery}
         right={<Ionicons name="search-circle-outline" />}

@@ -82,42 +82,64 @@ export const useUpvoteDiscussion = (user: User | null) => {
   return useMutation({
     mutationFn: (id: string) => discussionsService.upvoteDiscussion(id),
     onMutate: async (id: string) => {
-      // Cancel any outgoing refetches for this discussion.
       await queryClient.cancelQueries({
         queryKey: queryKeys.discussions.detail(id),
       });
 
-      // Snapshot the previous discussion data.
       const previousDiscussion = queryClient.getQueryData(
         queryKeys.discussions.detail(id)
       );
 
-      // Optimistically update the upvotes.
+      //OPTIMISTIC UPDATES
       queryClient.setQueryData(queryKeys.discussions.detail(id), (old: any) => {
         if (!old) return old;
         const userId = user?.id;
-        let newUpvotes;
+
+        // Copy current arrays and counts
+        let newUpvotes = [...old.upvotes];
+        let newUpvotesCount =
+          typeof old.upvotesCount === "number"
+            ? old.upvotesCount
+            : old.upvotes.length;
+        let newDownvotes = [...old.downvotes];
+        let newDownvotesCount =
+          typeof old.downvotesCount === "number"
+            ? old.downvotesCount
+            : old.downvotes.length;
+
         if (old.upvotes.includes(userId)) {
-          // Toggle off: remove the upvote.
+          // Toggle off upvote: remove user and decrement count.
           newUpvotes = old.upvotes.filter((id: string) => id !== userId);
+          newUpvotesCount = newUpvotesCount - 1;
         } else {
-          // Toggle on: add the upvote.
+          // Toggle on upvote: add user and increment count.
           newUpvotes = [...old.upvotes, userId];
+          newUpvotesCount = newUpvotesCount + 1;
+          // If the user had downvoted, remove that vote and decrement its count.
+          if (old.downvotes.includes(userId)) {
+            newDownvotes = old.downvotes.filter((id: string) => id !== userId);
+            newDownvotesCount = newDownvotesCount - 1;
+          }
         }
-        return { ...old, upvotes: newUpvotes };
+
+        return {
+          ...old,
+          upvotes: newUpvotes,
+          upvotesCount: newUpvotesCount,
+          downvotes: newDownvotes,
+          downvotesCount: newDownvotesCount,
+        };
       });
 
       return { previousDiscussion };
     },
     onError: (err, id, context) => {
-      // Roll back on error.
       queryClient.setQueryData(
         queryKeys.discussions.detail(id),
         context?.previousDiscussion
       );
     },
     onSettled: (data, error, id) => {
-      // Invalidate to ensure fresh data.
       queryClient.invalidateQueries({
         queryKey: queryKeys.discussions.all,
       });
@@ -137,19 +159,44 @@ export const useDownvoteDiscussion = (user: User | null) => {
       const previousDiscussion = queryClient.getQueryData(
         queryKeys.discussions.detail(id)
       );
-      // Optimistically update the downvotes.
       queryClient.setQueryData(queryKeys.discussions.detail(id), (old: any) => {
         if (!old) return old;
         const userId = user?.id;
-        let newDownvotes;
+
+        // Copy current arrays and counts
+        let newDownvotes = [...old.downvotes];
+        let newDownvotesCount =
+          typeof old.downvotesCount === "number"
+            ? old.downvotesCount
+            : old.downvotes.length;
+        let newUpvotes = [...old.upvotes];
+        let newUpvotesCount =
+          typeof old.upvotesCount === "number"
+            ? old.upvotesCount
+            : old.upvotes.length;
+
         if (old.downvotes.includes(userId)) {
-          // Toggle off: remove the downvote.
+          // Toggle off downvote: remove user and decrement count.
           newDownvotes = old.downvotes.filter((id: string) => id !== userId);
+          newDownvotesCount = newDownvotesCount - 1;
         } else {
-          // Toggle on: add the downvote.
+          // Toggle on downvote: add user and increment count.
           newDownvotes = [...old.downvotes, userId];
+          newDownvotesCount = newDownvotesCount + 1;
+          // If the user had upvoted, remove that vote and decrement its count.
+          if (old.upvotes.includes(userId)) {
+            newUpvotes = old.upvotes.filter((id: string) => id !== userId);
+            newUpvotesCount = newUpvotesCount - 1;
+          }
         }
-        return { ...old, downvotes: newDownvotes };
+
+        return {
+          ...old,
+          downvotes: newDownvotes,
+          downvotesCount: newDownvotesCount,
+          upvotes: newUpvotes,
+          upvotesCount: newUpvotesCount,
+        };
       });
       return { previousDiscussion };
     },
@@ -207,6 +254,25 @@ export const useUpdateComment = () => {
   });
 };
 
+export const useDeleteComment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      discussionId,
+      commentId,
+    }: {
+      discussionId: string;
+      commentId: string;
+    }) => discussionsService.deleteComment(discussionId, commentId),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.discussions.detail(variables.discussionId),
+      });
+    },
+  });
+};
+
 export const useReportComment = () => {
   return useMutation({
     mutationFn: ({
@@ -221,7 +287,7 @@ export const useReportComment = () => {
   });
 };
 
-export const useUpvoteComment = (user: User) => {
+export const useUpvoteComment = (user: User | null) => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -237,21 +303,49 @@ export const useUpvoteComment = (user: User) => {
       await queryClient.cancelQueries({ queryKey });
       const previousDiscussion = queryClient.getQueryData(queryKey);
 
-      // Optimistically update the comment upvotes.
+      // Optimistically update the comment upvotes and counts.
       queryClient.setQueryData(queryKey, (old: any) => {
         if (!old) return old;
         const userId = user?.id;
         const newComments = old.comments.map((comment: any) => {
           if (comment._id === commentId) {
-            let newUpvotes;
+            // Get current vote arrays and counts.
+            let newUpvotes = [...comment.upvotes];
+            let newDownvotes = [...comment.downvotes];
+            let newUpvotesCount =
+              typeof comment.upvotesCount === "number"
+                ? comment.upvotesCount
+                : comment.upvotes.length;
+            let newDownvotesCount =
+              typeof comment.downvotesCount === "number"
+                ? comment.downvotesCount
+                : comment.downvotes.length;
+
             if (comment.upvotes.includes(userId)) {
+              // Toggle off: remove upvote and decrement count.
               newUpvotes = comment.upvotes.filter(
                 (uid: string) => uid !== userId
               );
+              newUpvotesCount = newUpvotesCount - 1;
             } else {
+              // Toggle on: add upvote and increment count.
               newUpvotes = [...comment.upvotes, userId];
+              newUpvotesCount = newUpvotesCount + 1;
+              // Remove conflicting downvote if present.
+              if (comment.downvotes.includes(userId)) {
+                newDownvotes = comment.downvotes.filter(
+                  (uid: string) => uid !== userId
+                );
+                newDownvotesCount = newDownvotesCount - 1;
+              }
             }
-            return { ...comment, upvotes: newUpvotes };
+            return {
+              ...comment,
+              upvotes: newUpvotes,
+              upvotesCount: newUpvotesCount,
+              downvotes: newDownvotes,
+              downvotesCount: newDownvotesCount,
+            };
           }
           return comment;
         });
@@ -274,7 +368,7 @@ export const useUpvoteComment = (user: User) => {
   });
 };
 
-export const useDownvoteComment = (user: User) => {
+export const useDownvoteComment = (user: User | null) => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -290,21 +384,48 @@ export const useDownvoteComment = (user: User) => {
       await queryClient.cancelQueries({ queryKey });
       const previousDiscussion = queryClient.getQueryData(queryKey);
 
-      // Optimistically update the comment downvotes.
+      // Optimistically update the comment downvotes and counts.
       queryClient.setQueryData(queryKey, (old: any) => {
         if (!old) return old;
         const userId = user?.id;
         const newComments = old.comments.map((comment: any) => {
           if (comment._id === commentId) {
-            let newDownvotes;
+            let newDownvotes = [...comment.downvotes];
+            let newUpvotes = [...comment.upvotes];
+            let newDownvotesCount =
+              typeof comment.downvotesCount === "number"
+                ? comment.downvotesCount
+                : comment.downvotes.length;
+            let newUpvotesCount =
+              typeof comment.upvotesCount === "number"
+                ? comment.upvotesCount
+                : comment.upvotes.length;
+
             if (comment.downvotes.includes(userId)) {
+              // Toggle off: remove downvote and decrement count.
               newDownvotes = comment.downvotes.filter(
                 (uid: string) => uid !== userId
               );
+              newDownvotesCount = newDownvotesCount - 1;
             } else {
+              // Toggle on: add downvote and increment count.
               newDownvotes = [...comment.downvotes, userId];
+              newDownvotesCount = newDownvotesCount + 1;
+              // Remove conflicting upvote if present.
+              if (comment.upvotes.includes(userId)) {
+                newUpvotes = comment.upvotes.filter(
+                  (uid: string) => uid !== userId
+                );
+                newUpvotesCount = newUpvotesCount - 1;
+              }
             }
-            return { ...comment, downvotes: newDownvotes };
+            return {
+              ...comment,
+              downvotes: newDownvotes,
+              downvotesCount: newDownvotesCount,
+              upvotes: newUpvotes,
+              upvotesCount: newUpvotesCount,
+            };
           }
           return comment;
         });
@@ -338,6 +459,25 @@ export const useMarkAnswer = () => {
       discussionId: string;
       commentId: string;
     }) => discussionsService.markAnswer(discussionId, commentId),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.discussions.detail(variables.discussionId),
+      });
+    },
+  });
+};
+
+export const useUnmarkAnswer = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      discussionId,
+      commentId,
+    }: {
+      discussionId: string;
+      commentId: string;
+    }) => discussionsService.unmarkAnswer(discussionId, commentId),
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.discussions.detail(variables.discussionId),

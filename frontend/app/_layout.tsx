@@ -7,8 +7,8 @@ import { useStore } from "@/src/context/store";
 import { authService } from "@/src/services/api/auth";
 import { queryClient } from "@/src/services/api/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { StatusBar } from "react-native";
 import { ThemeProvider } from "@/src/context/ThemeProvider";
+import { PaperProvider } from "react-native-paper";
 
 export default function RootLayout() {
   const {
@@ -55,15 +55,21 @@ export default function RootLayout() {
   }
 
   return (
+    // React-query provider to make sure query functions work
     <QueryClientProvider client={queryClient}>
+      {/* Authentication provider that lets you use useAuth Inside any nested commponents */}
       <AuthProvider>
+        {/* Theme provider that provides themes */}
         <ThemeProvider>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-            }}
-          />
-          <AuthHandler />
+          {/* React native paper provider to use certain components inside it  */}
+          <PaperProvider>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+              }}
+            />
+            <AuthHandler />
+          </PaperProvider>
         </ThemeProvider>
       </AuthProvider>
     </QueryClientProvider>

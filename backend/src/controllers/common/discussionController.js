@@ -190,8 +190,18 @@ export const createDiscussion = async (req, res) => {
 export const updateDiscussion = async (req, res) => {
   try {
     const { discussionId } = req.params;
-    const updates = req.body;
     const user = req.user;
+
+    // Only allow title and description to be updated
+    const allowedUpdates = ["title", "description"];
+    const updates = {};
+
+    // Filter the incoming updates to only include allowed fields
+    Object.keys(req.body).forEach((key) => {
+      if (allowedUpdates.includes(key)) {
+        updates[key] = req.body[key];
+      }
+    });
 
     const discussion = await Discussion.findById(discussionId);
     if (!discussion) {
@@ -204,18 +214,23 @@ export const updateDiscussion = async (req, res) => {
         .json({ message: "Only author can update discussions" });
     }
 
-    if (updates.visibilityType && !user.isAdmin()) {
+    // If a visibility change is requested, validate it accordingly.
+    if (req.body.visibilityType && !user.isAdmin()) {
       const valid = await validateDiscussionPosting(user, {
         ...discussion.toObject(),
         ...updates,
       });
-      if (!valid)
+      if (!valid) {
         return res.status(403).json({ message: "Invalid visibility change" });
+      }
     }
 
-    // Prevent closing through regular update
-    if ("isClosed" in updates) delete updates.isClosed;
+    // Prevent updating isClosed regardless of what is in req.body.
+    if ("isClosed" in updates) {
+      delete updates.isClosed;
+    }
 
+    // Perform the update with only the filtered fields
     const updatedDiscussion = await Discussion.findByIdAndUpdate(
       discussionId,
       updates,
@@ -370,6 +385,7 @@ export const downvoteDiscussion = async (req, res) => {
   }
 };
 
+//Mark answer
 export const markAnswer = async (req, res) => {
   try {
     const { discussionId, commentId } = req.params;
@@ -393,6 +409,45 @@ export const markAnswer = async (req, res) => {
         $set: {
           "comments.$.isAnswer": true,
           isClosed: true,
+        },
+      },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ message: "Comment not found" });
+    }
+
+    res.json(updated);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// Unmark answer controller
+export const unmarkAnswer = async (req, res) => {
+  try {
+    const { discussionId, commentId } = req.params;
+
+    // Fetch the discussion
+    const discussion = await Discussion.findById(discussionId);
+    if (!discussion) {
+      return res.status(404).json({ message: "Discussion not found" });
+    }
+
+    // Check if user is an admin or teacher
+    const isAuthorized = req.user.isAdmin || req.user.isTeacher;
+    if (!isAuthorized) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    // Update comment: unset answer flag and reopen discussion
+    const updated = await Discussion.findOneAndUpdate(
+      { _id: discussionId, "comments._id": commentId },
+      {
+        $set: {
+          "comments.$.isAnswer": false,
+          isClosed: false,
         },
       },
       { new: true }
@@ -620,6 +675,55 @@ export const downvoteComment = async (req, res) => {
       updated = await Discussion.findOneAndUpdate(
         { _id: discussionId, "comments._id": commentId },
         updateQuery,
+        { new: true }
+      );
+    }
+
+    res.json(updated);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+export const deleteComment = async (req, res) => {
+  try {
+    const { discussionId, commentId } = req.params;
+    const user = req.user;
+
+    // Fetch the discussion
+    const discussion = await Discussion.findById(discussionId);
+    if (!discussion) {
+      return res.status(404).json({ message: "Discussion not found" });
+    }
+
+    // Locate the comment
+    const comment = discussion.comments.id(commentId);
+    if (!comment) {
+      return res.status(404).json({ message: "Comment not found" });
+    }
+
+    // Allow deletion if the user is the comment owner, admin, or teacher
+    if (!comment.postedBy.equals(user._id) && !user.isAdmin()) {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to delete this comment" });
+    }
+
+    // If the comment is marked as answer, ensure discussion is reopened
+    let updated;
+    if (comment.isAnswer) {
+      updated = await Discussion.findByIdAndUpdate(
+        discussionId,
+        {
+          $pull: { comments: { _id: commentId } },
+          $set: { isClosed: false },
+        },
+        { new: true }
+      );
+    } else {
+      updated = await Discussion.findByIdAndUpdate(
+        discussionId,
+        { $pull: { comments: { _id: commentId } } },
         { new: true }
       );
     }

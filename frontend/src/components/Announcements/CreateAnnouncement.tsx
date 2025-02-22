@@ -40,8 +40,14 @@ type FileWithKey = SelectedFile & { key: string };
 type CreateAnnouncementProps = {
   onDismiss: () => void;
 };
-const MAX_FILE_SIZE_MB = 5;
 const MAX_ATTACHMENTS = 3;
+type VisibilityType = "General" | "Department" | "Batch" | "Course";
+
+const modelMapping = {
+  Department: "Departments",
+  Batch: "Batches",
+  Course: "Courses",
+};
 
 const CreateAnnouncement = ({ onDismiss }: CreateAnnouncementProps) => {
   const { control, handleSubmit, setValue, watch } = useForm<FormData>({
@@ -120,7 +126,10 @@ const CreateAnnouncement = ({ onDismiss }: CreateAnnouncementProps) => {
           data.visibilityType === "General"
             ? undefined
             : {
-                model: `${data.visibilityType}s`,
+                model:
+                  modelMapping[
+                    visibilityType as "Department" | "Batch" | "Course"
+                  ],
                 id: data.postedToId!,
               },
       });

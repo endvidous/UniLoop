@@ -26,10 +26,18 @@ export interface IReport {
   createdAt?: Date;
 }
 
+export interface IPostedBy {
+  _id: string;
+  name: string;
+  role: string;
+  mentor_of?: string;
+  classrep_of?: string;
+}
+
 // Interface for a comment on a discussion
 export interface IComment {
   content: string;
-  postedBy: string;
+  postedBy: IPostedBy;
   isAnswer?: boolean;
   upvotes: string[];
   upvotesCount: number;

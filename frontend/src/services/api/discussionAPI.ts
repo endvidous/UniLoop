@@ -4,6 +4,7 @@ import axiosInstance from "./axiosConfig";
 interface CreateDiscussionData {
   title: string;
   description: string;
+  postedBy: string;
   visibilityType: string;
   posted_to?: {
     model: string;
@@ -24,7 +25,6 @@ interface UpdateDiscussionData {
 export const discussionsService = {
   getDiscussions: async (params: any): Promise<DiscussionsResponse> => {
     const response = await axiosInstance.get("/discussions", { params });
-    console.log(response);
     return response.data;
   },
 
@@ -85,6 +85,13 @@ export const discussionsService = {
     return response.data;
   },
 
+  deleteComment: async (discussionId: string, commentId: string) => {
+    const response = await axiosInstance.delete(
+      `/discussions/${discussionId}/comments/${commentId}`
+    );
+    return response.data;
+  },
+
   reportComment: async (
     discussionId: string,
     commentId: string,
@@ -114,6 +121,13 @@ export const discussionsService = {
   markAnswer: async (discussionId: string, commentId: string) => {
     const response = await axiosInstance.post(
       `/discussions/${discussionId}/comments/${commentId}/mark-answer`
+    );
+    return response.data;
+  },
+
+  unmarkAnswer: async (discussionId: string, commentId: string) => {
+    const response = await axiosInstance.post(
+      `/discussions/${discussionId}/comments/${commentId}/unmark-answer`
     );
     return response.data;
   },
