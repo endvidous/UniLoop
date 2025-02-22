@@ -12,6 +12,11 @@ import { useAuth } from "@/src/context/AuthContext";
 import {
   useUpvoteComment,
   useDownvoteComment,
+  useUpdateComment,
+  useDeleteComment,
+  useReportComment,
+  useMarkAnswer,
+  useUnmarkAnswer,
 } from "@/src/hooks/api/useDiscussions";
 import ReportModal from "./ReportModal";
 import { formatNumber } from "@/src/utils/helperFunctions";
@@ -21,11 +26,6 @@ interface CommentItemProps {
   isTeacher: boolean;
   hasMarkedAnswer: boolean;
   discussionId: string;
-  onMarkAnswer: () => void;
-  onUnmarkAnswer: () => void;
-  onUpdateComment: (commentId: string, newContent: string) => void;
-  onDeleteComment: (commentId: string) => void;
-  onReportComment: (commentId: string, reason: string) => void;
 }
 
 const CommentItem = ({
@@ -33,11 +33,6 @@ const CommentItem = ({
   isTeacher,
   hasMarkedAnswer,
   discussionId,
-  onMarkAnswer,
-  onUnmarkAnswer,
-  onUpdateComment,
-  onDeleteComment,
-  onReportComment,
 }: CommentItemProps) => {
   const { user } = useAuth();
   const [menuVisible, setMenuVisible] = useState(false);
@@ -47,35 +42,51 @@ const CommentItem = ({
   const [reportModalVisible, setReportModalVisible] = useState(false);
   const [reportReason, setReportReason] = useState("");
 
+  // Comment action hooks
   const { mutate: upvoteComment } = useUpvoteComment(user);
   const { mutate: downvoteComment } = useDownvoteComment(user);
+  const { mutate: updateComment } = useUpdateComment();
+  const { mutate: deleteComment } = useDeleteComment();
+  const { mutate: reportComment } = useReportComment();
+  const { mutate: markAnswer } = useMarkAnswer();
+  const { mutate: unmarkAnswer } = useUnmarkAnswer();
 
   const isAuthor = comment.postedBy._id === user?.id;
   const isAdmin = user?.role === "admin";
 
-  const handleUpvote = () => {
+  const handleUpvote = () =>
     upvoteComment({ discussionId, commentId: comment._id });
-  };
-
-  const handleDownvote = () => {
+  const handleDownvote = () =>
     downvoteComment({ discussionId, commentId: comment._id });
-  };
 
-  const handleUpdateComment = () => {
-    onUpdateComment(comment._id, editedContent);
+  const handleUpdate = () => {
+    updateComment({
+      discussionId,
+      commentId: comment._id,
+      content: editedContent,
+    });
     setEditMode(false);
   };
 
-  const confirmDelete = () => {
-    onDeleteComment(comment._id);
+  const handleDelete = () => {
+    deleteComment({ discussionId, commentId: comment._id });
     setDeleteModalVisible(false);
   };
 
   const handleReport = () => {
-    onReportComment(comment._id, reportReason);
+    reportComment({
+      discussionId,
+      commentId: comment._id,
+      reason: reportReason,
+    });
     setReportModalVisible(false);
     setReportReason("");
   };
+
+  const handleMarkAnswer = () =>
+    markAnswer({ discussionId, commentId: comment._id });
+  const handleUnmarkAnswer = () =>
+    unmarkAnswer({ discussionId, commentId: comment._id });
 
   return (
     <View style={styles.container}>
@@ -143,10 +154,7 @@ const CommentItem = ({
             >
               <Text style={styles.buttonText}>Cancel</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.saveButton}
-              onPress={handleUpdateComment}
-            >
+            <TouchableOpacity style={styles.saveButton} onPress={handleUpdate}>
               <Text style={styles.buttonText}>Save</Text>
             </TouchableOpacity>
           </View>
@@ -178,7 +186,7 @@ const CommentItem = ({
                 {comment.isAnswer ? (
                   <TouchableOpacity
                     style={styles.answerAction}
-                    onPress={onUnmarkAnswer}
+                    onPress={handleUnmarkAnswer}
                   >
                     <Text style={styles.actionText}>Unmark Answer</Text>
                   </TouchableOpacity>
@@ -186,7 +194,7 @@ const CommentItem = ({
                   !hasMarkedAnswer && (
                     <TouchableOpacity
                       style={styles.answerAction}
-                      onPress={onMarkAnswer}
+                      onPress={handleMarkAnswer}
                     >
                       <Text style={styles.actionText}>Mark Answer</Text>
                     </TouchableOpacity>
@@ -207,7 +215,7 @@ const CommentItem = ({
           <Dialog.Title>Delete Comment?</Dialog.Title>
           <Dialog.Actions>
             <Button onPress={() => setDeleteModalVisible(false)}>Cancel</Button>
-            <Button onPress={confirmDelete}>Delete</Button>
+            <Button onPress={handleDelete}>Delete</Button>
           </Dialog.Actions>
         </Dialog>
       </Portal>

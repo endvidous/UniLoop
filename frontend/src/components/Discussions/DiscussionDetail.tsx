@@ -20,15 +20,10 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import {
   useDiscussion,
   useAddComment,
-  useMarkAnswer,
   useReportDiscussion,
   useUpvoteDiscussion,
   useDownvoteDiscussion,
   useDeleteDiscussion,
-  useUpdateComment,
-  useDeleteComment,
-  useReportComment,
-  useUnmarkAnswer,
   useUpdateDiscussion,
 } from "@/src/hooks/api/useDiscussions";
 import { useAuth } from "@/src/context/AuthContext";
@@ -55,11 +50,6 @@ const DiscussionDetail = ({ id }: { id: string }) => {
 
   // Comment related hooks
   const { mutate: addComment } = useAddComment();
-  const { mutate: markAnswer } = useMarkAnswer();
-  const { mutate: updateComment } = useUpdateComment();
-  const { mutate: deleteComment } = useDeleteComment();
-  const { mutate: reportComment } = useReportComment();
-  const { mutate: unmarkAnswer } = useUnmarkAnswer();
 
   // Menu state
   const [menuVisible, setMenuVisible] = useState(false);
@@ -231,28 +221,9 @@ const DiscussionDetail = ({ id }: { id: string }) => {
               <CommentItem
                 key={c._id}
                 comment={c}
-                discussionId={discussion._id}
+                discussionId={id}
                 isTeacher={user?.role === "teacher"}
                 hasMarkedAnswer={!!hasMarkedAnswer}
-                onMarkAnswer={() =>
-                  markAnswer({ discussionId: id, commentId: c._id })
-                }
-                onUnmarkAnswer={() => {
-                  unmarkAnswer({ discussionId: id, commentId: c._id });
-                }}
-                onUpdateComment={(commentId, newContent) =>
-                  updateComment({
-                    discussionId: id,
-                    commentId,
-                    content: newContent,
-                  })
-                }
-                onDeleteComment={(commentId) =>
-                  deleteComment({ discussionId: id, commentId })
-                }
-                onReportComment={(commentId, reason) =>
-                  reportComment({ discussionId: id, commentId, reason })
-                }
               />
             ))}
           </View>
