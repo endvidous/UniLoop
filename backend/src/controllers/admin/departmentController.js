@@ -33,11 +33,19 @@ export const createDepartments = async (req, res) => {
   try {
     checkIfEmpty(departments);
 
-    const invalidDepartment = departments.find(
-      (department) => !department.name
-    );
-    if (invalidDepartment) {
-      throw new Error("Each department must have a name");
+    const departmentNamesMap = new Map();
+    for (const department of departments) {
+      if (!department.name) {
+        res.status(400).json({ message: "Each department must have a name" });
+      }
+
+      // Check for duplicate
+      if (departmentNamesMap.has(department.name)) {
+        res.status(400).json({
+          message: `Duplicate department names found`,
+        });
+      }
+      departmentNamesMap.set(department.name, true);
     }
 
     const createdDepartments = await Departments.insertMany(departments);
