@@ -50,4 +50,46 @@ export const queryKeys = {
     details: () => [...queryKeys.discussions.all, "detail"] as const,
     detail: (id: string) => [...queryKeys.discussions.details(), id] as const,
   },
+
+  //Department Keys
+  departments: {
+    all: ["departments"] as const,
+    lists: () => [...queryKeys.departments.all, "list"] as const,
+    list: (filters?: any) =>
+      [...queryKeys.departments.lists(), { ...filters }] as const,
+    details: () => [...queryKeys.departments.all, "detail"] as const,
+    detail: (id: string) => [...queryKeys.departments.details(), id] as const,
+  },
+
+  //Paper keys
+  papers: {
+    all: (departmentId: string) =>
+      [...queryKeys.departments.detail(departmentId), "papers"] as const,
+    lists: (departmentId: string) =>
+      [...queryKeys.papers.all(departmentId), "list"] as const,
+    list: (departmentId: string, filters?: any) =>
+      [...queryKeys.papers.lists(departmentId), { ...filters }] as const,
+    details: (departmentId: string) =>
+      [...queryKeys.papers.all(departmentId), "detail"] as const,
+    detail: (departmentId: string, paperId: string) =>
+      [...queryKeys.papers.details(departmentId), paperId] as const,
+  },
+
+  //Teacher keys
+  teachers: {
+    all: ["teachers"] as const,
+    list: (departmentId: string, filters?: any) =>
+      ["teachers", "list", { departmentId, ...filters }] as const,
+    detail: (teacherId: string) =>
+      ["teachers", "detail", teacherId] as const,
+  },
+
+  //Student keys
+  students: {
+    all: ["students"] as const,
+    list: (batchId: string, filters?: any) =>
+      ["students", "list", { batchId, ...filters }] as const,
+    detail: (studentId: string) =>
+      ["students", "detail", studentId] as const,
+  },
 };
