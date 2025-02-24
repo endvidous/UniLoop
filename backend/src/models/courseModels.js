@@ -7,6 +7,7 @@ const departmentSchema = new Schema({
   name: {
     type: String,
     required: true,
+    unique: true,
   },
   teachers: [
     {
@@ -241,14 +242,17 @@ batchSchema.pre("save", async function (next) {
     next(err);
   }
 });
-batchSchema.pre('save', async function (next) {
+batchSchema.pre("save", async function (next) {
   // Only generate a code if it’s not already set.
   if (!this.code) {
     try {
       // Fetch the related course's code.
-      const course = await mongoose.model('Courses').findById(this.course).select('code');
+      const course = await mongoose
+        .model("Courses")
+        .findById(this.course)
+        .select("code");
       if (!course) {
-        return next(new Error('Referenced course not found'));
+        return next(new Error("Referenced course not found"));
       }
       // Generate the batch code based on course code and startYear.
       this.code = `${course.code}-${this.startYear}`;
@@ -260,7 +264,6 @@ batchSchema.pre('save', async function (next) {
     next();
   }
 });
-
 
 // Semester Schema (connects subjects, teachers, and batches)
 const semesterSchema = new Schema({
