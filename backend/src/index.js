@@ -17,7 +17,7 @@ const defaultJsonParser = express.json({ limit: "100kb" });
 const highLimitJsonParser = express.json({ limit: "5mb" });
 
 // Define routes
-router.use("/auth", authRoutes);
+router.use("/auth", defaultJsonParser, authRoutes);
 router.use("/admin", defaultJsonParser, authMiddleware, isAdmin, adminRoutes);
 router.use(
   "/announcements",
