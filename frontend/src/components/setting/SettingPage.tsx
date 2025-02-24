@@ -26,16 +26,41 @@ const SettingsPage = () => {
     setIsDropdownVisible(!isDropdownVisible);
   };
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.nametitle}>{user?.name}</Text>
-      <Text style={styles.mailtitle}>{user?.email}</Text>
-      <TouchableOpacity style={[styles.dataButton, styles.shadow]}>
-        <Text style={styles.buttontext}>change Password</Text>
-        <Ionicons name="key" size={24} color="#00100B" />
+    <ScrollView
+      contentContainerStyle={[
+        styles.container,
+        { backgroundColor: colors.background },
+      ]}
+    >
+      <Text style={[styles.nametitle, { color: colors.text }]}>
+        {user?.name}
+      </Text>
+      <Text style={[styles.mailtitle, { color: colors.text }]}>
+        {user?.email}
+      </Text>
+      <TouchableOpacity
+        style={[
+          styles.dataButton,
+          styles.shadow,
+          { shadowColor: colors.shadowcolor },
+          { backgroundColor: colors.background },
+        ]}
+      >
+        <Text style={[styles.buttontext, { color: colors.text }]}>
+          change Password
+        </Text>
+        <Ionicons name="key" size={24} color="#687076" />
       </TouchableOpacity>
 
-      <TouchableOpacity style={[styles.dataButton, styles.shadow]}>
-        <Text style={styles.buttontext}>
+      <TouchableOpacity
+        style={[
+          styles.dataButton,
+          styles.shadow,
+          { shadowColor: colors.shadowcolor },
+          { backgroundColor: colors.background },
+        ]}
+      >
+        <Text style={[styles.buttontext, { color: colors.text }]}>
           {theme.charAt(0).toUpperCase() + theme.slice(1)} mode
         </Text>
         <Switch
@@ -49,17 +74,33 @@ const SettingsPage = () => {
         />
       </TouchableOpacity>
 
-      <TouchableOpacity style={[styles.dataButton, styles.shadow]}>
-        <Text style={styles.buttontext}>Notifications</Text>
-        <Ionicons name="notifications-outline" size={24} color="#00100B" />
+      <TouchableOpacity
+        style={[
+          styles.dataButton,
+          styles.shadow,
+          { shadowColor: colors.shadowcolor },
+          { backgroundColor: colors.background },
+        ]}
+      >
+        <Text style={[styles.buttontext, { color: colors.text }]}>
+          Notifications
+        </Text>
+        <Ionicons name="notifications-outline" size={24} color="#687076" />
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[styles.dataButton, styles.shadow]}
+        style={[
+          styles.dataButton,
+          styles.shadow,
+          { shadowColor: colors.shadowcolor },
+          { backgroundColor: colors.background },
+        ]}
         onPress={toggleDropdown}
       >
-        <Text style={styles.buttontext}>Tech support</Text>
-        <Ionicons name="call-outline" size={24} color="#00100B" />
+        <Text style={[styles.buttontext, { color: colors.text }]}>
+          Tech support
+        </Text>
+        <Ionicons name="call-outline" size={24} color="#687076" />
       </TouchableOpacity>
 
       {isDropdownVisible && (
@@ -77,11 +118,13 @@ const SettingsPage = () => {
         style={[
           styles.dataButton,
           styles.shadow,
+          { shadowColor: colors.shadowcolor },
+          { backgroundColor: colors.background },
           isDropdownVisible && { marginTop: 20 },
         ]}
       >
-        <Text style={styles.buttontext}>Log out</Text>
-        <Ionicons name="log-out-outline" size={24} color="#00100B" />
+        <Text style={[styles.buttontext, { color: colors.text }]}>Log out</Text>
+        <Ionicons name="log-out-outline" size={24} color="#687076" />
       </TouchableOpacity>
     </ScrollView>
   );
@@ -90,13 +133,12 @@ const SettingsPage = () => {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 20,
   },
   shadow: {
-    shadowColor: "#000",
+    // shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 4,
@@ -108,20 +150,18 @@ const styles = StyleSheet.create({
   nametitle: {
     fontSize: 40,
     fontWeight: "400",
-    color: "#00100B",
     marginBottom: 10,
   },
   mailtitle: {
     fontSize: 20,
     fontWeight: "300",
-    color: "#00100B",
     marginBottom: 20,
   },
   dataButton: {
     flexDirection: "row",
     width: "80%",
     height: 60,
-    backgroundColor: "#ffffff",
+    // backgroundColor: "#ffffff",
     borderRadius: 12,
     justifyContent: "space-between",
     alignItems: "center",
@@ -129,7 +169,7 @@ const styles = StyleSheet.create({
     marginTop: 30,
   },
   buttontext: {
-    color: "#00100B",
+    // color: "#00100B",
     fontSize: 17,
     fontWeight: "600",
     marginRight: 10,
