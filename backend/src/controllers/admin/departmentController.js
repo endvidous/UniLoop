@@ -48,26 +48,6 @@ export const createDepartments = async (req, res) => {
       departmentNamesMap.set(department.name, true);
     }
 
-    // Check for duplicate names
-    const departmentNamesSet = new Set();
-    const duplicates = [];
-
-    for (const department of departments) {
-      if (departmentNamesSet.has(department.name)) {
-        duplicates.push(department.name);
-      } else {
-        departmentNamesSet.add(department.name);
-      }
-    }
-
-    if (duplicates.length > 0) {
-      throw new Error(
-        `Duplicate department names found: ${[...new Set(duplicates)].join(
-          ", "
-        )}`
-      );
-    }
-
     const createdDepartments = await Departments.insertMany(departments);
 
     res.status(201).json({
