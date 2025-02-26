@@ -86,6 +86,12 @@ const TimelinePage = () => {
             academicYear={item.academicYear}
             oddSemester={item.oddSemester}
             evenSemester={item.evenSemester}
+            onDelete={() => {
+              console.log("Delete timeline");
+            }}
+            onEdit={() => {
+              console.log("Edit timeline");
+            }}
           />
         )}
         refreshControl={

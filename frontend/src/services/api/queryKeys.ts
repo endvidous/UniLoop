@@ -80,8 +80,7 @@ export const queryKeys = {
     all: ["teachers"] as const,
     list: (departmentId: string, filters?: any) =>
       ["teachers", "list", { departmentId, ...filters }] as const,
-    detail: (teacherId: string) =>
-      ["teachers", "detail", teacherId] as const,
+    detail: (teacherId: string) => ["teachers", "detail", teacherId] as const,
   },
 
   //Student keys
@@ -89,7 +88,6 @@ export const queryKeys = {
     all: ["students"] as const,
     list: (batchId: string, filters?: any) =>
       ["students", "list", { batchId, ...filters }] as const,
-    detail: (studentId: string) =>
-      ["students", "detail", studentId] as const,
+    detail: (studentId: string) => ["students", "detail", studentId] as const,
   },
 };
