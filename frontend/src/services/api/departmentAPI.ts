@@ -19,7 +19,7 @@ export type Department = {
 
 export const departmentsService = {
   getDepartments: async () => {
-    const response = await axiosInstance.get("/admin/departments");
+    const response = await axiosInstance.get("/admin/departments/");
     return response.data;
   },
 

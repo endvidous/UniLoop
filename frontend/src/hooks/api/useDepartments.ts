@@ -4,7 +4,7 @@ import { queryKeys } from "@/src/services/api/queryKeys";
 import { Department, Paper } from "@/src/services/api/departmentAPI";
 
 export const useDepartments = (filters?: any) => {
-  return useQuery<Department[]>({
+  return useQuery<{ message: string; count: number; data: Department[] }>({
     queryKey: queryKeys.departments.list(filters),
     queryFn: () => departmentsService.getDepartments(),
   });

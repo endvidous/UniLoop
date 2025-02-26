@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
 import CSVCleaner from "@/src/utils/csvdatacleaner";
 import { pickCSVDocument } from "@/src/utils/csvPicker";
 import {
@@ -19,8 +20,28 @@ import {
   useDeleteDepartment,
 } from "@/src/hooks/api/useDepartments";
 
+interface DepartmentFormData {
+  departments: {
+    id: number;
+    name: string;
+  }[];
+}
+
 const DepartmentTable = () => {
-  const [departments, setDepartments] = useState([{ id: 1, name: "" }]);
+  // Setup React Hook Form
+  const { control, handleSubmit, reset, setValue, getValues } =
+    useForm<DepartmentFormData>({
+      defaultValues: {
+        departments: [{ id: Date.now(), name: "" }],
+      },
+    });
+
+  // Use fieldArray for dynamic form fields
+  const { fields, append, remove, update } = useFieldArray({
+    control,
+    name: "departments",
+  });
+
   const [showUploadSection, setShowUploadSection] = useState(true);
   const [csvFile, setCsvFile] = useState<{
     uri: string;
@@ -28,27 +49,23 @@ const DepartmentTable = () => {
     size?: number;
     type?: string;
   } | null>(null);
-
-  interface Department {
-    name: string;
-  }
-  
   const [isManualEntryDisabled, setIsManualEntryDisabled] = useState(false);
   const [showCSVCleaner, setShowCSVCleaner] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isEditingCSV, setIsEditingCSV] = useState(false);
 
   // Fetch departments from the backend
-  const { data: existingDepartments, isPending: isFetching } = useDepartments();
+  const { data: existingDepartments, isFetching } = useDepartments();
   const { mutate: createDepartments, isPending: isCreating } =
     useCreateDepartments();
 
-  const checkForDuplicates = (newDepartments: Department[]): string[] => {
+  const checkForDuplicates = (newDepartments: { name: string }[]): string[] => {
     if (!existingDepartments) return [];
 
     const duplicates = newDepartments
       .filter((dept) => dept.name.trim() !== "")
       .filter((dept) =>
-        existingDepartments.some(
+        existingDepartments.data.some(
           (existing) => existing.name.toLowerCase() === dept.name.toLowerCase()
         )
       )
@@ -56,43 +73,48 @@ const DepartmentTable = () => {
 
     return duplicates;
   };
-  
+
   const handleAddRow = () => {
     if (!isManualEntryDisabled) {
-      setDepartments([...departments, { id: Date.now(), name: "" }]);
+      prepend({ id: Date.now(), name: "" });
     }
   };
 
-  const handleRemoveRow = (id: number) => {
-    if (!isManualEntryDisabled) {
-      setDepartments(departments.filter((dept) => dept.id !== id));
+  const handleRemoveRow = (index: number) => {
+    if (!isManualEntryDisabled || isEditingCSV) {
+      remove(index);
     }
   };
 
-  const handleInputChange = (id: number, text: string) => {
-    if (!isManualEntryDisabled) {
-      setDepartments(
-        departments.map((dept) =>
-          dept.id === id ? { ...dept, name: text } : dept
-        )
-      );
-    }
-  };
-
-  const handleSave = () => {
-    const validDepartments = departments.filter(
+  const onSubmit = (data: DepartmentFormData) => {
+    const validDepartments = data.departments.filter(
       (dept) => dept.name.trim() !== ""
     );
+
     if (validDepartments.length === 0) {
       Alert.alert("Error", "Please enter at least one department.");
       return;
     }
 
+    const duplicates = checkForDuplicates(validDepartments);
+    if (duplicates.length > 0) {
+      Alert.alert(
+        "Error",
+        `The following departments already exist: ${duplicates.join(", ")}`
+      );
+      return;
+    }
+
+    const backendData = validDepartments.map((item) => ({
+      name: item.name,
+    }));
+
     // Call the mutation to create departments
-    createDepartments(validDepartments, {
+    createDepartments(backendData, {
       onSuccess: () => {
         Alert.alert("Success", "Departments saved successfully!");
-        setDepartments([{ id: 1, name: "" }]); // Reset form
+        reset({ departments: [{ id: Date.now(), name: "" }] }); // Reset form
+        setIsEditingCSV(false);
       },
       onError: (error: { message: any }) => {
         Alert.alert("Error", error.message || "Failed to save departments.");
@@ -181,12 +203,15 @@ const DepartmentTable = () => {
       name: row.name,
     }));
 
-    setDepartments(newDepartments);
+    // Update form with CSV data
+    reset({ departments: newDepartments });
     setShowUploadSection(false);
     setShowCSVCleaner(false);
+    setIsEditingCSV(true);
+    setIsManualEntryDisabled(false); // Enable editing for CSV data
 
     // Save the parsed departments to the backend
-    createDepartments(newDepartments, {
+    createDepartments(data, {
       onSuccess: () => {
         Alert.alert("Success", "Departments uploaded and saved successfully!");
       },
@@ -216,6 +241,7 @@ const DepartmentTable = () => {
       );
       setIsManualEntryDisabled(false);
       setCsvFile(null);
+      setIsEditingCSV(false);
     } finally {
       setShowCSVCleaner(false);
       setIsProcessing(false);
@@ -245,7 +271,9 @@ const DepartmentTable = () => {
       )}
 
       <View style={styles.section}>
-        <Text style={styles.title}>Manual Department Entry</Text>
+        <Text style={styles.title}>
+          {isEditingCSV ? "Edit CSV Departments" : "Manual Department Entry"}
+        </Text>
         <View style={styles.tableHeader}>
           <Text style={styles.headerText}>Department Name</Text>
           <TouchableOpacity
@@ -257,27 +285,36 @@ const DepartmentTable = () => {
           </TouchableOpacity>
         </View>
         <FlatList
-          data={departments}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
+          data={fields}
+          keyExtractor={(item: { id: number }) => item.id.toString()}
+          renderItem={({ index }) => (
             <View style={styles.row}>
-              <TextInput
-                style={[
-                  styles.input,
-                  isManualEntryDisabled && styles.disabledInput,
-                ]}
-                placeholder="Enter department name"
-                value={item.name}
-                onChangeText={(text) => handleInputChange(item.id, text)}
-                editable={!isManualEntryDisabled}
+              <Controller
+                control={control}
+                name={`departments.${index}.name`}
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    style={[
+                      styles.input,
+                      isManualEntryDisabled &&
+                        !isEditingCSV &&
+                        styles.disabledInput,
+                    ]}
+                    placeholder="Enter department name"
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    editable={!isManualEntryDisabled || isEditingCSV}
+                  />
+                )}
               />
               <TouchableOpacity
-                onPress={() => handleRemoveRow(item.id)}
+                onPress={() => handleRemoveRow(index)}
                 style={[
                   styles.deleteButton,
-                  isManualEntryDisabled && styles.disabled,
+                  isManualEntryDisabled && !isEditingCSV && styles.disabled,
                 ]}
-                disabled={isManualEntryDisabled}
+                disabled={isManualEntryDisabled && !isEditingCSV}
               >
                 <Ionicons name="trash-outline" size={24} color="black" />
               </TouchableOpacity>
@@ -286,7 +323,7 @@ const DepartmentTable = () => {
         />
       </View>
 
-      {showUploadSection && (
+      {showUploadSection && !isEditingCSV && (
         <View style={styles.section}>
           <Text style={styles.title}>Upload CSV File</Text>
           <Text style={styles.instruction}>
@@ -313,7 +350,7 @@ const DepartmentTable = () => {
 
       <TouchableOpacity
         style={styles.saveButton}
-        onPress={handleSave}
+        onPress={handleSubmit(onSubmit)}
         disabled={isProcessing || isCreating}
       >
         <Text style={styles.saveButtonText}>
@@ -458,3 +495,6 @@ const styles = StyleSheet.create({
 });
 
 export default DepartmentTable;
+function prepend(arg0: { id: number; name: string }) {
+  throw new Error("Function not implemented.");
+}
