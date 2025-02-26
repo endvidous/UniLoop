@@ -1,11 +1,13 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Card } from "react-native-paper";
-
+import { Ionicons } from "@expo/vector-icons";
 interface TimelineCardProps {
   academicYear: string;
   oddSemester: { start: string; end: string };
   evenSemester: { start: string; end: string };
+  onDelete: () => void;
+  onEdit: () => void;
 }
 
 const formatDate = (dateString: string) => {
@@ -20,6 +22,8 @@ const TimelineCard: React.FC<TimelineCardProps> = ({
   academicYear,
   oddSemester,
   evenSemester,
+  onDelete,
+  onEdit,
 }) => {
   return (
     <Card style={styles.card}>
@@ -32,6 +36,16 @@ const TimelineCard: React.FC<TimelineCardProps> = ({
         Even Semester: {formatDate(evenSemester.start)} -{" "}
         {formatDate(evenSemester.end)}
       </Text>
+
+      <TouchableOpacity style={styles.editButton} onPress={onEdit}>
+        <Ionicons name="pencil" size={24} color="blue" />
+        <Text style={styles.editButtonText}>Edit</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.deleteButton} onPress={onDelete}>
+        <Ionicons name="trash" size={24} color="red" />
+        <Text style={styles.deleteButtonText}>Delete</Text>
+      </TouchableOpacity>
     </Card>
   );
 };
@@ -46,6 +60,34 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginVertical: 2,
     fontWeight: 400,
+  },
+  editButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 10,
+    padding: 10,
+    backgroundColor: "#89CFF0",
+    borderRadius: 5,
+    justifyContent: "center",
+  },
+  editButtonText: {
+    fontSize: 16,
+    color: "blue",
+    marginLeft: 5,
+  },
+  deleteButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 10,
+    padding: 10,
+    backgroundColor: "#f8d7da",
+    borderRadius: 5,
+    justifyContent: "center",
+  },
+  deleteButtonText: {
+    fontSize: 16,
+    color: "red",
+    marginLeft: 5,
   },
 });
 
