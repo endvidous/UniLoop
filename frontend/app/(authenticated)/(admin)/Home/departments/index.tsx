@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   View,
   Text,
@@ -6,17 +6,35 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  ListRenderItem,
 } from "react-native";
 import { Link } from "expo-router";
 import Icon from "react-native-vector-icons/Ionicons";
-import { useDepartments } from "@/src/hooks/api/useDepartments"; // Import the useDepartments hook
+import {
+  useDepartments,
+  useCreateDepartments,
+} from "@/src/hooks/api/useDepartments";
+
+interface Department {
+  _id: string;
+  name: string;
+}
 
 const HomeScreen = () => {
-  // Fetch departments using the useDepartments hook
-  const { data: departments, isLoading, isError } = useDepartments();
+  const { data: departments, isFetching, isError, refetch } = useDepartments();
 
-  // Show a loading indicator while fetching data
-  if (isLoading) {
+  const renderDepartment: ListRenderItem<Department> = ({ item }) => {
+    if (!item.name) {
+      console.warn("Item is missing the 'name' property:", item);
+    }
+    return (
+      <TouchableOpacity style={styles.card}>
+        <Text style={styles.cardText}>{item.name}</Text>
+      </TouchableOpacity>
+    );
+  };
+
+  if (isFetching) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007BFF" />
@@ -24,31 +42,32 @@ const HomeScreen = () => {
     );
   }
 
-  // Show an error message if fetching fails
   if (isError) {
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorText}>
-          Failed to load departments. Please try again later.
+          Error loading departments. Please try again.
         </Text>
+        <TouchableOpacity onPress={() => refetch()}>
+          <Text style={styles.retryText}>Retry</Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      {/* Render departments as cards */}
-      <FlatList
-        data={departments}
-        keyExtractor={(item, index) => index.toString()} // Use index as the key
-        renderItem={({ item }) => (
-          <TouchableOpacity style={styles.card}>
-            <Text style={styles.cardText}>{item.name}</Text>
-          </TouchableOpacity>
-        )}
+      <FlatList<Department>
+        data={departments?.data} // Use the extracted array
+        keyExtractor={(item, index) => item._id || index.toString()}
+        renderItem={renderDepartment}
+        refreshing={isFetching}
+        onRefresh={refetch}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>No departments available</Text>
+        }
       />
 
-      {/* Floating button to navigate to departmentUpload */}
       <Link href="/Home/departments/departmentUpload" asChild>
         <TouchableOpacity style={styles.button}>
           <Icon name="add" size={40} color="white" />
@@ -106,6 +125,18 @@ const styles = StyleSheet.create({
     color: "red",
     fontSize: 16,
     textAlign: "center",
+    marginBottom: 20,
+  },
+  retryText: {
+    color: "#007BFF",
+    fontSize: 16,
+    textDecorationLine: "underline",
+  },
+  emptyText: {
+    textAlign: "center",
+    fontSize: 16,
+    color: "#666",
+    marginTop: 20,
   },
 });
 
