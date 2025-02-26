@@ -1,3 +1,4 @@
+import React from "react";
 import {
   Text,
   TouchableOpacity,
@@ -7,14 +8,20 @@ import {
   ScrollView,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import React from "react";
 import { useAuth } from "@/src/context/AuthContext";
 import { useTheme } from "@/src/hooks/colors/useThemeColor";
+import Animated, {
+  Easing,
+  withTiming,
+  useSharedValue,
+  useAnimatedStyle,
+} from "react-native-reanimated";
 
 const SettingsPage = () => {
   const { user, signOut } = useAuth();
   const { theme, colors, toggleTheme } = useTheme();
   const [isDropdownVisible, setIsDropdownVisible] = React.useState(false);
+  const dropdownHeight = useSharedValue(0);
   const data = [
     { id: "1", name: "Please send an email to :" },
     { id: "2", name: "henry@gmail.com" },
@@ -22,9 +29,25 @@ const SettingsPage = () => {
     { id: "4", name: "angela@gmail.com" },
     { id: "5", name: "ananyapkumar@gmail.com" },
   ];
+
   const toggleDropdown = () => {
     setIsDropdownVisible(!isDropdownVisible);
+    dropdownHeight.value = isDropdownVisible ? 0 : 225;
   };
+
+  const dropdownStyle = useAnimatedStyle(() => {
+    return {
+      height: withTiming(dropdownHeight.value, {
+        duration: 250,
+        easing: Easing.ease,
+      }),
+      opacity: withTiming(dropdownHeight.value > 0 ? 1 : 0, {
+        duration: 250,
+        easing: Easing.ease,
+      }),
+    };
+  });
+
   return (
     <ScrollView
       contentContainerStyle={[
@@ -38,6 +61,7 @@ const SettingsPage = () => {
       <Text style={[styles.mailtitle, { color: colors.text }]}>
         {user?.email}
       </Text>
+
       <TouchableOpacity
         style={[
           styles.dataButton,
@@ -47,7 +71,7 @@ const SettingsPage = () => {
         ]}
       >
         <Text style={[styles.buttontext, { color: colors.text }]}>
-          change Password
+          Change Password
         </Text>
         <Ionicons name="key" size={24} color="#687076" />
       </TouchableOpacity>
@@ -98,20 +122,25 @@ const SettingsPage = () => {
         onPress={toggleDropdown}
       >
         <Text style={[styles.buttontext, { color: colors.text }]}>
-          Tech support
+          Tech Support
         </Text>
         <Ionicons name="call-outline" size={24} color="#687076" />
       </TouchableOpacity>
 
-      {isDropdownVisible && (
-        <View style={styles.dropdownContainer}>
-          {data.map((item) => (
-            <Text key={item.id} style={styles.optionText}>
-              {item.name}
-            </Text>
-          ))}
-        </View>
-      )}
+      <Animated.View style={[styles.dropdownContainer, dropdownStyle]}>
+        {isDropdownVisible && (
+          <View>
+            {data.map((item) => (
+              <Text
+                key={item.id}
+                style={[styles.optionText, { color: colors.text }]}
+              >
+                {item.name}
+              </Text>
+            ))}
+          </View>
+        )}
+      </Animated.View>
 
       <TouchableOpacity
         onPress={signOut}
@@ -138,7 +167,6 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
   shadow: {
-    // shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 4,
@@ -161,7 +189,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     width: "80%",
     height: 60,
-    // backgroundColor: "#ffffff",
     borderRadius: 12,
     justifyContent: "space-between",
     alignItems: "center",
@@ -169,23 +196,17 @@ const styles = StyleSheet.create({
     marginTop: 30,
   },
   buttontext: {
-    // color: "#00100B",
     fontSize: 17,
     fontWeight: "600",
     marginRight: 10,
   },
   dropdownContainer: {
     width: "80%",
-    backgroundColor: "#fff",
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: "#687076",
     marginTop: 0,
-  },
-  option: {
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
+    overflow: "hidden",
   },
   optionText: {
     paddingHorizontal: 15,
