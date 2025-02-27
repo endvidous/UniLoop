@@ -11,7 +11,7 @@ import {
 import { RelativePathString, useRouter } from "expo-router";
 import { useAuth } from "@/src/context/AuthContext";
 import { Batch, useUserAssociations } from "@/src/hooks/api/useAssociations";
-import { ScrollView } from "react-native-reanimated/lib/typescript/Animated";
+import { ScrollView } from "react-native";
 
 // Component to display each batch as a clickable card
 const BatchCard = ({ batch }: { batch: Batch }) => {
