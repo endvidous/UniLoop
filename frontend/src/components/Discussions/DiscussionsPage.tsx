@@ -7,6 +7,7 @@ import {
   RefreshControl,
   TouchableOpacity,
   Modal,
+  ScrollView,
 } from "react-native";
 import DiscussionCard from "./DiscussionCard";
 import SearchFilterHeader from "../common/SearchFilter";
@@ -66,9 +67,16 @@ const DiscussionsPage = () => {
 
   if (isError) {
     return (
-      <Text style={styles.error}>
-        Error loading discussions {error.message}
-      </Text>
+      <ScrollView
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        style={styles.container}
+      >
+        <Text style={styles.error}>
+          Error loading discussions {error.message}
+        </Text>
+      </ScrollView>
     );
   }
 
