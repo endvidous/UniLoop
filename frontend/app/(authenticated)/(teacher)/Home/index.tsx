@@ -10,18 +10,18 @@ import {
 } from "react-native";
 import { RelativePathString, useRouter } from "expo-router";
 import { useAuth } from "@/src/context/AuthContext";
-import { useUserAssociations } from "@/src/hooks/api/useAssociations";
+import { Batch, useUserAssociations } from "@/src/hooks/api/useAssociations";
 import { ScrollView } from "react-native-reanimated/lib/typescript/Animated";
 
 // Component to display each batch as a clickable card
-const BatchCard = ({ batch }: { batch: { _id: string; code: string } }) => {
+const BatchCard = ({ batch }: { batch: Batch }) => {
   const router = useRouter();
   return (
     <TouchableOpacity
       onPress={() =>
         router.push({
           pathname:
-            `/authenticated/teacher/batch/[batchId]` as RelativePathString,
+            `/(authenticated)/(teacher)/batch/[batchId]` as RelativePathString,
           params: { batchId: batch._id },
         })
       }
@@ -37,7 +37,12 @@ const BatchCard = ({ batch }: { batch: { _id: string; code: string } }) => {
         elevation: 3,
       }}
     >
-      <Text style={{ fontSize: 18, fontWeight: "bold" }}>{batch.code}</Text>
+      <Text style={{ fontSize: 18, fontWeight: "bold" }}>
+        Code: {batch.code}
+      </Text>
+      <Text style={{ fontSize: 18, fontWeight: "bold" }}>
+        Start Year: {batch.startYear}
+      </Text>
     </TouchableOpacity>
   );
 };

@@ -23,7 +23,7 @@ export const getUserAssociations = async (req, res) => {
       const [departments, courses, batches] = await Promise.all([
         Departments.find({}).select("_id name").lean(),
         Courses.find({}).select("_id name code").lean(),
-        Batches.find({}).select("_id code").lean(),
+        Batches.find({}).select("_id code startYear").lean(),
       ]);
 
       associations = { departments, courses, batches };
@@ -45,7 +45,7 @@ export const getUserAssociations = async (req, res) => {
           : [],
         details.batchIds && details.batchIds.length > 0
           ? Batches.find({ _id: { $in: details.batchIds } })
-              .select("_id code")
+              .select("_id code startYear")
               .lean()
           : [],
       ]);
@@ -73,7 +73,7 @@ export const getUserAssociations = async (req, res) => {
               .lean()
           : [],
         details.batchId
-          ? Batches.find({ _id: details.batchId }).select("_id code").lean()
+          ? Batches.find({ _id: details.batchId }).select("_id code startYear").lean()
           : [],
       ]);
 
