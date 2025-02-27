@@ -8,12 +8,9 @@ import {
   ActivityIndicator,
   ListRenderItem,
 } from "react-native";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import Icon from "react-native-vector-icons/Ionicons";
-import {
-  useDepartments,
-  useCreateDepartments,
-} from "@/src/hooks/api/useDepartments";
+import { useDepartments } from "@/src/hooks/api/useDepartments";
 
 interface Department {
   _id: string;
@@ -21,6 +18,7 @@ interface Department {
 }
 
 const HomeScreen = () => {
+  const router = useRouter();
   const { data: departments, isFetching, isError, refetch } = useDepartments();
 
   const renderDepartment: ListRenderItem<Department> = ({ item }) => {
@@ -28,7 +26,12 @@ const HomeScreen = () => {
       console.warn("Item is missing the 'name' property:", item);
     }
     return (
-      <TouchableOpacity style={styles.card}>
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() =>
+          router.push(`/Home/departments/${item.name}`)
+        }
+      >
         <Text style={styles.cardText}>{item.name}</Text>
       </TouchableOpacity>
     );

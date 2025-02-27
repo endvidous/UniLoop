@@ -15,6 +15,8 @@ import TimelineCard from "@/src/components/admin/TimelineComponents/TimelineCard
 import {
   useAcademicTimelines,
   useCreateAcademicTimeline,
+  useDeleteAcademicTimeline,
+  useUpdateAcademicTimeline,
 } from "@/src/hooks/api/useAcademicTimelines";
 
 const TimelinePage = () => {

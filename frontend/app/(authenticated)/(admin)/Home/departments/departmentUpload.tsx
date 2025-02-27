@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
-import CSVCleaner from "@/src/utils/csvdatacleaner";
+import CSVCleaner from "@/src/components/common/csvdatacleaner";
 import { pickCSVDocument } from "@/src/utils/csvPicker";
 import {
   useDepartments,
@@ -37,7 +37,7 @@ const DepartmentTable = () => {
     });
 
   // Use fieldArray for dynamic form fields
-  const { fields, append, remove, update } = useFieldArray({
+  const { fields, remove } = useFieldArray({
     control,
     name: "departments",
   });
