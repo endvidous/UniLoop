@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 const Schema = mongoose.Schema;
 
-const attachmentSchema = new mongoose.Schema(
+export const attachmentSchema = new mongoose.Schema(
   {
     name: {
       type: String,

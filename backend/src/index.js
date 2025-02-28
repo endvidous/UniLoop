@@ -7,6 +7,7 @@ import fileRoutes from "./routes/common/fileRoutes.js";
 import meetingRoutes from "./routes/common/meetingRoutes.js";
 import associationsRoutes from "./routes/common/associationsRoutes.js";
 import classroomRoutes from "./routes/common/classroomFinderRoutes.js";
+import assignmentRoutes from "./routes/common/assignmentRoutes.js";
 import { authMiddleware, isAdmin } from "./middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -35,5 +36,6 @@ router.use(
   associationsRoutes
 );
 router.use("/classrooms", highLimitJsonParser, authMiddleware, classroomRoutes);
+router.use("/assignments", defaultJsonParser, authMiddleware, assignmentRoutes);
 
 export default router;
