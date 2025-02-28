@@ -22,7 +22,7 @@ export const canCreateClassroomBookings = async (req, res, next) => {
       if (batch) return next();
     }
 
-    res.status(403).json({ message: "Not authorized to create announcements" });
+    res.status(403).json({ message: "Not authorized to book classrooms" });
   } catch {
     res.status(500).json({ message: "Server error during authorization" });
   }
@@ -404,6 +404,13 @@ export const rejectBooking = async (req, res) => {
       await session.abortTransaction();
       session.endSession();
       return res.status(404).json({ message: "Booking not found" });
+    }
+
+    const { reason } = req.body; // Get the rejection reason from the request body
+    if (!reason) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ message: "Rejection reason is required" });
     }
 
     // Update booking status

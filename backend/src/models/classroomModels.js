@@ -151,6 +151,10 @@ const classroomBookingSchema = new Schema({
     max: 1440,
     set: parseTime,
   },
+  rejectionReason: {
+    type: String,
+    default: null, // Default to null if not provided
+  },
 });
 
 // Virtual for formatted booking slot (for frontend display)
