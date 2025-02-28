@@ -1,12 +1,14 @@
 import axiosInstance from "./axiosConfig";
 
 export type Paper = {
+  _id: string;
   name: string;
   code: string;
   semester: number;
 };
 
 export type Teacher = {
+  _id: string;
   name?: string;
   email?: string;
 };
@@ -44,7 +46,9 @@ export const departmentsService = {
     );
     return response.data;
   },
+};
 
+export const papersService = {
   getPapers: async (departmentId: string) => {
     const response = await axiosInstance.get(
       `/admin/departments/${departmentId}/papers`

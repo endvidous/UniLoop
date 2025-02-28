@@ -477,13 +477,13 @@ export const editSemester = async (req, res) => {
 
 // Delete Semester Function with Validation
 export const deleteSemester = async (req, res) => {
-  const { semesterId, semNo, courseId } = req.params; // Expecting semester ID, semester number, and course ID from the URL
+  const { semesterId } = req.params; // Expecting semester ID, semester number, and course ID from the URL
 
   try {
     // Validate input
-    if (!semesterId || !semNo || !courseId) {
+    if (!semesterId) {
       return res.status(400).json({
-        message: "All parameters (semesterId, semNo, courseId) are required.",
+        message: "Semester Id is required.",
       });
     }
 
@@ -520,8 +520,8 @@ export const validatePapers = async (papers) => {
         throw new Error(`Invalid teacher ID format: ${p.teacher}`);
       }
 
-      const paperId = new mongoose.Types.ObjectId(p.paper);
-      const teacherId = new mongoose.Types.ObjectId(p.teacher);
+      const paperId = new mongoose.Types.ObjectId(`${p.paper}`);
+      const teacherId = new mongoose.Types.ObjectId(`${p.teacher}`);
 
       // Validate that the paper exists
       const paperExists = await Papers.findById(paperId);

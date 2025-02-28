@@ -38,9 +38,9 @@ router.delete("/batches/:batchId", deleteBatch);
 
 /* ---------------------- SEMESTER ROUTES ---------------------- */
 router.get("/:courseId/semesters", getSemesters);
-router.get("/semesters/:semesterId", getOneSemester);
 router.post("/:courseId/semesters/:sem_no", createSemester);
+router.get("/semesters/:semesterId", getOneSemester);
 router.patch("/semesters/:semesterId", editSemester);
-router.delete("/:courseId/semesters/:semNo/:semesterId", deleteSemester);
+router.delete("/semesters/:semesterId", deleteSemester);
 
 export default router;

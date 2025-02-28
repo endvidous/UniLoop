@@ -1,5 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { departmentsService } from "@/src/services/api/departmentAPI";
+import {
+  departmentsService,
+  papersService,
+} from "@/src/services/api/departmentAPI";
 import { queryKeys } from "@/src/services/api/queryKeys";
 import { Department, Paper } from "@/src/services/api/departmentAPI";
 
@@ -67,7 +70,7 @@ export const useDeleteDepartment = () => {
 export const useDepartmentPapers = (departmentId: string, filters?: any) => {
   return useQuery<Paper[]>({
     queryKey: queryKeys.papers.list(departmentId, filters),
-    queryFn: () => departmentsService.getPapers(departmentId),
+    queryFn: () => papersService.getPapers(departmentId),
     enabled: !!departmentId,
   });
 };
@@ -82,7 +85,7 @@ export const useCreatePapers = () => {
     }: {
       departmentId: string;
       papers: Paper[];
-    }) => departmentsService.createPapers(departmentId, papers),
+    }) => papersService.createPapers(departmentId, papers),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.papers.list(variables.departmentId),
@@ -102,7 +105,7 @@ export const useUpdatePaper = () => {
       departmentId: string;
       paperId: string;
       paperData: Partial<Paper>;
-    }) => departmentsService.updatePaper(departmentId, paperId, paperData),
+    }) => papersService.updatePaper(departmentId, paperId, paperData),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.papers.list(variables.departmentId),
@@ -126,7 +129,7 @@ export const useDeletePaper = () => {
     }: {
       departmentId: string;
       paperId: string;
-    }) => departmentsService.deletePaper(departmentId, paperId),
+    }) => papersService.deletePaper(departmentId, paperId),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.papers.list(variables.departmentId),
