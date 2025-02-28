@@ -114,7 +114,9 @@ export const createTeachers = async (req, res) => {
 export const updateTeacher = async (req, res) => {
   const { departmentId, teacherId } = req.params;
   const updates = req.body;
-
+  if (Object.prototype.hasOwnProperty.call(updates, "role")) {
+    delete updates.role;
+  }
   try {
     // Validate department exists
     const department = await Departments.findById(departmentId);
@@ -293,9 +295,11 @@ export const createStudents = async (req, res) => {
 
 //Update a student in the batch
 export const updateStudent = async (req, res) => {
-  const { batchID } = req.params;
-  const { updates } = req.body;
-
+  const { batchID, studentId } = req.params;
+  const updates = req.body;
+  if (Object.prototype.hasOwnProperty.call(updates, "role")) {
+    delete updates.role;
+  }
   try {
     // Validate batch exists
     const batch = await Batches.findById(batchID);
@@ -304,7 +308,7 @@ export const updateStudent = async (req, res) => {
     }
 
     // Update student
-    const updatedStudent = await User.findByIdAndUpdate(batchID, updates, {
+    const updatedStudent = await User.findByIdAndUpdate(studentId, updates, {
       new: true,
       runValidators: true,
     }).select("-password -__v");

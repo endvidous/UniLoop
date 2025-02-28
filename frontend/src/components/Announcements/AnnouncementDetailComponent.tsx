@@ -1,4 +1,4 @@
-import React, { useState, useEffect, ComponentProps } from "react";
+import React, { ComponentProps, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -20,7 +20,10 @@ import { ActivityIndicator } from "react-native-paper";
 import { useAuth } from "@/src/context/AuthContext";
 import { useUserAssociations } from "@/src/hooks/api/useAssociations";
 import { useRouter } from "expo-router";
-import AttachmentViewer from "../common/AttachmentViewer";
+import AttachmentViewer, { Attachment } from "../common/AttachmentViewer";
+import { useForm, Controller } from "react-hook-form";
+import { useFileDelete } from "@/src/hooks/api/useFiles";
+
 type PostedTo = {
   model: string | null;
   id?: {
@@ -43,13 +46,21 @@ type AnnouncementData = {
     role: string;
   };
   createdAt: string;
-  attachments: any[];
+  attachments: Attachment[];
 };
 
 type Department = { _id: string; name: string };
 type Course = { _id: string; name: string; code: string };
 type Batch = { _id: string; code: string };
-type MaterialIconName = ComponentProps<typeof MaterialIcons>["name"];
+
+type FormValues = {
+  title: string;
+  description: string;
+  priority: number;
+  visibilityType: string;
+  postedToId?: string | null;
+  expiresAt: Date;
+};
 
 const AnnouncementDetailComponent = ({ id }: { id: string }) => {
   const { user } = useAuth();
@@ -58,60 +69,50 @@ const AnnouncementDetailComponent = ({ id }: { id: string }) => {
   const deleteMutation = useDeleteAnnouncement();
   const { data: associations } = useUserAssociations();
   const router = useRouter();
-
-  const [editing, setEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    priority: 2,
-    visibilityType: "General",
-    postedToModel: "Batches",
-    postedToId: null as string | null,
-    expiresAt: new Date(),
+  const { control, handleSubmit, reset, getValues } = useForm<FormValues>({
+    defaultValues: {
+      title: "",
+      description: "",
+      priority: 2,
+      visibilityType: "General",
+      postedToId: null,
+      expiresAt: new Date(),
+    },
   });
-
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const { mutate: deleteFile } = useFileDelete();
   const [showCalendar, setShowCalendar] = useState(false);
+  const [editing, setEditing] = useState(false);
 
-  // Date formatting helper
-  const formatDateForDisplay = (date: Date) => {
-    return date.toLocaleDateString("en-GB"); // DD/MM/YYYY format
-  };
-
-  // Date selection handler
-  const isValidDate = (date: Date) => {
-    return date instanceof Date && !isNaN(date.getTime());
-  };
-  const handleDateSelect = (dateString: string) => {
-    // The dateString comes from CalendarModal as "YYYY/MM/DD"
-    const [year, month, day] = dateString.split("/");
-
-    // Create date using Date constructor parameters (year, monthIndex, day)
-    const newDate = new Date(
-      parseInt(year),
-      parseInt(month) - 1, // Months are 0-based in JS Date
-      parseInt(day)
-    );
-
-    if (isValidDate(newDate)) {
-      setFormData({ ...formData, expiresAt: newDate });
-    }
-  };
-
+  // When announcement data is loaded, set form values and attachments
   useEffect(() => {
     if (data) {
-      setFormData({
+      reset({
         title: data.title,
         description: data.description,
         priority: data.priority,
         visibilityType: data.visibilityType,
-        postedToModel: data.posted_to?.model || null,
         postedToId: data.posted_to?.id?._id || null,
         expiresAt: new Date(data.expiresAt),
       });
+      setAttachments(data.attachments || []);
     }
-  }, [data]);
+  }, [data, reset]);
 
-  const handleUpdate = async () => {
+  const handleDateSelect = (dateString: string) => {
+    // dateString comes as "YYYY/MM/DD"
+    const [year, month, day] = dateString.split("/");
+    const newDate = new Date(
+      parseInt(year),
+      parseInt(month) - 1,
+      parseInt(day)
+    );
+    if (!isNaN(newDate.getTime())) {
+      reset((prev) => ({ ...prev, expiresAt: newDate }));
+    }
+  };
+
+  const onSubmit = async (formData: FormValues) => {
     try {
       await updateMutation.mutateAsync({
         id,
@@ -122,29 +123,31 @@ const AnnouncementDetailComponent = ({ id }: { id: string }) => {
           visibilityType: formData.visibilityType,
           ...(formData.visibilityType !== "General" && {
             posted_to: {
-              model: formData.postedToModel,
+              // For example, you might want to map "Department" to "Departments", etc.
+              model:
+                formData.visibilityType === "Department"
+                  ? "Departments"
+                  : formData.visibilityType === "Course"
+                  ? "Courses"
+                  : formData.visibilityType === "Batch"
+                  ? "Batches"
+                  : null,
               id: formData.postedToId,
             },
           }),
           expiresAt: formData.expiresAt.toISOString(),
+          attachments: attachments,
         },
       });
       Alert.alert("Success", "Announcement updated successfully.");
       setEditing(false);
       refetch();
     } catch (err) {
-      Alert.alert("Error", `"Failed to update announcement." ${err}`);
+      Alert.alert("Error", "Failed to update announcement.");
     }
   };
 
-  const formatPostedTo = (posted_to: PostedTo) => {
-    if (!posted_to?.model) return "General";
-    const modelPart = posted_to.model;
-    const idPart = posted_to.id?.name ? `: ${posted_to.id.name}` : "";
-    return `${modelPart}${idPart}`;
-  };
-
-  const handleDelete = async () => {
+  const handleDeleteAnnouncement = async () => {
     Alert.alert(
       "Confirm Delete",
       "Are you sure you want to delete this announcement?",
@@ -167,15 +170,25 @@ const AnnouncementDetailComponent = ({ id }: { id: string }) => {
     );
   };
 
+  const handleDeleteAttachment = async (attachment: Attachment) => {
+    try {
+      await deleteFile(attachment.key);
+      setAttachments((prev) =>
+        prev.filter((att) => att.key !== attachment.key)
+      );
+      Alert.alert("Success", "Attachment deleted successfully.");
+    } catch (err) {
+      Alert.alert("Error", "Failed to delete attachment.");
+    }
+  };
+
   const canEdit = () => {
     if (!user || !data) return false;
-    // Only original poster can edit (admin or regular user)
     return data.postedBy._id === user.id;
   };
 
   const canDelete = () => {
     if (!user || !data) return false;
-    // Admins can delete any, users can delete their own
     return user.role === "admin" || data.postedBy._id === user.id;
   };
 
@@ -201,123 +214,167 @@ const AnnouncementDetailComponent = ({ id }: { id: string }) => {
     <ScrollView contentContainerStyle={styles.container}>
       {editing ? (
         <>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Title</Text>
-            <TextInput
-              style={styles.input}
-              value={formData.title}
-              onChangeText={(text) => setFormData({ ...formData, title: text })}
-              placeholder="Enter title"
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Description</Text>
-            <TextInput
-              style={[styles.input, styles.multiline]}
-              value={formData.description}
-              onChangeText={(text) =>
-                setFormData({ ...formData, description: text })
-              }
-              placeholder="Enter description"
-              multiline
-              numberOfLines={4}
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Priority</Text>
-            <Picker
-              selectedValue={formData.priority}
-              onValueChange={(value) =>
-                setFormData({ ...formData, priority: value })
-              }
-              style={styles.picker}
-            >
-              <Picker.Item label="High" value={3} />
-              <Picker.Item label="Normal" value={2} />
-              <Picker.Item label="Low" value={1} />
-            </Picker>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Visibility Type</Text>
-            <Picker
-              selectedValue={formData.visibilityType}
-              onValueChange={(value) =>
-                setFormData({ ...formData, visibilityType: value })
-              }
-              style={styles.picker}
-            >
-              <Picker.Item label="General" value="General" />
-              <Picker.Item label="Department" value="Department" />
-              <Picker.Item label="Course" value="Course" />
-              <Picker.Item label="Batch" value="Batch" />
-            </Picker>
-          </View>
-
-          {formData.visibilityType !== "General" && (
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>{formData.visibilityType}</Text>
-              <Picker
-                selectedValue={formData.postedToId}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, postedToId: value })
-                }
-                style={styles.picker}
-              >
-                <Picker.Item
-                  label={`Select ${formData.visibilityType}`}
-                  value={null}
+          <Controller
+            control={control}
+            name="title"
+            rules={{ required: "Title is required" }}
+            render={({ field: { onChange, value } }) => (
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Title</Text>
+                <TextInput
+                  style={styles.input}
+                  value={value}
+                  onChangeText={onChange}
+                  placeholder="Enter title"
                 />
-                {formData.visibilityType === "Department" &&
-                  associations?.departments.map((dept: Department) => (
+              </View>
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="description"
+            render={({ field: { onChange, value } }) => (
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Description</Text>
+                <TextInput
+                  style={[styles.input, styles.multiline]}
+                  value={value}
+                  onChangeText={onChange}
+                  placeholder="Enter description"
+                  multiline
+                  numberOfLines={4}
+                />
+              </View>
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="priority"
+            render={({ field: { onChange, value } }) => (
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Priority</Text>
+                <Picker
+                  selectedValue={value}
+                  onValueChange={onChange}
+                  style={styles.picker}
+                >
+                  <Picker.Item label="High" value={3} />
+                  <Picker.Item label="Normal" value={2} />
+                  <Picker.Item label="Low" value={1} />
+                </Picker>
+              </View>
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="visibilityType"
+            render={({ field: { onChange, value } }) => (
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Visibility Type</Text>
+                <Picker
+                  selectedValue={value}
+                  onValueChange={onChange}
+                  style={styles.picker}
+                >
+                  <Picker.Item label="General" value="General" />
+                  <Picker.Item label="Department" value="Department" />
+                  <Picker.Item label="Course" value="Course" />
+                  <Picker.Item label="Batch" value="Batch" />
+                </Picker>
+              </View>
+            )}
+          />
+
+          {getValues("visibilityType") !== "General" && (
+            <Controller
+              control={control}
+              name="postedToId"
+              render={({ field: { onChange, value } }) => (
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>
+                    {getValues("visibilityType")}
+                  </Text>
+                  <Picker
+                    selectedValue={value}
+                    onValueChange={onChange}
+                    style={styles.picker}
+                  >
                     <Picker.Item
-                      key={dept._id}
-                      label={dept.name}
-                      value={dept._id}
+                      label={`Select ${getValues("visibilityType")}`}
+                      value={null}
                     />
-                  ))}
-                {formData.visibilityType === "Course" &&
-                  associations?.courses.map((course: Course) => (
-                    <Picker.Item
-                      key={course._id}
-                      label={course.name}
-                      value={course._id}
-                    />
-                  ))}
-                {formData.visibilityType === "Batch" &&
-                  associations?.batches.map((batch: Batch) => (
-                    <Picker.Item
-                      key={batch._id}
-                      label={batch.code}
-                      value={batch._id}
-                    />
-                  ))}
-              </Picker>
-            </View>
+                    {getValues("visibilityType") === "Department" &&
+                      associations?.departments.map((dept: Department) => (
+                        <Picker.Item
+                          key={dept._id}
+                          label={dept.name}
+                          value={dept._id}
+                        />
+                      ))}
+                    {getValues("visibilityType") === "Course" &&
+                      associations?.courses.map((course: Course) => (
+                        <Picker.Item
+                          key={course._id}
+                          label={course.name}
+                          value={course._id}
+                        />
+                      ))}
+                    {getValues("visibilityType") === "Batch" &&
+                      associations?.batches.map((batch: Batch) => (
+                        <Picker.Item
+                          key={batch._id}
+                          label={batch.code}
+                          value={batch._id}
+                        />
+                      ))}
+                  </Picker>
+                </View>
+              )}
+            />
           )}
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Expiration Date</Text>
-            <TouchableOpacity
-              style={styles.dateInput}
-              onPress={() => setShowCalendar(true)}
-            >
-              <Text>{formatDateForDisplay(formData.expiresAt)}</Text>
-              <MaterialIcons name="calendar-today" size={20} color="#666" />
-            </TouchableOpacity>
+          <Controller
+            control={control}
+            name="expiresAt"
+            render={({ field: { value } }) => (
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Expiration Date</Text>
+                <TouchableOpacity
+                  style={styles.dateInput}
+                  onPress={() => setShowCalendar(true)}
+                >
+                  <Text>
+                    {value ? value.toLocaleDateString("en-GB") : "Select date"}
+                  </Text>
+                  <MaterialIcons name="calendar-today" size={20} color="#666" />
+                </TouchableOpacity>
+                <CalendarModal
+                  visible={showCalendar}
+                  onClose={() => setShowCalendar(false)}
+                  onDateSelect={handleDateSelect}
+                  initialDate={
+                    value ? value.toISOString().split("T")[0] : undefined
+                  }
+                />
+              </View>
+            )}
+          />
 
-            <CalendarModal
-              visible={showCalendar}
-              onClose={() => setShowCalendar(false)}
-              onDateSelect={handleDateSelect}
-              initialDate={formData.expiresAt.toISOString().split("T")[0]}
-            />
-          </View>
+          {/* Render attachments with delete (edit) functionality */}
+          <AttachmentViewer
+            attachments={attachments}
+            editable
+            onDeleteAttachment={handleDeleteAttachment}
+          />
 
           <View style={styles.buttonGroup}>
-            <TouchableOpacity style={styles.saveButton} onPress={handleUpdate}>
+            <TouchableOpacity
+              style={styles.saveButton}
+              onPress={handleSubmit(onSubmit)}
+            >
               <Text style={styles.buttonText}>Save Changes</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -338,9 +395,7 @@ const AnnouncementDetailComponent = ({ id }: { id: string }) => {
               </Text>
             </View>
           </View>
-
           <Text style={styles.description}>{data.description}</Text>
-
           <View style={styles.metaContainer}>
             <MetaItem
               icon="visibility"
@@ -350,7 +405,11 @@ const AnnouncementDetailComponent = ({ id }: { id: string }) => {
             <MetaItem
               icon="category"
               label="Posted To"
-              value={formatPostedTo(data.posted_to)}
+              value={
+                data.posted_to
+                  ? `${data.posted_to.model}: ${data.posted_to.id?.name}`
+                  : "General"
+              }
             />
             <MetaItem
               icon="event"
@@ -369,7 +428,6 @@ const AnnouncementDetailComponent = ({ id }: { id: string }) => {
             />
           </View>
           <AttachmentViewer attachments={data.attachments} />
-
           {(canEdit() || canDelete()) && (
             <View style={styles.buttonGroup}>
               {canEdit() && (
@@ -383,7 +441,7 @@ const AnnouncementDetailComponent = ({ id }: { id: string }) => {
               {canDelete() && (
                 <TouchableOpacity
                   style={styles.deleteButton}
-                  onPress={handleDelete}
+                  onPress={handleDeleteAnnouncement}
                 >
                   <Text style={styles.buttonText}>Delete Announcement</Text>
                 </TouchableOpacity>
@@ -401,7 +459,7 @@ const MetaItem = ({
   label,
   value,
 }: {
-  icon: MaterialIconName;
+  icon: ComponentProps<typeof MaterialIcons>["name"];
   label: string;
   value: string;
 }) => (

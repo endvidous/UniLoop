@@ -13,7 +13,7 @@ import DateButton from "./dateButton";
 
 interface CreateTimelineModalProps {
   visible: boolean;
-  onClose: () => void;
+  onClose: () => void
   onSubmit: (data: any) => void;
 }
 

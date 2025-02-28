@@ -6,9 +6,11 @@ import mongoose from "mongoose";
 //Department controllers
 export const getDepartments = async (req, res) => {
   try {
-    const departments = await Departments.find().sort({ name: 1 });
+    const departments = await Departments.find()
+      .sort({ name: 1 })
+      .select("-teachers");
     if (!departments.length) {
-      return res.status(404).json({
+      return res.status(200).json({
         message: "No Departments found",
         data: [],
       });
@@ -31,11 +33,19 @@ export const createDepartments = async (req, res) => {
   try {
     checkIfEmpty(departments);
 
-    const invalidDepartment = departments.find(
-      (department) => !department.name
-    );
-    if (invalidDepartment) {
-      throw new Error("Each department must have a name");
+    const departmentNamesMap = new Map();
+    for (const department of departments) {
+      if (!department.name) {
+        res.status(400).json({ message: "Each department must have a name" });
+      }
+
+      // Check for duplicate
+      if (departmentNamesMap.has(department.name)) {
+        res.status(400).json({
+          message: `Duplicate department names found`,
+        });
+      }
+      departmentNamesMap.set(department.name, true);
     }
 
     const createdDepartments = await Departments.insertMany(departments);
@@ -211,28 +221,24 @@ export const createPapers = async (req, res) => {
 };
 
 export const updatePaper = async (req, res) => {
-  const { paperId } = req.params;
-  const { name, code, semester, department } = req.body;
+  const { departmentId, paperId } = req.params;
+  const { name, code, semester } = req.body;
 
   try {
+    const department = await Departments.findById(departmentId);
+    if (!department) {
+      return res.status(404).json({ message: "Department not found" });
+    }
     const paper = await Papers.findById(paperId);
     if (!paper) {
       return res.status(404).json({ message: "Paper not found" });
     }
 
-    // Validate department if being updated
-    if (department) {
-      const departmentExists = await Departments.exists({ _id: department });
-      if (!departmentExists) {
-        return res.status(404).json({ message: "Department not found" });
-      }
-    }
-
-    // Check for duplicate code in the same department
+    // Check for duplicate code within the same department (using the paper's existing department)
     if (code) {
       const existingPaper = await Papers.findOne({
         code: code,
-        department: department || paper.department,
+        department: paper.department,
         _id: { $ne: paperId },
       });
 
@@ -242,13 +248,12 @@ export const updatePaper = async (req, res) => {
           .json({ message: "Paper code already exists in this department" });
       }
     }
+
+    // Only update the name, code, and semester fields
     const updatedPaper = await Papers.findByIdAndUpdate(
       paperId,
-      { name, code, semester, department },
-      {
-        new: true,
-        runValidators: true,
-      }
+      { name, code, semester },
+      { new: true, runValidators: true }
     );
 
     res.status(200).json({
@@ -264,9 +269,14 @@ export const updatePaper = async (req, res) => {
 };
 
 export const deletePaper = async (req, res) => {
-  const { paperId } = req.params;
+  const { departmentId, paperId } = req.params;
 
   try {
+    const department = await Departments.findById(departmentId);
+    if (!department) {
+      return res.status(404).json({ message: "Department not found" });
+    }
+
     const paper = await Papers.findByIdAndDelete(paperId);
     if (!paper) {
       return res.status(404).json({ message: "Paper not found" });

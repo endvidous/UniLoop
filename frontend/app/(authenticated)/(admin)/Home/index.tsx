@@ -4,10 +4,14 @@ import { Link } from "expo-router";
 import { pickCSVDocument } from "@/src/utils/csvPicker";
 import { classroomCSVCleaner } from "@/src/utils/classroomCSVcleaner";
 // import Ionicons from "@expo/vector-icons/Ionicons";
+import { useTheme } from "@/src/hooks/colors/useThemeColor";
+import { shadow } from "react-native-paper";
+import { Colors } from "react-native/Libraries/NewAppScreen";
 
 const AdminIndex = () => {
+  const { colors } = useTheme();
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Link style={[styles.card, styles.shadow]} href="/Home/timelines" asChild>
         <TouchableOpacity style={styles.cardTouchable}>
           <View style={styles.cardContent}>
@@ -44,7 +48,7 @@ const AdminIndex = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#ffffff",
+    // backgroundColor: "#ffffff",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -55,7 +59,7 @@ const styles = StyleSheet.create({
     width: "90%",
     marginBottom: 40,
     elevation: 5,
-    shadowColor: "#000",
+    shadowColor: Colors.shadowcolor,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.8,
     shadowRadius: 5,
@@ -76,7 +80,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   shadow: {
-    shadowColor: "#000",
+    shadowColor: Colors.shadowcolor,
     shadowOffset: {
       width: 0,
       height: 4,

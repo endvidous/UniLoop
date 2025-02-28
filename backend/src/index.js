@@ -12,12 +12,12 @@ import { authMiddleware, isAdmin } from "./middleware/authMiddleware.js";
 const router = express.Router();
 
 // Default parser for routes that don't require a high limit
-const defaultJsonParser = express.json({ limit: "2mb" });
+const defaultJsonParser = express.json({ limit: "100kb" });
 // High limit parser for routes that need it
-// const highLimitJsonParser = express.json({ limit: '50mb' });
+const highLimitJsonParser = express.json({ limit: "5mb" });
 
 // Define routes
-router.use("/auth", authRoutes);
+router.use("/auth", defaultJsonParser, authRoutes);
 router.use("/admin", defaultJsonParser, authMiddleware, isAdmin, adminRoutes);
 router.use(
   "/announcements",
@@ -34,6 +34,6 @@ router.use(
   authMiddleware,
   associationsRoutes
 );
-router.use("/classrooms", defaultJsonParser, authMiddleware, classroomRoutes);
+router.use("/classrooms", highLimitJsonParser, authMiddleware, classroomRoutes);
 
 export default router;

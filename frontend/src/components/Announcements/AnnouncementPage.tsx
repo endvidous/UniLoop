@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   Modal,
+  ScrollView,
 } from "react-native";
 import { useAnnouncements } from "@/src/hooks/api/useAnnouncements";
 import { useState } from "react";
@@ -66,11 +67,16 @@ const AnnouncementsPage = () => {
 
   if (isError) {
     return (
-      <View style={styles.container}>
+      <ScrollView
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        style={styles.container}
+      >
         <Text style={styles.errorText}>
           Error loading announcements: {error.message}
         </Text>
-      </View>
+      </ScrollView>
     );
   }
   return (

@@ -1,3 +1,4 @@
+import React from "react";
 import {
   View,
   Text,
@@ -9,25 +10,31 @@ import {
 import { MaterialIcons } from "@expo/vector-icons";
 import { useDownloadUrl } from "@/src/hooks/api/useFiles";
 
-type Attachment = {
+export type Attachment = {
   key: string;
   name: string;
   type: "pdf" | "image" | "document" | "other";
 };
 
-const AttachmentViewer = ({ attachments }: { attachments: Attachment[] }) => {
+type AttachmentViewerProps = {
+  attachments: Attachment[];
+  editable?: boolean;
+  onDeleteAttachment?: (attachment: Attachment) => void;
+};
+
+const AttachmentViewer = ({
+  attachments,
+  editable = false,
+  onDeleteAttachment,
+}: AttachmentViewerProps) => {
   const { mutateAsync: getDownloadUrl } = useDownloadUrl();
 
   const handleDownload = async (key: string, name: string) => {
     try {
-      // Get the download URL from your backend
       const downloadUrl = await getDownloadUrl(key);
-
       if (!downloadUrl) {
         throw new Error("No download URL available");
       }
-
-      // Open the URL in the default handler
       await Linking.openURL(downloadUrl);
     } catch (error) {
       console.error("Download error:", error);
@@ -42,18 +49,27 @@ const AttachmentViewer = ({ attachments }: { attachments: Attachment[] }) => {
     <View style={styles.attachmentsContainer}>
       <Text style={styles.sectionTitle}>Attachments</Text>
       {attachments.map((attachment) => (
-        <TouchableOpacity
-          key={attachment.key}
-          style={styles.attachmentItem}
-          onPress={() => handleDownload(attachment.key, attachment.name)}
-        >
-          <MaterialIcons
-            name={getIconForType(attachment.type)}
-            size={24}
-            color="#3b82f6"
-          />
-          <Text style={styles.attachmentName}>{attachment.name}</Text>
-        </TouchableOpacity>
+        <View key={attachment.key} style={styles.attachmentRow}>
+          <TouchableOpacity
+            style={styles.attachmentContent}
+            onPress={() => handleDownload(attachment.key, attachment.name)}
+          >
+            <MaterialIcons
+              name={getIconForType(attachment.type)}
+              size={24}
+              color="#3b82f6"
+            />
+            <Text style={styles.attachmentName}>{attachment.name}</Text>
+          </TouchableOpacity>
+          {editable && onDeleteAttachment && (
+            <TouchableOpacity
+              onPress={() => onDeleteAttachment(attachment)}
+              style={styles.deleteButton}
+            >
+              <MaterialIcons name="close" size={24} color="#ff4444" />
+            </TouchableOpacity>
+          )}
+        </View>
       ))}
       {attachments.length === 0 && (
         <Text style={styles.noAttach}>No attachments found</Text>
@@ -61,8 +77,6 @@ const AttachmentViewer = ({ attachments }: { attachments: Attachment[] }) => {
     </View>
   );
 };
-
-export default AttachmentViewer;
 
 const getIconForType = (type: string) => {
   switch (type) {
@@ -91,17 +105,26 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     color: "#1e293b",
   },
-  attachmentItem: {
+  attachmentRow: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
     paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: "#e2e8f0",
+  },
+  attachmentContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
   },
   attachmentName: {
     marginLeft: 12,
     color: "#3b82f6",
     fontSize: 14,
+  },
+  deleteButton: {
+    padding: 4,
   },
   noAttach: {
     fontSize: 14,
@@ -109,3 +132,5 @@ const styles = StyleSheet.create({
     color: "#1e296f",
   },
 });
+
+export default AttachmentViewer;

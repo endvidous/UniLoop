@@ -5,7 +5,7 @@ export const getAcademicTimelines = async (req, res) => {
     const timelines = await AcademicTimeline.find().sort({ academicYear: 1 });
 
     if (!timelines.length) {
-      return res.status(404).json({
+      return res.status(200).json({
         message: "No academic timelines found",
         data: [],
       });
