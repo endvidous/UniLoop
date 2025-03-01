@@ -5,8 +5,8 @@ const tintColorLight = "#0a7ea4";
 const tintColorDark = "#fff";
 
 export const LightTheme = {
-  text: "#11181C",
-  background: "#fff",
+  text: "#36393b",
+  background: "#dfdfdf",
   tint: tintColorLight,
   icon: "#687076",
   tabIconDefault: "#687076",
@@ -20,7 +20,7 @@ export const DarkTheme = {
   icon: "#9BA1A6",
   tabIconDefault: "#9BA1A6",
   tabIconSelected: tintColorDark,
-  shadowcolor: "#0a7ea4",
+  shadowcolor: "#d0e1e7",
 };
 export const useTheme = () => {
   const theme = useStore((state) => state.theme);

@@ -69,7 +69,6 @@ export const bulkDeleteFiles = async (keys: string[]): Promise<void> => {
 };
 
 export const getDownloadUrl = async (fileKey: string): Promise<string> => {
-  console.log(fileKey);
   const { data } = await axiosInstance.get<{ url: string }>(
     `/files/download-url`,
     { params: { fileKey } }

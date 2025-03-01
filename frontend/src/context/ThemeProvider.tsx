@@ -45,7 +45,6 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     },
   };
 
-  console.log("Paper Theme", paperTheme);
   return (
     <>
       <StatusBar style={isDarkMode ? "light" : "dark"} />

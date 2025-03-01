@@ -4,9 +4,7 @@ import { useRouter } from "expo-router";
 import { appStorage } from "@/src/services/storage/secureStorage";
 
 const IP = process.env.EXPO_PUBLIC_API_URL;
-console.log("Ip address", IP);
 const BASE_URL = `http://${IP}:5000/api`; // your backend URL
-console.log(BASE_URL);
 
 const axiosInstance = axios.create({
   baseURL: BASE_URL,

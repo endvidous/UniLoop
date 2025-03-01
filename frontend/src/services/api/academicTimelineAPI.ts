@@ -34,7 +34,6 @@ export const academicTimelineService = {
   },
 
   createTimeline: async (data: CreateAcademicTimelineData) => {
-    console.log("Reached create");
     const response = await axiosInstance.post("/admin/academic-timeline", data);
     return response.data;
   },
