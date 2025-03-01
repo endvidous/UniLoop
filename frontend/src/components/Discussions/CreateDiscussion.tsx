@@ -153,9 +153,15 @@ const CreateDiscussion = ({ onDismiss }: CreateDiscussionProps) => {
               style={styles.picker}
             >
               <Picker.Item label="General" value="General" />
-              <Picker.Item label="Department" value="Department" />
-              <Picker.Item label="Course" value="Course" />
-              <Picker.Item label="Batch" value="Batch" />
+              {associations?.departments.length !== 0 && (
+                <Picker.Item label="Department" value="Department" />
+              )}
+              {associations?.courses.length !== 0 && (
+                <Picker.Item label="Course" value="Course" />
+              )}
+              {associations?.batches.length !== 0 && (
+                <Picker.Item label="Batch" value="Batch" />
+              )}
             </Picker>
             {fieldState.error && (
               <Text style={styles.error}>{fieldState.error.message}</Text>

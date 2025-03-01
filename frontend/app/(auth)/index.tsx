@@ -4,14 +4,14 @@ import {
   TextInput,
   TouchableOpacity,
   Text,
-  Alert,
 } from "react-native";
 import { UniloopText } from "@/src/assets/svgs/splashSvgs";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
-import axios from "axios";
+import { AxiosError } from "axios";
 import { useAuth } from "@/src/context/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
+import { toast, ToastPosition } from "@backpackapp-io/react-native-toast";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -20,29 +20,32 @@ export default function LoginPage() {
   const { signIn } = useAuth();
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [passwordVisible, setPasswordVisible] = useState(false);
+  interface LoginFormState {
+    email: string;
+    password: string;
+    emailError: string | null;
+    passwordError: string | null;
+    passwordVisible: boolean;
+  }
 
-  const handleLogin = async () => {
+  const [passwordVisible, setPasswordVisible] =
+    useState<LoginFormState["passwordVisible"]>(false);
+
+  const handleLogin = async (): Promise<void> => {
     try {
-      await signIn(email.trim(), password);
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const message = error.response?.data?.message;
-
-        // Reset errors
-        setEmailError(null);
-        setPasswordError(null);
-        // Set error based on backend message
-        if (message === "Invalid credentials") {
-          setEmailError("Invalid email or user does not exist.");
-        } else if (message === "Wrong password") {
-          setPasswordError("Incorrect password. Please try again.");
-        } else {
-          Alert.alert("Error", "An unexpected error occurred.");
-        }
-      } else {
-        console.error("An unknown error occurred:", error);
-      }
+      const signInPromise = signIn(email.trim(), password);
+      toast.promise(
+        signInPromise,
+        {
+          loading: "Logging in...",
+          success: () => "Welcome ",
+          error: (err: Error) => err.toString(),
+        },
+        { position: ToastPosition.BOTTOM }
+      );
+      await signInPromise;
+    } catch (error: AxiosError | any) {
+      //Do Nothing as of now
     }
   };
 

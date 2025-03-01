@@ -83,6 +83,7 @@ const DiscussionsPage = () => {
   return (
     <View style={styles.container}>
       <SearchFilterHeader
+        placeholder="Search discussions..."
         filters={filters}
         setFilters={setFilters}
         configType="Discussions"
