@@ -118,4 +118,14 @@ export const queryKeys = {
     details: () => [...queryKeys.discussions.all, "detail"] as const,
     detail: (id: string) => [...queryKeys.discussions.details(), id] as const,
   },
+
+  // Assignment keys
+  assignments: {
+    all: ["assignments"] as const,
+    lists: () => [...queryKeys.assignments.all, "list"] as const,
+    list: (filters?: any) =>
+      [...queryKeys.assignments.lists(), { ...filters }] as const,
+    details: () => [...queryKeys.assignments.all, "detail"] as const,
+    detail: (id: string) => [...queryKeys.assignments.details(), id] as const,
+  },
 };

@@ -61,7 +61,7 @@ export const uploadFile = async (file: SelectedFile): Promise<string> => {
 };
 
 export const deleteFile = async (fileKey: string): Promise<void> => {
-  await axiosInstance.delete(`/files`, { params: fileKey });
+  await axiosInstance.delete(`/files`, { data: { fileKey } });
 };
 
 export const bulkDeleteFiles = async (keys: string[]): Promise<void> => {
@@ -71,7 +71,7 @@ export const bulkDeleteFiles = async (keys: string[]): Promise<void> => {
 export const getDownloadUrl = async (fileKey: string): Promise<string> => {
   const { data } = await axiosInstance.get<{ url: string }>(
     `/files/download-url`,
-    { params: { fileKey } }
+    { data: { fileKey } }
   );
   return data.url;
 };

@@ -40,6 +40,15 @@ const TabLayout = () => {
         }}
       />
       <Tabs.Screen
+        name="Assignments"
+        options={{
+          title: "Assignments",
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons size={28} name="assignment" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="Settings"
         options={{
           title: "Settings",
