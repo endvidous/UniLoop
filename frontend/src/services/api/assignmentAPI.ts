@@ -92,8 +92,14 @@ export interface GetAssignmentResponse {
 export const assignmentsService = {
   // Get all assignments
   getAllAssignments: async (): Promise<GetAllAssignmentsResponse> => {
-    const response = await axiosInstance.get("/assignments");
-    return response.data;
+    try {
+      const response = await axiosInstance.get("/assignments");
+      return response.data;
+    } catch (error: any) {
+      throw new Error(
+        error?.response?.data?.message || "Unknown error occured"
+      );
+    }
   },
 
   // Get single assignment

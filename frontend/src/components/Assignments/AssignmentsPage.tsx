@@ -45,7 +45,7 @@ const AssignmentsPage = () => {
         style={styles.container}
       >
         <Text style={styles.errorText}>
-          Error loading assignments: {error?.message}
+          Error loading assignments: {error.message}
         </Text>
       </ScrollView>
     );
