@@ -7,9 +7,9 @@ import {
   submitAssignment,
   deleteAssignmentSubmission,
   downloadSubmissionsZip,
-} from "../../controllers/common/assignmentsController";
+} from "../../controllers/common/assignmentsController.js";
 import express from "express";
-import { isStudent, isTeacher } from "../../middleware/authMiddleware";
+import { isStudent, isTeacher } from "../../middleware/authMiddleware.js";
 
 const router = express.Router();
 

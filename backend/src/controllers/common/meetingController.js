@@ -76,6 +76,20 @@ export const createMeetingRequest = async (req, res) => {
       }
     }
 
+    // Check for existing meeting
+    const existingMeeting = await Meetings.findOne({
+      requestedBy,
+      requestedTo,
+      purpose,
+      timing,
+    });
+
+    if (existingMeeting) {
+      return res.status(400).json({
+        message: "Meeting with these details already exists",
+      });
+    }
+
     const meeting = await Meetings.create({
       requestedBy,
       requestedTo,

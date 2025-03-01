@@ -219,7 +219,7 @@ export const getBatchStudents = async (req, res) => {
       path: "students",
       select: "name email roll_no", // Select only necessary fields
       options: { sort: { name: 1 } }, // Sort students by name
-    });
+    }).lean();
 
     if (!batch) {
       return res.status(404).json({ message: "Batch not found" });

@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { attachmentSchema } from "./announcementsModels";
+import { attachmentSchema } from "./announcementsModels.js";
 const Schema = mongoose.Schema;
 
 //status Const
