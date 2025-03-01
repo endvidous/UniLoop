@@ -4,7 +4,7 @@ import { ColorSchemeName } from "react-native";
 const tintColorLight = "#0a7ea4";
 const tintColorDark = "#fff";
 
-const LightTheme = {
+export const LightTheme = {
   text: "#11181C",
   background: "#fff",
   tint: tintColorLight,
@@ -13,7 +13,7 @@ const LightTheme = {
   tabIconSelected: tintColorLight,
   shadowcolor: "#000",
 };
-const DarkTheme = {
+export const DarkTheme = {
   text: "#ECEDEE",
   background: "#151718",
   tint: tintColorDark,

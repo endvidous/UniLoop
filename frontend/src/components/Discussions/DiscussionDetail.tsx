@@ -114,121 +114,116 @@ const DiscussionDetail = ({ id }: { id: string }) => {
   if (!discussion) return null;
 
   return (
-    <Provider>
-      <KeyboardAwareScrollView
-        style={styles.outerContainer}
-        contentContainerStyle={styles.scrollContainer}
-        enableOnAndroid={true}
-        extraScrollHeight={120} // adjust if needed
-        keyboardOpeningTime={0}
-      >
-        <View style={styles.innerContainer}>
-          {/* Header Section */}
-          <View style={styles.header}>
-            <View style={styles.metaContainer}>
-              <View style={styles.meta}>
-                <Text style={styles.author}>
-                  {discussion.postedBy.name} | {capFL(discussion.postedBy.role)}
-                </Text>
-                <Text style={styles.date}>
-                  {new Date(discussion.createdAt).toLocaleDateString()}
-                </Text>
-              </View>
-              <Menu
-                visible={menuVisible}
-                onDismiss={closeMenu}
-                anchor={
-                  <TouchableOpacity
-                    onPress={openMenu}
-                    style={styles.dotsButton}
-                  >
-                    <MaterialCommunityIcons
-                      name="dots-vertical"
-                      size={24}
-                      color="#000"
-                    />
-                  </TouchableOpacity>
-                }
-                style={styles.menu}
-              >
-                {isAuthor && (
-                  <Menu.Item
-                    onPress={handleUpdateDiscussion}
-                    title="Update Discussion"
-                  />
-                )}
-                {(isAuthor || isAdmin) && (
-                  <Menu.Item
-                    onPress={handleDeleteDiscussion}
-                    title="Delete Discussion"
-                  />
-                )}
-                <Menu.Item onPress={handleReportDiscussion} title="Report" />
-              </Menu>
+    <KeyboardAwareScrollView
+      style={styles.outerContainer}
+      contentContainerStyle={styles.scrollContainer}
+      enableOnAndroid={true}
+      extraScrollHeight={120} // adjust if needed
+      keyboardOpeningTime={0}
+    >
+      <View style={styles.innerContainer}>
+        {/* Header Section */}
+        <View style={styles.header}>
+          <View style={styles.metaContainer}>
+            <View style={styles.meta}>
+              <Text style={styles.author}>
+                {discussion.postedBy.name} | {capFL(discussion.postedBy.role)}
+              </Text>
+              <Text style={styles.date}>
+                {new Date(discussion.createdAt).toLocaleDateString()}
+              </Text>
             </View>
-          </View>
-
-          <Divider style={styles.divider} />
-
-          {/* Content Section */}
-          <View style={styles.content}>
-            <Text style={styles.title}>{discussion.title}</Text>
-            <Text style={styles.description}>{discussion.description}</Text>
-          </View>
-
-          {/* Actions Section */}
-          <View style={styles.actionContainer}>
-            <View style={styles.votesContainer}>
-              <TouchableOpacity
-                style={styles.voteItem}
-                onPress={() => upvoteDiscussion(discussion._id)}
-              >
-                <Ionicons name="arrow-up-outline" size={18} color="#4CAF50" />
-                <Text style={styles.voteCount}>
-                  {formatNumber(discussion.upvotesCount)}
-                </Text>
-              </TouchableOpacity>
-              <View style={styles.separator} />
-              <TouchableOpacity
-                style={styles.voteItem}
-                onPress={() => downvoteDiscussion(discussion._id)}
-              >
-                <Ionicons name="arrow-down-outline" size={18} color="#F44336" />
-                <Text style={styles.voteCount}>
-                  {formatNumber(discussion.downvotesCount)}
-                </Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.commentNumber}>
-              <View style={styles.commentNumberButton}>
-                <MaterialCommunityIcons
-                  name="comment-multiple-outline"
-                  size={18}
+            <Menu
+              visible={menuVisible}
+              onDismiss={closeMenu}
+              anchor={
+                <TouchableOpacity onPress={openMenu} style={styles.dotsButton}>
+                  <MaterialCommunityIcons
+                    name="dots-vertical"
+                    size={24}
+                    color="#000"
+                  />
+                </TouchableOpacity>
+              }
+              style={styles.menu}
+            >
+              {isAuthor && (
+                <Menu.Item
+                  onPress={handleUpdateDiscussion}
+                  title="Update Discussion"
                 />
-                <Text style={styles.commentNumberText}>
-                  {formatNumber(discussion.comments.length)}
-                </Text>
-              </View>
-            </View>
-          </View>
-
-          <Divider style={styles.divider} />
-
-          {/* Comments Section */}
-          <View style={styles.commentsSection}>
-            <Text style={styles.sectionTitle}>-- Comments --</Text>
-            {discussion.comments.map((c: any) => (
-              <CommentItem
-                key={c._id}
-                comment={c}
-                discussionId={id}
-                isTeacher={user?.role === "teacher"}
-                hasMarkedAnswer={!!hasMarkedAnswer}
-              />
-            ))}
+              )}
+              {(isAuthor || isAdmin) && (
+                <Menu.Item
+                  onPress={handleDeleteDiscussion}
+                  title="Delete Discussion"
+                />
+              )}
+              <Menu.Item onPress={handleReportDiscussion} title="Report" />
+            </Menu>
           </View>
         </View>
-      </KeyboardAwareScrollView>
+
+        <Divider style={styles.divider} />
+
+        {/* Content Section */}
+        <View style={styles.content}>
+          <Text style={styles.title}>{discussion.title}</Text>
+          <Text style={styles.description}>{discussion.description}</Text>
+        </View>
+
+        {/* Actions Section */}
+        <View style={styles.actionContainer}>
+          <View style={styles.votesContainer}>
+            <TouchableOpacity
+              style={styles.voteItem}
+              onPress={() => upvoteDiscussion(discussion._id)}
+            >
+              <Ionicons name="arrow-up-outline" size={18} color="#4CAF50" />
+              <Text style={styles.voteCount}>
+                {formatNumber(discussion.upvotesCount)}
+              </Text>
+            </TouchableOpacity>
+            <View style={styles.separator} />
+            <TouchableOpacity
+              style={styles.voteItem}
+              onPress={() => downvoteDiscussion(discussion._id)}
+            >
+              <Ionicons name="arrow-down-outline" size={18} color="#F44336" />
+              <Text style={styles.voteCount}>
+                {formatNumber(discussion.downvotesCount)}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.commentNumber}>
+            <View style={styles.commentNumberButton}>
+              <MaterialCommunityIcons
+                name="comment-multiple-outline"
+                size={18}
+              />
+              <Text style={styles.commentNumberText}>
+                {formatNumber(discussion.comments.length)}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        <Divider style={styles.divider} />
+
+        {/* Comments Section */}
+        <View style={styles.commentsSection}>
+          <Text style={styles.sectionTitle}>-- Comments --</Text>
+          {discussion.comments.map((c: any) => (
+            <CommentItem
+              key={c._id}
+              comment={c}
+              discussionId={id}
+              isTeacher={user?.role === "teacher"}
+              hasMarkedAnswer={!!hasMarkedAnswer}
+            />
+          ))}
+        </View>
+      </View>
 
       {/* Fixed Comment Input Bar */}
       {!discussion.isClosed && !hasMarkedAnswer && !hasCommented && (
@@ -282,7 +277,7 @@ const DiscussionDetail = ({ id }: { id: string }) => {
         initialDescription={discussion.description}
         onSubmit={confirmUpdateDiscussion}
       />
-    </Provider>
+    </KeyboardAwareScrollView>
   );
 };
 

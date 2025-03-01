@@ -8,7 +8,6 @@ import { authService } from "@/src/services/api/auth";
 import { queryClient } from "@/src/services/api/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@/src/context/ThemeProvider";
-import { PaperProvider } from "react-native-paper";
 
 export default function RootLayout() {
   const {
@@ -61,15 +60,12 @@ export default function RootLayout() {
       <AuthProvider>
         {/* Theme provider that provides themes */}
         <ThemeProvider>
-          {/* React native paper provider to use certain components inside it  */}
-          <PaperProvider>
-            <Stack
-              screenOptions={{
-                headerShown: false,
-              }}
-            />
-            <AuthHandler />
-          </PaperProvider>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+            }}
+          />
+          <AuthHandler />
         </ThemeProvider>
       </AuthProvider>
     </QueryClientProvider>
