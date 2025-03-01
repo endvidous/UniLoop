@@ -6,16 +6,10 @@ import {
   TouchableOpacity,
   TextInput,
   Platform,
+  KeyboardAvoidingView,
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import {
-  Button,
-  Divider,
-  Menu,
-  Provider,
-  Portal,
-  Dialog,
-} from "react-native-paper";
+import { Divider, Menu, Portal } from "react-native-paper";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import {
   useDiscussion,
@@ -33,9 +27,13 @@ import { IComment } from "@/src/utils/interfaces";
 import { useRouter } from "expo-router";
 import ReportModal from "./ReportModal";
 import UpdateDiscussionModal from "./UpdateDiscussionModal";
+import { useTheme } from "@/src/hooks/colors/useThemeColor";
+import BasicDialog from "../common/BasicDialog";
+import VoteButtons from "./VoteButtons";
 
 const DiscussionDetail = ({ id }: { id: string }) => {
   const { user } = useAuth();
+  const { colors } = useTheme();
   const router = useRouter();
   const { data: discussion } = useDiscussion(id);
   const [comment, setComment] = useState("");
@@ -66,6 +64,8 @@ const DiscussionDetail = ({ id }: { id: string }) => {
   const hasCommented = discussion?.comments.some(
     (c: IComment) => c.postedBy._id === user?.id
   );
+  const hasUpvoted = discussion?.upvotes.includes(user?.id);
+  const hasDownvoted = discussion?.downvotes.includes(user?.id);
   const hasMarkedAnswer = discussion?.isClosed;
 
   const handleAddComment = () => {
@@ -114,170 +114,160 @@ const DiscussionDetail = ({ id }: { id: string }) => {
   if (!discussion) return null;
 
   return (
-    <KeyboardAwareScrollView
-      style={styles.outerContainer}
-      contentContainerStyle={styles.scrollContainer}
-      enableOnAndroid={true}
-      extraScrollHeight={120} // adjust if needed
-      keyboardOpeningTime={0}
-    >
-      <View style={styles.innerContainer}>
-        {/* Header Section */}
-        <View style={styles.header}>
-          <View style={styles.metaContainer}>
-            <View style={styles.meta}>
-              <Text style={styles.author}>
-                {discussion.postedBy.name} | {capFL(discussion.postedBy.role)}
-              </Text>
-              <Text style={styles.date}>
-                {new Date(discussion.createdAt).toLocaleDateString()}
-              </Text>
-            </View>
-            <Menu
-              visible={menuVisible}
-              onDismiss={closeMenu}
-              anchor={
-                <TouchableOpacity onPress={openMenu} style={styles.dotsButton}>
-                  <MaterialCommunityIcons
-                    name="dots-vertical"
-                    size={24}
-                    color="#000"
+    <View style={styles.container}>
+      <KeyboardAwareScrollView
+        style={styles.outerContainer}
+        contentContainerStyle={styles.scrollContainer}
+        enableOnAndroid={true}
+        extraScrollHeight={120} // adjust if needed
+        keyboardOpeningTime={0}
+      >
+        <View style={styles.innerContainer}>
+          {/* Header Section */}
+          <View style={styles.header}>
+            <View style={styles.metaContainer}>
+              <View style={styles.meta}>
+                <Text style={styles.author}>
+                  {discussion.postedBy.name} | {capFL(discussion.postedBy.role)}
+                </Text>
+                <Text style={styles.date}>
+                  {new Date(discussion.createdAt).toLocaleDateString()}
+                </Text>
+              </View>
+              <Menu
+                anchorPosition="bottom"
+                visible={menuVisible}
+                onDismiss={closeMenu}
+                anchor={
+                  <TouchableOpacity
+                    onPress={openMenu}
+                    style={styles.dotsButton}
+                  >
+                    <MaterialCommunityIcons
+                      name="dots-vertical"
+                      size={24}
+                      color="#000"
+                    />
+                  </TouchableOpacity>
+                }
+                style={styles.menu}
+              >
+                {isAuthor && (
+                  <Menu.Item
+                    onPress={handleUpdateDiscussion}
+                    title="Update Discussion"
                   />
-                </TouchableOpacity>
-              }
-              style={styles.menu}
-            >
-              {isAuthor && (
-                <Menu.Item
-                  onPress={handleUpdateDiscussion}
-                  title="Update Discussion"
-                />
-              )}
-              {(isAuthor || isAdmin) && (
-                <Menu.Item
-                  onPress={handleDeleteDiscussion}
-                  title="Delete Discussion"
-                />
-              )}
-              <Menu.Item onPress={handleReportDiscussion} title="Report" />
-            </Menu>
-          </View>
-        </View>
-
-        <Divider style={styles.divider} />
-
-        {/* Content Section */}
-        <View style={styles.content}>
-          <Text style={styles.title}>{discussion.title}</Text>
-          <Text style={styles.description}>{discussion.description}</Text>
-        </View>
-
-        {/* Actions Section */}
-        <View style={styles.actionContainer}>
-          <View style={styles.votesContainer}>
-            <TouchableOpacity
-              style={styles.voteItem}
-              onPress={() => upvoteDiscussion(discussion._id)}
-            >
-              <Ionicons name="arrow-up-outline" size={18} color="#4CAF50" />
-              <Text style={styles.voteCount}>
-                {formatNumber(discussion.upvotesCount)}
-              </Text>
-            </TouchableOpacity>
-            <View style={styles.separator} />
-            <TouchableOpacity
-              style={styles.voteItem}
-              onPress={() => downvoteDiscussion(discussion._id)}
-            >
-              <Ionicons name="arrow-down-outline" size={18} color="#F44336" />
-              <Text style={styles.voteCount}>
-                {formatNumber(discussion.downvotesCount)}
-              </Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.commentNumber}>
-            <View style={styles.commentNumberButton}>
-              <MaterialCommunityIcons
-                name="comment-multiple-outline"
-                size={18}
-              />
-              <Text style={styles.commentNumberText}>
-                {formatNumber(discussion.comments.length)}
-              </Text>
+                )}
+                {(isAuthor || isAdmin) && (
+                  <Menu.Item
+                    onPress={handleDeleteDiscussion}
+                    title="Delete Discussion"
+                  />
+                )}
+                <Menu.Item onPress={handleReportDiscussion} title="Report" />
+              </Menu>
             </View>
           </View>
-        </View>
 
-        <Divider style={styles.divider} />
+          <Divider style={styles.divider} />
 
-        {/* Comments Section */}
-        <View style={styles.commentsSection}>
-          <Text style={styles.sectionTitle}>-- Comments --</Text>
-          {discussion.comments.map((c: any) => (
-            <CommentItem
-              key={c._id}
-              comment={c}
-              discussionId={id}
-              isTeacher={user?.role === "teacher"}
-              hasMarkedAnswer={!!hasMarkedAnswer}
+          {/* Content Section */}
+          <View style={styles.content}>
+            <Text style={styles.title}>{discussion.title}</Text>
+            <Text style={styles.description}>{discussion.description}</Text>
+          </View>
+
+          {/* Actions Section */}
+          <View style={styles.actionContainer}>
+            <VoteButtons
+              upVoteCount={discussion.upvotes.length}
+              downVoteCount={discussion.downvotes.length}
+              hasUpvoted={hasUpvoted}
+              hasDownvoted={hasDownvoted}
+              onUpvote={() => upvoteDiscussion(discussion._id)}
+              onDownvote={() => downvoteDiscussion(discussion._id)}
             />
-          ))}
-        </View>
-      </View>
+            <View style={styles.commentNumber}>
+              <View style={styles.commentNumberButton}>
+                <MaterialCommunityIcons
+                  name="comment-multiple-outline"
+                  size={18}
+                />
+                <Text style={styles.commentNumberText}>
+                  {formatNumber(discussion.comments.length)}
+                </Text>
+              </View>
+            </View>
+          </View>
 
-      {/* Fixed Comment Input Bar */}
-      {!discussion.isClosed && !hasMarkedAnswer && !hasCommented && (
-        <View style={styles.fixedCommentBar}>
-          <TextInput
-            style={styles.commentInput}
-            placeholder="Add a comment..."
-            placeholderTextColor="#888"
-            value={comment}
-            onChangeText={setComment}
-            onSubmitEditing={handleAddComment}
-            returnKeyType="send"
-          />
-          <TouchableOpacity
-            style={styles.sendButton}
-            onPress={handleAddComment}
-          >
-            <Ionicons name="send" size={24} color="#fff" />
-          </TouchableOpacity>
-        </View>
-      )}
+          <Divider style={styles.divider} />
 
-      {/* Delete Confirmation Modal */}
-      <Portal>
-        <Dialog
+          {/* Comments Section */}
+          <View style={styles.commentsSection}>
+            <Text style={styles.sectionTitle}>-- Comments --</Text>
+            {discussion.comments.map((c: any) => (
+              <CommentItem
+                key={c._id}
+                comment={c}
+                discussionId={id}
+                isTeacher={user?.role === "teacher"}
+                hasMarkedAnswer={!!hasMarkedAnswer}
+              />
+            ))}
+          </View>
+        </View>
+
+        {/* Delete Confirmation Modal */}
+        <BasicDialog
           visible={deleteModalVisible}
+          title="Are you sure?"
+          onCancel={() => setDeleteModalVisible(false)}
           onDismiss={() => setDeleteModalVisible(false)}
-        >
-          <Dialog.Title>Are you sure?</Dialog.Title>
-          <Dialog.Actions>
-            <Button onPress={() => setDeleteModalVisible(false)}>Cancel</Button>
-            <Button onPress={confirmDeleteDiscussion}>Delete Post</Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
+          onConfirm={confirmDeleteDiscussion}
+        />
 
-      {/* Report Modal */}
-      <ReportModal
-        visible={reportModalVisible}
-        onDismiss={() => setReportModalVisible(false)}
-        reportReason={reportReason}
-        setReportReason={setReportReason}
-        onSubmit={confirmReportDiscussion}
-      />
+        {/* Report Modal */}
+        <ReportModal
+          reportTitle="Report Discussion"
+          visible={reportModalVisible}
+          onDismiss={() => setReportModalVisible(false)}
+          reportReason={reportReason}
+          setReportReason={setReportReason}
+          onSubmit={confirmReportDiscussion}
+        />
 
-      {/* Update discussion Modal */}
-      <UpdateDiscussionModal
-        visible={updateModalVisible}
-        onDismiss={() => setUpdateModalVisible(false)}
-        initialTitle={discussion.title}
-        initialDescription={discussion.description}
-        onSubmit={confirmUpdateDiscussion}
-      />
-    </KeyboardAwareScrollView>
+        {/* Update discussion Modal */}
+        <UpdateDiscussionModal
+          visible={updateModalVisible}
+          onDismiss={() => setUpdateModalVisible(false)}
+          initialTitle={discussion.title}
+          initialDescription={discussion.description}
+          onSubmit={confirmUpdateDiscussion}
+        />
+      </KeyboardAwareScrollView>
+      <KeyboardAvoidingView>
+        {/* Fixed Comment Input Bar */}
+        {!discussion.isClosed && !hasMarkedAnswer && !hasCommented && (
+          <View style={styles.fixedCommentBar}>
+            <TextInput
+              style={styles.commentInput}
+              placeholder="Add a comment..."
+              placeholderTextColor="#888"
+              value={comment}
+              onChangeText={setComment}
+              onSubmitEditing={handleAddComment}
+              returnKeyType="send"
+            />
+            <TouchableOpacity
+              style={styles.sendButton}
+              onPress={handleAddComment}
+            >
+              <Ionicons name="send" size={24} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        )}
+      </KeyboardAvoidingView>
+    </View>
   );
 };
 
@@ -294,6 +284,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContainer: {
+    flexGrow: 1,
     padding: 16,
     paddingBottom: 120, // Extra space so content doesn't hide behind the fixed bar
   },
@@ -348,27 +339,37 @@ const styles = StyleSheet.create({
   },
   votesContainer: {
     flexDirection: "row",
+    width: "35%",
     alignItems: "center",
     borderRadius: 10,
     borderColor: "#353535",
     borderWidth: 1,
+    backgroundColor: "white",
+    overflow: "hidden",
+    elevation: 6,
   },
   voteItem: {
-    alignItems: "center",
-    marginVertical: 6,
+    flex: 1,
     flexDirection: "row",
-    paddingVertical: 2,
-    marginHorizontal: 20,
-    gap: 6,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 10,
+  },
+  separator: {
+    height: "100%",
+    width: 1.08,
+    backgroundColor: "#353535",
+  },
+  upvoted: {
+    backgroundColor: "#3fff3f66",
+  },
+  downvoted: {
+    backgroundColor: "#ff676766",
   },
   voteCount: {
     fontSize: 14,
     color: "#444",
-  },
-  separator: {
-    height: "100%",
-    width: 1,
-    backgroundColor: "#353535",
+    marginLeft: 6,
   },
   commentNumber: {
     borderWidth: 1,
@@ -426,16 +427,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
-  },
-  reportInput: {
-    borderWidth: 1,
-    borderColor: "#353535",
-    borderRadius: 8,
-    padding: 8,
-    marginVertical: 8,
-    minHeight: 60,
-    backgroundColor: "transparent",
-    color: "#ffffff",
   },
 });
 
