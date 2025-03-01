@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
-import { MaterialIcons } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import CalendarModal from "../calendar/calendarModal";
 import {
   useAnnouncement,
@@ -23,6 +23,7 @@ import { useRouter } from "expo-router";
 import AttachmentViewer, { Attachment } from "../common/AttachmentViewer";
 import { useForm, Controller } from "react-hook-form";
 import { useFileDelete } from "@/src/hooks/api/useFiles";
+import { toast } from "@backpackapp-io/react-native-toast";
 
 type PostedTo = {
   model: string | null;
@@ -139,11 +140,11 @@ const AnnouncementDetailComponent = ({ id }: { id: string }) => {
           attachments: attachments,
         },
       });
-      Alert.alert("Success", "Announcement updated successfully.");
+      toast.success("Announcement updated successfully.");
       setEditing(false);
       refetch();
     } catch (err) {
-      Alert.alert("Error", "Failed to update announcement.");
+      toast.error("Failed to update announcement.");
     }
   };
 
@@ -159,10 +160,14 @@ const AnnouncementDetailComponent = ({ id }: { id: string }) => {
           onPress: async () => {
             try {
               await deleteMutation.mutateAsync(id);
-              Alert.alert("Success", "Announcement deleted successfully.");
+              toast.success("Announcement deleted successfully.", {
+                icon: <Ionicons name="checkmark" />,
+              });
               router.back();
             } catch (err) {
-              Alert.alert("Error", "Failed to delete announcement.");
+              toast.error("Failed to delete announcement.", {
+                icon: <Ionicons name="bug" />,
+              });
             }
           },
         },
@@ -176,9 +181,9 @@ const AnnouncementDetailComponent = ({ id }: { id: string }) => {
       setAttachments((prev) =>
         prev.filter((att) => att.key !== attachment.key)
       );
-      Alert.alert("Success", "Attachment deleted successfully.");
+      toast.success("Attachment deleted successfully.");
     } catch (err) {
-      Alert.alert("Error", "Failed to delete attachment.");
+      toast.error("Failed to delete attachment.");
     }
   };
 

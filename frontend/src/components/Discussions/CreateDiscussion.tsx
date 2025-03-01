@@ -1,6 +1,7 @@
 import { useAuth } from "@/src/context/AuthContext";
 import { useUserAssociations } from "@/src/hooks/api/useAssociations";
 import { useCreateDiscussion } from "@/src/hooks/api/useDiscussions";
+import { toast } from "@backpackapp-io/react-native-toast";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
 import { useState } from "react";
@@ -49,7 +50,7 @@ const CreateDiscussion = ({ onDismiss }: CreateDiscussionProps) => {
     try {
       setSubmitting(true);
       if (data.visibilityType !== "General" && !data.postedToId) {
-        Alert.alert("Error", "Please select a target for the visibility type");
+        toast.error("Please select a target for the visibility type");
         return;
       }
 
@@ -70,11 +71,11 @@ const CreateDiscussion = ({ onDismiss }: CreateDiscussionProps) => {
               },
       });
 
-      Alert.alert("Success", "Discussion created successfully");
+      toast.success("Discussion created successfully");
       onDismiss();
     } catch (error) {
       console.error(error);
-      Alert.alert("Error", "Failed to create discussion");
+      toast.error("Failed to create discussion");
     } finally {
       setSubmitting(false);
     }
