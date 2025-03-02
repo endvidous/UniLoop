@@ -1,10 +1,14 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { RelativePathString, useRouter } from "expo-router";
-import { AssignmentBase } from "@/src/services/api/assignmentAPI";
+import { TeacherAssignment } from "@/src/services/api/assignmentAPI";
 import { useAuth } from "@/src/context/AuthContext";
 
-const AssignmentCard = ({ assignment }: { assignment: AssignmentBase }) => {
+export const TeacherAssignmentCard = ({
+  assignment,
+}: {
+  assignment: TeacherAssignment;
+}) => {
   const router = useRouter();
   const { user } = useAuth();
 
@@ -18,25 +22,32 @@ const AssignmentCard = ({ assignment }: { assignment: AssignmentBase }) => {
   };
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress}>
+    <TouchableOpacity
+      style={[styles.card, styles.teacherCard]}
+      onPress={onPress}
+    >
       <View style={styles.header}>
         <Text style={styles.title}>{assignment.title}</Text>
-        <Text style={styles.deadline}>
-          Due: {new Date(assignment.deadline).toLocaleDateString()}
+        <Text style={styles.description} numberOfLines={2}>
+          {assignment.description}
         </Text>
       </View>
-      <Text style={styles.description}>{assignment.description}</Text>
-      {assignment?.late_deadline && (
-        <Text style={styles.lateDeadline}>
-          Late after: {new Date(assignment.late_deadline).toLocaleDateString()}
+
+      <View style={styles.deadlineContainer}>
+        <Text style={styles.deadline}>
+          Due date: {new Date(assignment.deadline).toLocaleDateString()}
         </Text>
-      )}
+        {assignment?.late_deadline && (
+          <Text style={styles.lateDeadline}>
+            Late after:{" "}
+            {new Date(assignment.late_deadline).toLocaleDateString()}
+          </Text>
+        )}
+      </View>
+
       <View style={styles.footer}>
-        <Text style={styles.createdBy}>
-          Created by: {assignment.created_by}
-        </Text>
         <Text style={styles.postedTo}>
-          Posted To: {assignment.posted_to.code} | Semester:{" "}
+          Posted to: {assignment.posted_to.code} | Semester:{" "}
           {assignment.posted_to.currentSemester}
         </Text>
       </View>
@@ -44,8 +55,10 @@ const AssignmentCard = ({ assignment }: { assignment: AssignmentBase }) => {
   );
 };
 
+// Cleaned up styles
 const styles = StyleSheet.create({
   card: {
+    flexDirection: "column",
     padding: 16,
     marginVertical: 8,
     backgroundColor: "#fff",
@@ -55,47 +68,50 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 3,
     borderLeftWidth: 5,
-    borderLeftColor: "#4CAF50",
+  },
+  teacherCard: {
+    borderLeftColor: "#2196F3",
   },
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: "column",
+    alignItems: "flex-start",
     marginBottom: 8,
   },
   title: {
     fontSize: 18,
     fontWeight: "bold",
     color: "#333",
+    flex: 1,
+    marginRight: 8,
   },
   description: {
     fontSize: 14,
     color: "#666",
+    marginBottom: 12,
+  },
+  deadlineContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 8,
   },
   deadline: {
     fontSize: 12,
-    color: "#FF5722",
+    color: "#ff2222",
+    fontWeight: "500",
   },
   lateDeadline: {
     fontSize: 12,
-    color: "#FF9800",
-    marginBottom: 8,
+    color: "#ff8000",
   },
   footer: {
     borderTopWidth: 1,
-    borderTopColor: "#eee",
+    borderTopColor: "#c8c8c8",
     paddingTop: 8,
     marginTop: 8,
-  },
-  createdBy: {
-    fontSize: 12,
-    color: "#999",
   },
   postedTo: {
     fontSize: 12,
     color: "#999",
   },
 });
-
-export default AssignmentCard;

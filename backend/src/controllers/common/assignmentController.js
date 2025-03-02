@@ -133,6 +133,7 @@ export const getAllAssignments = async (req, res) => {
         posted_to: batchId,
       })
         .populate("posted_to", "code startYear currentSemester")
+        .populate("created_by", "name email role")
         .lean();
 
       // Add personal submission status and deadline status
@@ -183,10 +184,10 @@ export const getAssignment = async (req, res) => {
         .populate("posted_to", "code startYear currentSemester")
         .populate({
           path: "submissions",
-          select: "student submission status createdAt updatedAt",
+          select: "student submission status updatedAt",
           populate: {
             path: "student",
-            select: "name email roll_no",
+            select: "_id name email roll_no",
           },
         })
         .lean();
@@ -195,8 +196,7 @@ export const getAssignment = async (req, res) => {
       const mappedSubmissions = assignment.submissions?.map((sub) => ({
         _id: sub._id,
         status: sub.status,
-        submitted_at: sub.createdAt,
-        updated_at: sub.updatedAt,
+        submitted_at: sub.updatedAt,
         attachment: sub.submission,
         student: sub.student,
       }));
@@ -224,6 +224,7 @@ export const getAssignment = async (req, res) => {
         posted_to: batchId,
       })
         .populate("posted_to", "code startYear currentSemester")
+        .populate("created_by", "name email role")
         .lean();
 
       if (assignment) {
@@ -234,8 +235,7 @@ export const getAssignment = async (req, res) => {
 
         assignment.student_submission = {
           status: submission?.status || SUBMISSION_STATUS.NOT_SUBMITTED,
-          submitted_at: submission?.createdAt,
-          updated_at: submission?.updatedAt,
+          submitted_at: submission?.updatedAt,
           attachment: submission?.submission,
         };
       }

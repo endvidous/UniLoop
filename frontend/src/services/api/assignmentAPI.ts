@@ -1,3 +1,4 @@
+import { Attachment } from "@/src/components/common/AttachmentViewer";
 import axiosInstance from "./axiosConfig";
 
 export interface CreateAssignmentData {
@@ -26,27 +27,28 @@ export interface AssignmentBase {
   description: string;
   deadline: Date;
   late_deadline?: Date;
-  created_by: string;
+  created_by:
+    | string
+    | {
+        name: string;
+        role: string;
+        email: string;
+      };
   posted_to: {
     _id: string;
     code: string;
     startYear: number;
     currentSemester: number;
   };
-  attachments: Array<{
-    name: string;
-    key: string;
-    type: string;
-  }>;
+  attachments?: Array<Attachment>;
 }
 
 export interface TeacherAssignment extends AssignmentBase {
-  submissions: Array<{
+  submissions?: Array<{
     _id: string;
     status: number;
     submitted_at: Date;
-    updated_at: Date;
-    attachment: {
+    attachment?: {
       name: string;
       key: string;
       type: string;
@@ -67,15 +69,10 @@ export interface StudentAssignment extends AssignmentBase {
   submission_status: number;
   deadline_status: string;
   final_deadline: Date;
-  student_submission: {
+  student_submission?: {
     status: number;
     submitted_at?: Date;
-    updated_at?: Date;
-    attachment?: {
-      name: string;
-      key: string;
-      type: string;
-    };
+    attachment?: Attachment;
   };
 }
 
@@ -106,8 +103,14 @@ export const assignmentsService = {
   getAssignment: async (
     assignmentId: string
   ): Promise<GetAssignmentResponse> => {
-    const response = await axiosInstance.get(`/assignments/${assignmentId}`);
-    return response.data;
+    try {
+      const response = await axiosInstance.get(`/assignments/${assignmentId}`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(
+        error?.response?.data?.message || "Unknown error occured"
+      );
+    }
   },
 
   // Create assignment

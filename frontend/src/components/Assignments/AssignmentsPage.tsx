@@ -10,14 +10,20 @@ import {
   Modal,
 } from "react-native";
 import { useAssignments } from "@/src/hooks/api/useAssignments";
-import AssignmentCard from "./AssignmentCard";
 import { ScrollView } from "react-native-gesture-handler";
 import { MaterialIcons } from "@expo/vector-icons";
 import CreateAssignment from "./CreateAssignment";
 import { useAuth } from "@/src/context/AuthContext";
+import { TeacherAssignmentCard } from "./teacher/AssignmentCard";
+import { StudentAssignmentCard } from "./student/AssignmentCard";
+import {
+  StudentAssignment,
+  TeacherAssignment,
+} from "@/src/services/api/assignmentAPI";
 
 const AssignmentsPage = () => {
   const { user } = useAuth();
+  const isTeacher = user?.role === "teacher";
   const [refreshing, setRefreshing] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const { data, isLoading, error, isError, refetch } = useAssignments();
@@ -56,7 +62,13 @@ const AssignmentsPage = () => {
       <FlatList
         data={data?.data || []}
         keyExtractor={(item) => item._id}
-        renderItem={({ item }) => <AssignmentCard assignment={item} />}
+        renderItem={({ item }) =>
+          isTeacher ? (
+            <TeacherAssignmentCard assignment={item as TeacherAssignment} />
+          ) : (
+            <StudentAssignmentCard assignment={item as StudentAssignment} />
+          )
+        }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.noAssignmentText}>No Assignments created</Text>
