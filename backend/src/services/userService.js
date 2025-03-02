@@ -99,7 +99,14 @@ export const findStudentDetails = async (studentId) => {
     const batch = await Batches.findOne({ students: studentId })
       .select("course _id")
       .lean();
-    if (!batch) return new Error("No batch found");
+    
+      if (!batch) {
+      return {
+        batchId: batch?._id || null,
+        courseId: [],
+        departmentIds: [],
+      };
+    }
 
     // 2. Single optimized aggregation query
     const result = await Semesters.aggregate([

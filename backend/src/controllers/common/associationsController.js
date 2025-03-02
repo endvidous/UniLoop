@@ -54,11 +54,6 @@ export const getUserAssociations = async (req, res) => {
     } else if (user.isStudent()) {
       // Fetch student-specific associations
       const details = await findStudentDetails(user._id);
-      if (!details) {
-        return res
-          .status(404)
-          .json({ message: "No associations found for the student" });
-      }
 
       // Populate additional details from the IDs
       const [departments, courses, batches] = await Promise.all([
