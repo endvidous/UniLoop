@@ -1,6 +1,3 @@
-//FUNCTIONS LEFT:
-//get all
-// search&filter refere announcements
 import { Reminders } from "../../models/remindersModel.js";
 import mongoose from "mongoose";
 
@@ -130,6 +127,79 @@ export const deleteReminder = async (req, res) => {
     });
   }
 };
+export const searchAndFilterReminders = async (req, res) => {
+  try {
+    const sortOptions = {
+      newest: { "reminders.created_at": -1 }, // Sort by latest
+      priority: { "reminders.priority": -1 }, // High priority first
+      deadline: { "reminders.deadline": 1 }, // Closest deadline first
+    };
+
+    const filters = {
+      search: req.query.search, // Search term for title
+      priority: req.query.priority, // Priority level (0,1,2)
+      completed: req.query.completed, // Completed status (true/false)
+      remind_at: req.query.remind_at, // Specific reminder time
+    };
+
+    // Base query: Only search within the logged-in user’s reminders
+    const matchQuery = { _id: req.user._id };
+
+    // If any filters exist, apply them
+    if (
+      filters.search ||
+      filters.priority ||
+      filters.completed !== undefined ||
+      filters.remind_at
+    ) {
+      matchQuery.reminders = { $elemMatch: {} };
+
+      if (filters.search) {
+        matchQuery.reminders.$elemMatch.title = {
+          $regex: filters.search,
+          $options: "i", // Case-insensitive search
+        };
+      }
+
+      if (filters.priority !== undefined) {
+        matchQuery.reminders.$elemMatch.priority = Number(filters.priority);
+      }
+
+      if (filters.completed !== undefined) {
+        matchQuery.reminders.$elemMatch.completed =
+          filters.completed === "true";
+      }
+
+      if (filters.remind_at) {
+        matchQuery.reminders.$elemMatch.remind_at = new Date(filters.remind_at);
+      }
+    }
+
+    const sortBy = sortOptions[req.query.sort] || {
+      "reminders.created_at": -1,
+    };
+
+    // Fetch reminders matching filters
+    const result = await Reminders.findOne(matchQuery, { "reminders.$": 1 })
+      .sort(sortBy)
+      .lean();
+
+    if (!result || !result.reminders.length) {
+      return res.status(404).json({ message: "No matching reminders found" });
+    }
+
+    res.json({
+      reminders: result.reminders,
+      total: result.reminders.length,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error retrieving reminders",
+      error: error.message,
+    });
+  }
+};
+
 //4. Get one reminder
 export const getOneReminder = async (req, res) => {
   const { reminderId } = req.params;
@@ -161,4 +231,25 @@ export const getOneReminder = async (req, res) => {
     });
   }
 };
-// i dont understand the code AI gave me for search&filter:( so i havent added that
+export const getAllReminders = async (req, res) => {
+  try {
+    const userReminders = await Reminders.findOne({ _id: req.user._id })
+      .select("reminders") // Only fetches the 'reminders' field
+      .sort({ "reminders.created_at": -1 }) // Sort by newest reminder first
+      .lean(); // Converts MongoDB document to a plain JavaScript object
+
+    if (!userReminders || userReminders.reminders.length === 0) {
+      return res.status(404).json({ message: "No reminders found" });
+    }
+
+    res.json({
+      reminders: userReminders.reminders, // Returns all reminders
+      total: userReminders.reminders.length, // Returns count
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error retrieving reminders",
+      error: error.message,
+    });
+  }
+};
