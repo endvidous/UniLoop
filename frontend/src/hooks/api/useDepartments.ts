@@ -84,7 +84,7 @@ export const useCreatePapers = () => {
       papers,
     }: {
       departmentId: string;
-      papers: Paper[];
+      papers: Omit<Paper, "_id">[];
     }) => papersService.createPapers(departmentId, papers),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({

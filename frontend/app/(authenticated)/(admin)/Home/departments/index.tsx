@@ -29,7 +29,10 @@ const HomeScreen = () => {
       <TouchableOpacity
         style={styles.card}
         onPress={() =>
-          router.push(`/Home/departments/${item.name}`)
+          router.push({
+            pathname: `/Home/departments/[name]`,
+            params: { _id: item._id, name: item.name },
+          })
         }
       >
         <Text style={styles.cardText}>{item.name}</Text>

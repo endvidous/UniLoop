@@ -49,14 +49,14 @@ export const departmentsService = {
 };
 
 export const papersService = {
-  getPapers: async (departmentId: string) => {
+  getPapers: async (departmentId: string): Promise<Paper[]> => {
     const response = await axiosInstance.get(
       `/admin/departments/${departmentId}/papers`
     );
     return response.data;
   },
 
-  createPapers: async (departmentId: string, papers: Paper[]) => {
+  createPapers: async (departmentId: string, papers: Partial<Paper>[]) => {
     const response = await axiosInstance.post(
       `/admin/departments/${departmentId}/papers`,
       { papers }
