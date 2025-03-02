@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useDownloadUrl } from "@/src/hooks/api/useFiles";
+import { toast } from "@backpackapp-io/react-native-toast";
 
 export type Attachment = {
   key: string;
@@ -37,11 +38,7 @@ const AttachmentViewer = ({
       }
       await Linking.openURL(downloadUrl);
     } catch (error) {
-      console.error("Download error:", error);
-      Alert.alert(
-        "Download Failed",
-        "Could not download the file. Please try again."
-      );
+      toast.error("Could not download the file. Please try again.");
     }
   };
 

@@ -12,6 +12,7 @@ import {
   useDownvoteDiscussion,
 } from "@/src/hooks/api/useDiscussions";
 import ReportModal from "./ReportModal";
+import VoteButtons from "./VoteButtons";
 
 const DiscussionCard = ({ discussion }: { discussion: Discussion }) => {
   const { user } = useAuth();
@@ -46,79 +47,56 @@ const DiscussionCard = ({ discussion }: { discussion: Discussion }) => {
     closeReportDialog();
   };
 
+  const hasUpvoted = discussion?.upvotes.includes(user?.id || "");
+  const hasDownvoted = discussion?.downvotes.includes(user?.id || "");
+
   return (
-    <>
-      <TouchableOpacity
-        style={styles.card}
-        onPress={() => onPress(discussion._id)}
-      >
-        <View style={styles.content}>
-          <Text style={styles.title}>{discussion.title}</Text>
-          <Text
-            style={styles.description}
-            numberOfLines={3}
-            ellipsizeMode="tail"
-          >
-            {discussion.description}
-          </Text>
-        </View>
-        <Divider
-          style={{
-            backgroundColor: "#353535",
-            marginVertical: 6,
-            width: "100%",
-          }}
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => onPress(discussion._id)}
+    >
+      <View style={styles.content}>
+        <Text style={styles.title}>{discussion.title}</Text>
+        <Text style={styles.description} numberOfLines={3} ellipsizeMode="tail">
+          {discussion.description}
+        </Text>
+      </View>
+      <Divider
+        style={{
+          backgroundColor: "#353535",
+          marginVertical: 6,
+          width: "100%",
+        }}
+      />
+      <View style={styles.actionContainer}>
+        <VoteButtons
+          upVoteCount={discussion.upvotesCount}
+          downVoteCount={discussion.downvotesCount}
+          hasUpvoted={hasUpvoted}
+          hasDownvoted={hasDownvoted}
+          onUpvote={() => upvoteDiscussion(discussion._id)}
+          onDownvote={() => downvoteDiscussion(discussion._id)}
         />
-        <View style={styles.actionContainer}>
-          <View style={styles.votesContainer}>
-            <TouchableOpacity
-              style={styles.voteItem}
-              onPress={() => upvoteDiscussion(discussion._id)}
-            >
-              <Ionicons name="arrow-up-outline" size={18} color="#4CAF50" />
-              <Text style={styles.voteCount}>
-                {formatNumber(discussion.upvotesCount)}
-              </Text>
-            </TouchableOpacity>
-            <View
-              style={{
-                height: "100%",
-                width: 1,
-                backgroundColor: "#353535",
-              }}
-            />
-            <TouchableOpacity
-              style={styles.voteItem}
-              onPress={() => {
-                downvoteDiscussion(discussion._id);
-              }}
-            >
-              <Ionicons name="arrow-down-outline" size={18} color="#F44336" />
-              <Text style={styles.voteCount}>
-                {formatNumber(discussion.downvotesCount)}
-              </Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.reportContainer}>
-            <TouchableOpacity
-              onPress={openReportDialog}
-              style={styles.reportButton}
-            >
-              <Ionicons name="flag-outline" size={18} color={"red"} />
-            </TouchableOpacity>
-          </View>
+        <View style={styles.reportContainer}>
+          <TouchableOpacity
+            onPress={openReportDialog}
+            style={styles.reportButton}
+          >
+            <Ionicons name="flag-outline" size={18} color={"red"} />
+          </TouchableOpacity>
         </View>
-      </TouchableOpacity>
+      </View>
 
       {/* Report Dialog */}
       <ReportModal
+        reportTitle="Report Discussion"
         visible={isReportVisible}
         onDismiss={() => setIsReportVisible(false)}
         reportReason={reason}
         setReportReason={setReason}
         onSubmit={submitReport}
       />
-    </>
+    </TouchableOpacity>
   );
 };
 

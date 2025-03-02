@@ -8,6 +8,7 @@ import {
   pickPdfDocument,
   SelectedFile,
 } from "@/src/utils/filePicker";
+import { toast } from "@backpackapp-io/react-native-toast";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
 import { useState } from "react";
@@ -78,7 +79,7 @@ const CreateAnnouncement = ({ onDismiss }: CreateAnnouncementProps) => {
 
   const handleFilePick = async (picker: () => Promise<SelectedFile | null>) => {
     if (files.length >= MAX_ATTACHMENTS) {
-      Alert.alert(`Maximum ${MAX_ATTACHMENTS} attachments allowed`);
+      toast.error(`Maximum ${MAX_ATTACHMENTS} attachments allowed`);
       return;
     }
 
@@ -90,7 +91,7 @@ const CreateAnnouncement = ({ onDismiss }: CreateAnnouncementProps) => {
       const key = await uploadFile(file);
       setFiles((prev) => [...prev, { ...file, key }]);
     } catch (error) {
-      Alert.alert("Upload failed", "Could not upload file");
+      toast.error("Upload failed");
     } finally {
       setUploading(false);
     }
@@ -102,14 +103,14 @@ const CreateAnnouncement = ({ onDismiss }: CreateAnnouncementProps) => {
     try {
       await deleteFile(fileToRemove.key);
     } catch (error) {
-      Alert.alert("Error", "Failed to remove file");
+      toast.error("Failed to remove file");
     }
   };
 
   const onSubmit = async (data: FormData) => {
     try {
       if (data.visibilityType !== "General" && !data.postedToId) {
-        Alert.alert("Error", "Please select a target for the visibility type");
+        toast.error("Please select a target for the visibility type");
         return;
       }
       const formattedAttachments = files.map((f) => ({
@@ -134,11 +135,11 @@ const CreateAnnouncement = ({ onDismiss }: CreateAnnouncementProps) => {
               },
       });
 
-      Alert.alert("Success", "Announcement created successfully");
+      toast.success("Announcement created successfully");
       onDismiss();
     } catch (error) {
       console.log(error);
-      Alert.alert("Error", "Failed to create announcement");
+      toast.error("Failed to create announcement");
     }
   };
 
@@ -239,9 +240,15 @@ const CreateAnnouncement = ({ onDismiss }: CreateAnnouncementProps) => {
               style={styles.picker}
             >
               <Picker.Item label="General" value="General" />
-              <Picker.Item label="Department" value="Department" />
-              <Picker.Item label="Course" value="Course" />
-              <Picker.Item label="Batch" value="Batch" />
+              {associations?.departments.length !== 0 && (
+                <Picker.Item label="Department" value="Department" />
+              )}
+              {associations?.courses.length !== 0 && (
+                <Picker.Item label="Course" value="Course" />
+              )}
+              {associations?.batches.length !== 0 && (
+                <Picker.Item label="Batch" value="Batch" />
+              )}
             </Picker>
             {fieldState.error && (
               <Text style={styles.error}>{fieldState.error.message}</Text>

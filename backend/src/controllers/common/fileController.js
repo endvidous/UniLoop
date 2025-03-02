@@ -86,7 +86,7 @@ export const generateUploadURL = async (req, res) => {
 // Generate presigned GET URL for secure file access
 export const generateDownloadURL = async (req, res) => {
   try {
-    const { fileKey } = req.query;
+    const { fileKey } = req.body;
     const userId = req.user._id.toString();
     // Validate fileKey
     if (!fileKey) {
@@ -127,7 +127,7 @@ export const generateDownloadURL = async (req, res) => {
  */
 export const deleteFile = async (req, res) => {
   try {
-    const { fileKey } = req.query;
+    const { fileKey } = req.body;
     // Validate file key
     if (!fileKey || typeof fileKey !== "string") {
       return res.status(400).json({ error: "Invalid file key" });

@@ -1,4 +1,3 @@
-import { create } from "lodash";
 import axiosInstance from "./axiosConfig";
 import { Paper, Teacher } from "./departmentAPI";
 
@@ -25,12 +24,14 @@ export type Semester = {
 };
 
 export const courseService = {
-  getCourses: async () => {
+  getCourses: async (): Promise<{ data: Course[]; message: string }> => {
     const response = await axiosInstance.get("/admin/courses/");
     return response.data;
   },
 
-  getOneCourse: async (courseId: string) => {
+  getOneCourse: async (
+    courseId: string
+  ): Promise<{ data: Course; message: string }> => {
     const response = await axiosInstance.get(`/admin/courses/${courseId}`);
     return response.data;
   },
@@ -57,7 +58,9 @@ export const courseService = {
 };
 
 export const batchService = {
-  getBatches: async (courseId: string) => {
+  getBatches: async (
+    courseId: string
+  ): Promise<{ data: Batch[] | []; message: string }> => {
     const response = await axiosInstance.get(
       `/admin/courses/${courseId}/batches`
     );
@@ -72,7 +75,9 @@ export const batchService = {
     return response.data;
   },
 
-  getOneBatch: async (batchId: string) => {
+  getOneBatch: async (
+    batchId: string
+  ): Promise<{ data: Batch; message: string }> => {
     const response = await axiosInstance.get(
       `/admin/courses/batches/${batchId}`
     );

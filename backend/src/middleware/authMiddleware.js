@@ -59,6 +59,15 @@ export const isStudent = (req, res, next) => {
   next();
 };
 
+export const isStudentOrTeacher = (req, res, next) => {
+  if (!req.user || (!req.user.isStudent() && !req.user.isTeacher())) {
+    return res
+      .status(403)
+      .json({ message: "Access denied: Students or Teachers only" });
+  }
+  next();
+};
+
 export const isClassRep = async (req, res, next) => {
   try {
     // Basic checks (schema validation ensures valid assignment)

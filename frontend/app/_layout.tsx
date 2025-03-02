@@ -8,7 +8,9 @@ import { authService } from "@/src/services/api/auth";
 import { queryClient } from "@/src/services/api/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@/src/context/ThemeProvider";
-import { PaperProvider } from "react-native-paper";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { Toasts } from "@backpackapp-io/react-native-toast";
 
 export default function RootLayout() {
   const {
@@ -57,21 +59,23 @@ export default function RootLayout() {
   return (
     // React-query provider to make sure query functions work
     <QueryClientProvider client={queryClient}>
-      {/* Authentication provider that lets you use useAuth Inside any nested commponents */}
-      <AuthProvider>
-        {/* Theme provider that provides themes */}
-        <ThemeProvider>
-          {/* React native paper provider to use certain components inside it  */}
-          <PaperProvider>
-            <Stack
-              screenOptions={{
-                headerShown: false,
-              }}
-            />
-            <AuthHandler />
-          </PaperProvider>
-        </ThemeProvider>
-      </AuthProvider>
+      <SafeAreaProvider>
+        <GestureHandlerRootView>
+          {/* Authentication provider that lets you use useAuth Inside any nested commponents */}
+          <AuthProvider>
+            {/* Theme provider that provides themes */}
+            <ThemeProvider>
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                }}
+              />
+              <Toasts />
+              <AuthHandler />
+            </ThemeProvider>
+          </AuthProvider>
+        </GestureHandlerRootView>
+      </SafeAreaProvider>
     </QueryClientProvider>
   );
 }

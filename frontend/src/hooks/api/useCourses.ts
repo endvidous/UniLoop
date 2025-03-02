@@ -8,7 +8,8 @@ import {
 } from "@/src/services/api/courseAPI";
 import { queryKeys } from "@/src/services/api/queryKeys";
 
-//Course related hooks
+/* ------------Course related ----------------- */
+
 export const useCourses = () => {
   return useQuery<{ message: string; data: Course[] }>({
     queryKey: queryKeys.courses.list(),
@@ -74,7 +75,8 @@ export const useDeleteCourse = () => {
   });
 };
 
-//Batch related hooks
+/* ------------Batch related ----------------- */
+
 export const useBatches = (courseId: string) => {
   return useQuery({
     queryKey: queryKeys.batches.lists({ courseId }),

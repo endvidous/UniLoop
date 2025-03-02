@@ -21,7 +21,7 @@ const BatchCard = ({ batch }: { batch: Batch }) => {
       onPress={() =>
         router.push({
           pathname:
-            `/(authenticated)/(teacher)/batch/[batchId]` as RelativePathString,
+            `/(authenticated)/(teacher)/Home/[batchId]` as RelativePathString,
           params: { batchId: batch._id },
         })
       }
@@ -93,9 +93,6 @@ const TeacherHomePage = () => {
   // Render the batches from the associations response
   return (
     <View style={{ flex: 1, backgroundColor: "#f2f2f2" }}>
-      <Text style={{ fontSize: 24, fontWeight: "bold", margin: 16 }}>
-        Hey, {user?.name}. The batches you teach
-      </Text>
       <FlatList
         data={associations?.batches || []}
         keyExtractor={(item) => item._id}
@@ -110,16 +107,17 @@ const TeacherHomePage = () => {
               flex: 1,
               justifyContent: "center",
               alignItems: "center",
-              minHeight: 300,
+              minHeight: 500,
             }}
           >
             <Text
               style={{
                 fontSize: 16,
-                color: "#777",
+                color: "#ff5f5f",
+                textAlign: "center",
               }}
             >
-              No Batches are being taught by you
+              {`No Batches are being taught by you \nPull down to refresh`}
             </Text>
           </View>
         }

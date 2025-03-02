@@ -128,6 +128,8 @@ export const getDiscussions = async (req, res) => {
       postedBy: 1,
       visibilityType: 1,
       posted_to: 1,
+      upvotes: 1,
+      downvotes: 1,
       upvotesCount: 1,
       downvotesCount: 1,
       isClosed: 1,

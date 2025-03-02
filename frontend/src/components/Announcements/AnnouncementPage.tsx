@@ -104,14 +104,18 @@ const AnnouncementsPage = () => {
         }
       />
 
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => setShowModal(true)}
-        accessibilityLabel="Create new announcement"
-        accessibilityRole="button"
-      >
-        <Ionicons name="add" size={30} color="white" />
-      </TouchableOpacity>
+      {(user?.role === "teacher" ||
+        user?.role === "admin" ||
+        user?.classrep_of) && (
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => setShowModal(true)}
+          accessibilityLabel="Create new announcement"
+          accessibilityRole="button"
+        >
+          <Ionicons name="add" size={30} color="white" />
+        </TouchableOpacity>
+      )}
 
       <Modal
         visible={showModal}

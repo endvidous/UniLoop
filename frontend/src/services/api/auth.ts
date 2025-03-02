@@ -9,7 +9,6 @@ export const authService = {
       });
       return response.data;
     } catch (error: any) {
-      console.log(error.message);
       throw error;
     }
   },

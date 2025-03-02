@@ -67,7 +67,7 @@ export const validatePosting = async (user, postData) => {
 
   const associations = user.isTeacher()
     ? await findTeacherDetails(user._id)
-    : findStudentDetails(user._id);
+    : await findStudentDetails(user._id);
 
   if (!associations) return false;
 

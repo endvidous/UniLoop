@@ -19,7 +19,9 @@ import {
   useUnmarkAnswer,
 } from "@/src/hooks/api/useDiscussions";
 import ReportModal from "./ReportModal";
-import { formatNumber } from "@/src/utils/helperFunctions";
+import { useTheme } from "@/src/hooks/colors/useThemeColor";
+import BasicDialog from "../common/BasicDialog";
+import VoteButtons from "./VoteButtons";
 
 interface CommentItemProps {
   comment: any;
@@ -35,6 +37,7 @@ const CommentItem = ({
   discussionId,
 }: CommentItemProps) => {
   const { user } = useAuth();
+  const { colors } = useTheme();
   const [menuVisible, setMenuVisible] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [editedContent, setEditedContent] = useState(comment.content);
@@ -53,6 +56,8 @@ const CommentItem = ({
 
   const isAuthor = comment.postedBy._id === user?.id;
   const isAdmin = user?.role === "admin";
+  const hasUpvoted = comment?.upvotes.includes(user?.id);
+  const hasDownvoted = comment?.downvotes.includes(user?.id);
 
   const handleUpvote = () =>
     upvoteComment({ discussionId, commentId: comment._id });
@@ -97,6 +102,7 @@ const CommentItem = ({
             <Ionicons name="checkmark-circle" color="#4CAF50" size={20} />
           )}
           <Menu
+            anchorPosition="bottom"
             visible={menuVisible}
             onDismiss={() => setMenuVisible(false)}
             anchor={
@@ -163,24 +169,14 @@ const CommentItem = ({
         <>
           <Text style={styles.content}>{comment.content}</Text>
           <View style={styles.actions}>
-            <View style={styles.votesContainer}>
-              <TouchableOpacity style={styles.voteItem} onPress={handleUpvote}>
-                <Ionicons name="arrow-up-outline" size={18} color="#4CAF50" />
-                <Text style={styles.voteCount}>
-                  {formatNumber(comment.upvotesCount)}
-                </Text>
-              </TouchableOpacity>
-              <View style={styles.separator} />
-              <TouchableOpacity
-                style={styles.voteItem}
-                onPress={handleDownvote}
-              >
-                <Ionicons name="arrow-down-outline" size={18} color="#F44336" />
-                <Text style={styles.voteCount}>
-                  {formatNumber(comment.downvotesCount)}
-                </Text>
-              </TouchableOpacity>
-            </View>
+            <VoteButtons
+              upVoteCount={comment.upvotes.length}
+              downVoteCount={comment.downvotes.length}
+              hasUpvoted={hasUpvoted}
+              hasDownvoted={hasDownvoted}
+              onUpvote={handleUpvote}
+              onDownvote={handleDownvote}
+            />
             {(isTeacher || isAdmin) && (
               <>
                 {comment.isAnswer ? (
@@ -206,22 +202,18 @@ const CommentItem = ({
         </>
       )}
 
-      {/* Delete Confirmation Dialog */}
-      <Portal>
-        <Dialog
-          visible={deleteModalVisible}
-          onDismiss={() => setDeleteModalVisible(false)}
-        >
-          <Dialog.Title>Delete Comment?</Dialog.Title>
-          <Dialog.Actions>
-            <Button onPress={() => setDeleteModalVisible(false)}>Cancel</Button>
-            <Button onPress={handleDelete}>Delete</Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
+      {/* Delete Confirmation Dialog*/}
+      <BasicDialog
+        visible={deleteModalVisible}
+        title="Delete Comment?"
+        onDismiss={() => setDeleteModalVisible(false)}
+        onCancel={() => setDeleteModalVisible(false)}
+        onConfirm={handleDelete}
+      />
 
       {/* Report Modal */}
       <ReportModal
+        reportTitle="Report Comment"
         reportReason={reportReason}
         onDismiss={() => setReportModalVisible(false)}
         onSubmit={handleReport}
@@ -288,44 +280,43 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#fff",
   },
-  reportInput: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    padding: 12,
-    minHeight: 100,
-    marginVertical: 8,
-  },
   actions: {
     flexDirection: "row",
     justifyContent: "space-between",
   },
   votesContainer: {
     flexDirection: "row",
+    width: "35%",
     alignItems: "center",
     borderRadius: 10,
     borderColor: "#353535",
     borderWidth: 1,
-    elevation: 6,
-    backgroundColor: "#E3E3E3",
+    backgroundColor: "white",
     overflow: "hidden",
+    elevation: 6,
   },
   voteItem: {
-    alignItems: "center",
-    marginVertical: 6,
+    flex: 1,
     flexDirection: "row",
-    paddingVertical: 2,
-    marginHorizontal: 20,
-    gap: 6,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 10,
+  },
+  separator: {
+    height: "100%",
+    width: 1.08,
+    backgroundColor: "#353535",
+  },
+  upvoted: {
+    backgroundColor: "#3fff3f66",
+  },
+  downvoted: {
+    backgroundColor: "#ff676766",
   },
   voteCount: {
     fontSize: 14,
     color: "#444",
-  },
-  separator: {
-    height: "100%",
-    width: 1,
-    backgroundColor: "#353535",
+    marginLeft: 6,
   },
   answerAction: {
     borderRadius: 10,
@@ -339,6 +330,13 @@ const styles = StyleSheet.create({
   actionText: {
     color: "black",
     fontSize: 14,
+  },
+  deleteButton: {
+    borderWidth: 1,
+    borderRadius: 8,
+    backgroundColor: "#47a7f5",
+    elevation: 6,
+    paddingHorizontal: 10,
   },
 });
 
