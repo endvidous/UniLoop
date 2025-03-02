@@ -53,9 +53,9 @@ const CreateClassroom = ({ onDismiss }: { onDismiss: () => void }) => {
         </TouchableOpacity>
       </View>
       {/* Classroom Name */}
-      {/* <Controller
-        //room_num="name"
-        //control={control}
+      <Controller
+        name="room_num"
+        control={control}
         rules={{ required: "Classroom name is required" }}
         render={({ field: { onChange, onBlur, value }, fieldState }) => (
           <View style={styles.inputGroup}>
@@ -73,8 +73,7 @@ const CreateClassroom = ({ onDismiss }: { onDismiss: () => void }) => {
           </View>
         )}
       />
-
-      {/* Block */}
+      {/* block name */}
       <Controller
         control={control}
         name="block"
@@ -94,8 +93,7 @@ const CreateClassroom = ({ onDismiss }: { onDismiss: () => void }) => {
             )}
           </View>
         )}
-      />{" "}
-      */
+      />
       {/* Submit Button */}
       <TouchableOpacity
         style={styles.submitButton}
