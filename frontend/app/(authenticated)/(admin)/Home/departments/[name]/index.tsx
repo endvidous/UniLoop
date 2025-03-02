@@ -3,28 +3,38 @@ import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
 const DepartmentScreen = () => {
-  const { name } = useLocalSearchParams<{ name: string }>();
+  const { _id, name } = useLocalSearchParams<{ _id: string; name: string }>();
   const router = useRouter();
 
   return (
     <View style={styles.container}>
       <Text style={styles.header}>{name} Department</Text>
 
-      {/* <View style={styles.buttonsContainer}>
+      <View style={styles.buttonsContainer}>
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.push(`/departments/${name}/papers`)}
+          onPress={() =>
+            router.push({
+              pathname: `/Home/departments/[name]/papers`,
+              params: { name: name, _id: _id },
+            })
+          }
         >
           <Text style={styles.buttonText}>View Papers</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.push(`/departments/${name}/teachers`)}
+          onPress={() =>
+            router.push({
+              pathname: `/Home/departments/[name]/teachers`,
+              params: { name: name, _id: _id },
+            })
+          }
         >
           <Text style={styles.buttonText}>View Teachers</Text>
         </TouchableOpacity>
-      </View> */}
+      </View>
     </View>
   );
 };
