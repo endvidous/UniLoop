@@ -54,15 +54,6 @@ export const classroomService = {
   },
 
   /*------------------------------------------------------
-    Create multiple classrooms (bulk upload)
-    Deletes existing classrooms before creating new ones
-  ------------------------------------------------------*/
-  createClassrooms: async (data: ClassroomData[]) => {
-    const response = await axiosInstance.post("/classrooms", data);
-    return response.data;
-  },
-
-  /*------------------------------------------------------
     Book a classroom
     Required data: classroom ID, date, start time, end time, purpose
   ------------------------------------------------------*/

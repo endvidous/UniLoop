@@ -29,20 +29,6 @@ export const useClassroomById = (classroomId: string, date?: string) => {
 };
 
 /*------------------------------
- Create bulk classrooms
--------------------------------*/
-export const useCreateClassrooms = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: classroomService.createClassrooms,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.classrooms.all });
-    },
-  });
-};
-
-/*------------------------------
  Book a classroom
 -------------------------------*/
 export const useBookClassroom = () => {
