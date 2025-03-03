@@ -128,4 +128,30 @@ export const queryKeys = {
     details: () => [...queryKeys.assignments.all, "detail"] as const,
     detail: (id: string) => [...queryKeys.assignments.details(), id] as const,
   },
+
+  //classroom keys
+  classrooms: {
+    all: ["classrooms"] as const, // Invalidate all classrooms
+
+    list: (filters?: Record<string, any>) =>
+      filters
+        ? (["classrooms", "list", filters] as const)
+        : (["classrooms", "list"] as const),
+
+    detail: (classroomId: string, date?: string) =>
+      date
+        ? (["classrooms", "detail", classroomId, date] as const)
+        : (["classrooms", "detail", classroomId] as const),
+
+    bookings: {
+      all: ["classrooms", "bookings"] as const, // Invalidate all bookings
+      list: (filters?: Record<string, any>) =>
+        filters
+          ? (["classrooms", "bookings", "list", filters] as const)
+          : (["classrooms", "bookings", "list"] as const),
+
+      detail: (bookingId: string) =>
+        ["classrooms", "bookings", "detail", bookingId] as const,
+    },
+  },
 };
