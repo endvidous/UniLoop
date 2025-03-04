@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { useTheme } from "@/src/hooks/colors/useThemeColor";
 
 interface Announcement {
   _id: string;
@@ -31,14 +32,21 @@ const AnnouncementCard = ({ announcement, onPress }: AnnouncementCardProps) => {
   };
 
   const { label, color } = getPriorityData(announcement.priority);
+  const { colors } = useTheme();
 
   return (
     <TouchableOpacity
-      style={styles.cardContainer}
+      style={[
+        styles.cardContainer,
+        { backgroundColor: colors.background },
+        { shadowColor: colors.shadowcolor },
+      ]}
       onPress={() => onPress(announcement._id)}
     >
       <View style={styles.header}>
-        <Text style={styles.title}>{announcement.title}</Text>
+        <Text style={[styles.title, { color: colors.text }]}>
+          {announcement.title}
+        </Text>
         <View style={[styles.priorityBadge, { backgroundColor: color }]}>
           <Text style={styles.priorityText}>{label}</Text>
         </View>
@@ -58,10 +66,8 @@ const AnnouncementCard = ({ announcement, onPress }: AnnouncementCardProps) => {
 const styles = StyleSheet.create({
   cardContainer: {
     padding: 16,
-    backgroundColor: "#ffffff",
     borderRadius: 8,
     marginBottom: 12,
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -76,7 +82,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#1f2937",
     flex: 1,
   },
   priorityBadge: {

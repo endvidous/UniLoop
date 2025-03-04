@@ -15,6 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useTheme } from "@/src/hooks/colors/useThemeColor";
 
 type FormData = {
   title: string;
@@ -45,6 +46,7 @@ const CreateDiscussion = ({ onDismiss }: CreateDiscussionProps) => {
   const [submitting, setSubmitting] = useState(false);
 
   const visibilityType = watch("visibilityType");
+  const { colors } = useTheme();
 
   const onSubmit = async (data: FormData) => {
     try {
@@ -95,9 +97,16 @@ const CreateDiscussion = ({ onDismiss }: CreateDiscussionProps) => {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Create Discussion</Text>
+    <ScrollView
+      contentContainerStyle={[
+        styles.container,
+        { backgroundColor: colors.background },
+      ]}
+    >
+      <View style={[styles.header, { borderBottomColor: colors.text }]}>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>
+          Create Discussion
+        </Text>
         <TouchableOpacity onPress={onDismiss}>
           <MaterialIcons name="close" size={24} color="#000" />
         </TouchableOpacity>
@@ -109,12 +118,13 @@ const CreateDiscussion = ({ onDismiss }: CreateDiscussionProps) => {
         rules={{ required: "Title is required" }}
         render={({ field, fieldState }) => (
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Title</Text>
+            <Text style={[styles.label, { color: colors.text }]}>Title</Text>
             <TextInput
               style={styles.input}
               value={field.value}
               onChangeText={field.onChange}
               placeholder="Enter title"
+              placeholderTextColor={colors.text}
             />
             {fieldState.error && (
               <Text style={styles.error}>{fieldState.error.message}</Text>
@@ -128,7 +138,9 @@ const CreateDiscussion = ({ onDismiss }: CreateDiscussionProps) => {
         name="description"
         render={({ field }) => (
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Description</Text>
+            <Text style={[styles.label, { color: colors.text }]}>
+              Description
+            </Text>
             <TextInput
               style={[styles.input, styles.multiline]}
               value={field.value}
@@ -136,6 +148,7 @@ const CreateDiscussion = ({ onDismiss }: CreateDiscussionProps) => {
               placeholder="Enter description"
               multiline
               numberOfLines={4}
+              placeholderTextColor={colors.text}
             />
           </View>
         )}
@@ -147,7 +160,9 @@ const CreateDiscussion = ({ onDismiss }: CreateDiscussionProps) => {
         rules={{ required: "Visibility type is required" }}
         render={({ field, fieldState }) => (
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Visibility Type</Text>
+            <Text style={[styles.label, { color: colors.text }]}>
+              Visibility Type
+            </Text>
             <Picker
               selectedValue={field.value}
               onValueChange={field.onChange}
@@ -178,7 +193,9 @@ const CreateDiscussion = ({ onDismiss }: CreateDiscussionProps) => {
           rules={{ required: `${visibilityType} is required` }}
           render={({ field, fieldState }) => (
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>{visibilityType}</Text>
+              <Text style={[styles.label, { color: colors.text }]}>
+                {visibilityType}
+              </Text>
               <Picker
                 selectedValue={field.value}
                 onValueChange={field.onChange}
@@ -225,7 +242,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     paddingBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
   },
   headerTitle: {
     fontSize: 20,

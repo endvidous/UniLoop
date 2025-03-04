@@ -24,6 +24,7 @@ import AttachmentViewer, { Attachment } from "../common/AttachmentViewer";
 import { useForm, Controller } from "react-hook-form";
 import { useFileDelete } from "@/src/hooks/api/useFiles";
 import { toast } from "@backpackapp-io/react-native-toast";
+import { useTheme } from "@/src/hooks/colors/useThemeColor";
 
 type PostedTo = {
   model: string | null;
@@ -84,6 +85,7 @@ const AnnouncementDetailComponent = ({ id }: { id: string }) => {
   const { mutate: deleteFile } = useFileDelete();
   const [showCalendar, setShowCalendar] = useState(false);
   const [editing, setEditing] = useState(false);
+  const { colors } = useTheme();
 
   // When announcement data is loaded, set form values and attachments
   useEffect(() => {
@@ -216,7 +218,12 @@ const AnnouncementDetailComponent = ({ id }: { id: string }) => {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView
+      contentContainerStyle={[
+        styles.container,
+        { backgroundColor: colors.background },
+      ]}
+    >
       {editing ? (
         <>
           <Controller
@@ -478,7 +485,7 @@ const MetaItem = ({
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-    backgroundColor: "#fff",
+    //backgroundColor: "#fff",
     flexGrow: 1,
   },
   header: {

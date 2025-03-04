@@ -13,6 +13,7 @@ import {
 } from "@/src/hooks/api/useDiscussions";
 import ReportModal from "./ReportModal";
 import VoteButtons from "./VoteButtons";
+import { useTheme } from "@/src/hooks/colors/useThemeColor";
 
 const DiscussionCard = ({ discussion }: { discussion: Discussion }) => {
   const { user } = useAuth();
@@ -49,14 +50,21 @@ const DiscussionCard = ({ discussion }: { discussion: Discussion }) => {
 
   const hasUpvoted = discussion?.upvotes.includes(user?.id || "");
   const hasDownvoted = discussion?.downvotes.includes(user?.id || "");
+  const { colors } = useTheme();
 
   return (
     <TouchableOpacity
-      style={styles.card}
+      style={[
+        styles.card,
+        { backgroundColor: colors.background },
+        { shadowColor: colors.shadowcolor },
+      ]}
       onPress={() => onPress(discussion._id)}
     >
       <View style={styles.content}>
-        <Text style={styles.title}>{discussion.title}</Text>
+        <Text style={[styles.title, { color: colors.text }]}>
+          {discussion.title}
+        </Text>
         <Text style={styles.description} numberOfLines={3} ellipsizeMode="tail">
           {discussion.description}
         </Text>
@@ -102,14 +110,14 @@ const DiscussionCard = ({ discussion }: { discussion: Discussion }) => {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#fff",
+    // backgroundColor: "#fff",
     borderRadius: 8,
     padding: 16,
     marginBottom: 12,
     flexDirection: "column",
     alignItems: "flex-start",
     elevation: 2,
-    shadowColor: "#000",
+    //shadowColor: "#ffffff",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
