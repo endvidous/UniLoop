@@ -2,7 +2,7 @@ import { Text, View, StyleSheet, TouchableOpacity } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useTheme } from "@/src/hooks/colors/useThemeColor";
 import Icon from "react-native-vector-icons/Ionicons";
-import { Link } from "@react-navigation/native";
+import { Link } from "expo-router";
 
 const CoursesPage = () => {
   const { colors } = useTheme();
@@ -18,9 +18,9 @@ const CoursesPage = () => {
         <Text style={[styles.text, { color: colors.text }]}>CoursesPage</Text>
       </View>
 
-      <Link href="/Home/courses/CourseUpload" asChild>
+      <Link href="/Home/courses/courseUpload" asChild>
         <TouchableOpacity
-          style={[styles.button, { shadowColor: colors.shadowcolor }]}
+          style={styles.button}
         >
           <Icon name="add" size={30} color="white" />
         </TouchableOpacity>
