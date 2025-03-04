@@ -6,6 +6,7 @@ import { debounce } from "lodash";
 import FilterModal from "./FilterModal";
 import type { FilterState } from "./FilterModal";
 import { useCallback, useEffect, useState } from "react";
+import { useTheme } from "@/src/hooks/colors/useThemeColor";
 
 type SearchFilterHeaderProps = {
   filters: FilterState;
@@ -22,6 +23,7 @@ const SearchFilterHeader = ({
 }: SearchFilterHeaderProps) => {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState(filters.search);
+  const { colors } = useTheme();
 
   // Create a memoized debounced search function
   const debouncedSearch = useCallback(
@@ -71,13 +73,16 @@ const SearchFilterHeader = ({
     "Announcements" === configType ? AnnouncementConfig : DiscussionConfig;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TextInput
-        style={styles.searchInput}
+        style={[
+          styles.searchInput,
+          { backgroundColor: colors.secondaryBackground },
+        ]}
         placeholder={placeholder}
-        placeholderTextColor="black"
-        textColor="black"
-        cursorColor="black"
+        placeholderTextColor={colors.text}
+        textColor={colors.text}
+        cursorColor={colors.text}
         underlineColor="black"
         underlineColorAndroid="black"
         activeUnderlineColor="grey"
@@ -108,15 +113,15 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     padding: 16,
-    backgroundColor: "#fff",
     alignItems: "center",
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBlockColor: "#9f9f9f",
+    //borderBottomColor: "#eee",
   },
   searchInput: {
     flex: 1,
     marginRight: 16,
-    backgroundColor: "#fff",
+    // backgroundColor: "#f2f2f2",
     height: 40,
   },
   filterButton: {
