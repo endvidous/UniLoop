@@ -114,9 +114,12 @@ const DiscussionDetail = ({ id }: { id: string }) => {
   if (!discussion) return null;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <KeyboardAwareScrollView
-        style={styles.outerContainer}
+        style={[
+          styles.outerContainer,
+          { backgroundColor: colors.secondaryBackground },
+        ]}
         contentContainerStyle={styles.scrollContainer}
         enableOnAndroid={true}
         extraScrollHeight={120} // adjust if needed
@@ -173,7 +176,9 @@ const DiscussionDetail = ({ id }: { id: string }) => {
 
           {/* Content Section */}
           <View style={styles.content}>
-            <Text style={styles.title}>{discussion.title}</Text>
+            <Text style={[styles.title, { color: colors.text }]}>
+              {discussion.title}
+            </Text>
             <Text style={styles.description}>{discussion.description}</Text>
           </View>
 
@@ -192,6 +197,7 @@ const DiscussionDetail = ({ id }: { id: string }) => {
                 <MaterialCommunityIcons
                   name="comment-multiple-outline"
                   size={18}
+                  color="#666"
                 />
                 <Text style={styles.commentNumberText}>
                   {formatNumber(discussion.comments.length)}
@@ -204,7 +210,9 @@ const DiscussionDetail = ({ id }: { id: string }) => {
 
           {/* Comments Section */}
           <View style={styles.commentsSection}>
-            <Text style={styles.sectionTitle}>-- Comments --</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              -- Comments --
+            </Text>
             {discussion.comments.map((c: any) => (
               <CommentItem
                 key={c._id}
@@ -248,9 +256,17 @@ const DiscussionDetail = ({ id }: { id: string }) => {
       <KeyboardAvoidingView>
         {/* Fixed Comment Input Bar */}
         {!discussion.isClosed && !hasMarkedAnswer && !hasCommented && (
-          <View style={styles.fixedCommentBar}>
+          <View
+            style={[
+              styles.fixedCommentBar,
+              { backgroundColor: colors.secondaryBackground },
+            ]}
+          >
             <TextInput
-              style={styles.commentInput}
+              style={[
+                styles.commentInput,
+                { backgroundColor: colors.background },
+              ]}
               placeholder="Add a comment..."
               placeholderTextColor="#888"
               value={comment}

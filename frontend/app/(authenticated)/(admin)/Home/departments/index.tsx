@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -10,7 +10,18 @@ import {
 } from "react-native";
 import { Link, RelativePathString, useRouter } from "expo-router";
 import Icon from "react-native-vector-icons/Ionicons";
-import { useDepartments } from "@/src/hooks/api/useDepartments";
+import {
+  useDepartments,
+  useDeleteDepartment,
+} from "@/src/hooks/api/useDepartments";
+import { useTheme } from "@/src/hooks/colors/useThemeColor";
+import {
+  GestureHandlerRootView,
+  RectButton,
+  Swipeable,
+} from "react-native-gesture-handler";
+import Animated from "react-native-reanimated";
+import { toast } from "@backpackapp-io/react-native-toast";
 
 interface Department {
   _id: string;
@@ -18,20 +29,99 @@ interface Department {
 }
 
 const HomeScreen = () => {
+  // Custom hooks:
+  const { colors } = useTheme();
   const router = useRouter();
   const { data: departments, isFetching, isError, refetch } = useDepartments();
+  const { mutate: deleteDepartment } = useDeleteDepartment();
+  // State indicators:
+  const [showConfirmCard, setShowConfirmCard] = useState<string | null>(null);
+  const [isDeleted, setIsDeleted] = useState(false);
+
+  const renderRightActions = (item: Department) => {
+    return (
+      <TouchableOpacity
+        style={styles.rightAction}
+        onPress={() => setShowConfirmCard(item._id)}
+      >
+        <Icon name="trash-outline" size={30} color="white" />
+      </TouchableOpacity>
+    );
+  };
+
+  const renderLeftActions = (item: Department) => {
+    return (
+      <TouchableOpacity
+        style={styles.leftAction}
+        onPress={() => {
+          void null;
+          // Handle the edit action here
+          ///router.push({
+          //pathname: "/Home/departments/edit",
+          //params: { _id: item._id, name: item.name },
+          //});
+        }}
+      >
+        <Icon name="pencil-outline" size={30} color="white" />
+      </TouchableOpacity>
+    );
+  };
 
   const renderDepartment: ListRenderItem<Department> = ({ item }) => {
-    if (!item.name) {
-      console.warn("Item is missing the 'name' property:", item);
+    if (showConfirmCard === item._id) {
+      return (
+        <View
+          style={[styles.confirmCard, { backgroundColor: colors.background }]}
+        >
+          <Text style={[styles.confirmText, { color: colors.text }]}>
+            Are you sure you want to delete {item.name}?
+          </Text>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => setShowConfirmCard(null)}
+            >
+              <Text style={styles.buttonText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.confirmButton}
+              onPress={() => {
+                // Handle the delete action here
+                deleteDepartment(item._id, {
+                  onSuccess: () => {
+                    // setShowConfirmCard(null);
+                    toast.success("Department deleted successfully");
+                    setIsDeleted(true);
+                  },
+                });
+              }}
+            >
+              <Text style={styles.buttonText}>Confirm</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      );
     }
+
+    if (isDeleted && showConfirmCard === item._id) {
+      return (
+        <View
+          style={[styles.confirmCard, { backgroundColor: colors.background }]}
+        >
+          <Text style={[styles.confirmText, { color: colors.text }]}>
+            Department deleted
+          </Text>
+        </View>
+      );
+    }
+
     return (
       <TouchableOpacity
         style={styles.card}
         onPress={() =>
           router.push({
-            pathname: `/Home/departments/[departmentId]` as RelativePathString,
-            params: { departmentId: item._id, name: item.name },
+            pathname: `/Home/departments/[name]`,
+            params: { _id: item._id, name: item.name },
           })
         }
       >
@@ -62,9 +152,11 @@ const HomeScreen = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <GestureHandlerRootView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
       <FlatList<Department>
-        data={departments?.data} // Use the extracted array
+        data={departments?.data}
         keyExtractor={(item, index) => item._id || index.toString()}
         renderItem={renderDepartment}
         refreshing={isFetching}
@@ -73,13 +165,12 @@ const HomeScreen = () => {
           <Text style={styles.emptyText}>No departments available</Text>
         }
       />
-
       <Link href="/Home/departments/departmentUpload" asChild>
         <TouchableOpacity style={styles.button}>
           <Icon name="add" size={40} color="white" />
         </TouchableOpacity>
       </Link>
-    </View>
+    </GestureHandlerRootView>
   );
 };
 
@@ -87,10 +178,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: "#f5f5f5",
   },
   card: {
-    backgroundColor: "#000000",
+    backgroundColor: "#007BFF",
     padding: 15,
     borderRadius: 10,
     marginVertical: 8,
@@ -143,6 +233,55 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#666",
     marginTop: 20,
+  },
+  rightAction: {
+    backgroundColor: "red",
+    justifyContent: "center",
+    alignItems: "center",
+    width: 75,
+    marginVertical: 8,
+    borderRadius: 10,
+  },
+  leftAction: {
+    backgroundColor: "green",
+    justifyContent: "center",
+    alignItems: "center",
+    width: 75,
+    marginVertical: 8,
+    borderRadius: 10,
+  },
+  confirmCard: {
+    padding: 20,
+    borderRadius: 10,
+    elevation: 5,
+    marginVertical: 8,
+  },
+  confirmText: {
+    fontSize: 16,
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+  },
+  cancelButton: {
+    backgroundColor: "#ccc",
+    padding: 10,
+    borderRadius: 5,
+    width: 100,
+    alignItems: "center",
+  },
+  confirmButton: {
+    backgroundColor: "red",
+    padding: 10,
+    borderRadius: 5,
+    width: 100,
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "white",
+    fontSize: 16,
   },
 });
 

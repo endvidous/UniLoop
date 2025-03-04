@@ -1,14 +1,24 @@
 import { Tabs } from "expo-router";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useTheme } from "@/src/hooks/colors/useThemeColor";
 
 const TabLayout = () => {
+  const { colors } = useTheme();
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: "#0003a0",
+        tabBarActiveTintColor: colors.background,
+        tabBarActiveBackgroundColor: colors.icon,
         tabBarHideOnKeyboard: true,
-        // headerBackButtonDisplayMode: "default",
+        tabBarInactiveTintColor: colors.text,
+        tabBarStyle: {
+          backgroundColor: colors.background,
+        },
+        headerStyle: {
+          backgroundColor: colors.background,
+        },
+        headerTintColor: colors.text,
       }}
     >
       <Tabs.Screen

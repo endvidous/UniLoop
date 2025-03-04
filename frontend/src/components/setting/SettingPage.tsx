@@ -52,7 +52,7 @@ const SettingsPage = () => {
     <ScrollView
       contentContainerStyle={[
         styles.container,
-        { backgroundColor: colors.background },
+        { backgroundColor: colors.secondaryBackground },
       ]}
     >
       <Text style={[styles.nametitle, { color: colors.text }]}>

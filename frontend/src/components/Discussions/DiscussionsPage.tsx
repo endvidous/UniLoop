@@ -16,8 +16,10 @@ import { useCallback, useState } from "react";
 import type { FilterState } from "../common/FilterModal";
 import { Ionicons } from "@expo/vector-icons";
 import CreateDiscussion from "./CreateDiscussion";
+import { useTheme } from "@/src/hooks/colors/useThemeColor";
 
 const DiscussionsPage = () => {
+  const { colors } = useTheme();
   const [filters, setFilters] = useState<FilterState>({
     search: "",
     department: "",
@@ -81,7 +83,12 @@ const DiscussionsPage = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: colors.secondaryBackground },
+      ]}
+    >
       <SearchFilterHeader
         placeholder="Search discussions..."
         filters={filters}

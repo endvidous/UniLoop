@@ -94,9 +94,17 @@ const CommentItem = ({
     unmarkAnswer({ discussionId, commentId: comment._id });
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: colors.background },
+        { shadowColor: colors.shadowcolor },
+      ]}
+    >
       <View style={styles.header}>
-        <Text style={styles.author}>{comment.postedBy.name}</Text>
+        <Text style={[styles.author, { color: colors.text }]}>
+          {comment.postedBy.name}
+        </Text>
         <View style={styles.headerRight}>
           {comment.isAnswer && (
             <Ionicons name="checkmark-circle" color="#4CAF50" size={20} />
@@ -226,11 +234,10 @@ const CommentItem = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#f8f8f8",
     borderRadius: 8,
     padding: 12,
     marginBottom: 8,
-    elevation: 10,
+    elevation: 4,
   },
   header: {
     flexDirection: "row",
@@ -239,7 +246,7 @@ const styles = StyleSheet.create({
   },
   author: {
     fontWeight: "500",
-    color: "#444",
+    //
   },
   content: {
     color: "#666",

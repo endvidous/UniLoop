@@ -23,6 +23,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useTheme } from "@/src/hooks/colors/useThemeColor";
 
 type FormData = {
   title: string;
@@ -58,6 +59,7 @@ const CreateAnnouncement = ({ onDismiss }: CreateAnnouncementProps) => {
     },
   });
   const { user } = useAuth();
+  const { colors } = useTheme();
   const { data: associations } = useUserAssociations();
   const { mutateAsync: uploadFile } = useFileUpload();
   const { mutateAsync: deleteFile } = useFileDelete();
@@ -163,11 +165,18 @@ const CreateAnnouncement = ({ onDismiss }: CreateAnnouncementProps) => {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView
+      contentContainerStyle={[
+        styles.container,
+        { backgroundColor: colors.background },
+      ]}
+    >
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Create Announcement</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>
+          Create Announcement
+        </Text>
         <TouchableOpacity onPress={onDismiss}>
-          <MaterialIcons name="close" size={24} color="#000" />
+          <MaterialIcons name="close" size={24} color="#464646" />
         </TouchableOpacity>
       </View>
       <Controller
@@ -176,9 +185,9 @@ const CreateAnnouncement = ({ onDismiss }: CreateAnnouncementProps) => {
         rules={{ required: "Title is required" }}
         render={({ field, fieldState }) => (
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Title</Text>
+            <Text style={[styles.label, { color: colors.text }]}>Title</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { color: "#464646" }]}
               value={field.value}
               onChangeText={field.onChange}
               placeholder="Enter title"
@@ -195,7 +204,9 @@ const CreateAnnouncement = ({ onDismiss }: CreateAnnouncementProps) => {
         name="description"
         render={({ field }) => (
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Description</Text>
+            <Text style={[styles.label, { color: colors.text }]}>
+              Description
+            </Text>
             <TextInput
               style={[styles.input, styles.multiline]}
               value={field.value}
@@ -213,7 +224,7 @@ const CreateAnnouncement = ({ onDismiss }: CreateAnnouncementProps) => {
         name="priority"
         render={({ field }) => (
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Priority</Text>
+            <Text style={[styles.label, { color: colors.text }]}>Priority</Text>
             <Picker
               selectedValue={field.value}
               onValueChange={field.onChange}
@@ -233,7 +244,9 @@ const CreateAnnouncement = ({ onDismiss }: CreateAnnouncementProps) => {
         rules={{ required: "Visibility type is required" }}
         render={({ field, fieldState }) => (
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Visibility Type</Text>
+            <Text style={[styles.label, { color: colors.text }]}>
+              Visibility Type
+            </Text>
             <Picker
               selectedValue={field.value}
               onValueChange={field.onChange}
@@ -288,7 +301,9 @@ const CreateAnnouncement = ({ onDismiss }: CreateAnnouncementProps) => {
       )}
 
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>Expiration Date</Text>
+        <Text style={[styles.label, { color: colors.text }]}>
+          Expiration Date
+        </Text>
         <TouchableOpacity
           style={styles.dateInput}
           onPress={() => setShowCalendar(true)}
@@ -306,7 +321,7 @@ const CreateAnnouncement = ({ onDismiss }: CreateAnnouncementProps) => {
       </View>
 
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>
+        <Text style={[styles.label, { color: colors.text }]}>
           Attachments ({files.length}/{MAX_ATTACHMENTS})
         </Text>
         <View style={styles.fileButtons}>

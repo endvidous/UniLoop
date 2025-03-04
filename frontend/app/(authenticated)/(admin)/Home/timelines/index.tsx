@@ -18,12 +18,14 @@ import {
   useDeleteAcademicTimeline,
   useUpdateAcademicTimeline,
 } from "@/src/hooks/api/useAcademicTimelines";
+import { useTheme } from "@/src/hooks/colors/useThemeColor";
 
 const TimelinePage = () => {
   const [showModal, setShowModal] = React.useState(false);
   const [refreshing, setRefreshing] = React.useState(false);
   const { data, isLoading, isError, error, refetch } = useAcademicTimelines();
   const createMutation = useCreateAcademicTimeline();
+  const { colors } = useTheme();
 
   const handleSubmit = async (newDates: any) => {
     try {
@@ -73,14 +75,21 @@ const TimelinePage = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: colors.secondaryBackground },
+      ]}
+    >
       <FlatList
         data={data?.data || []}
         keyExtractor={(item) => item._id}
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.noTimelinesText}>No timelines available</Text>
+            <Text style={[styles.noTimelinesText, { color: colors.text }]}>
+              No timelines available
+            </Text>
           </View>
         }
         renderItem={({ item }) => (
@@ -102,7 +111,7 @@ const TimelinePage = () => {
       />
 
       <TouchableOpacity
-        style={styles.fab}
+        style={[styles.fab, { shadowColor: colors.shadowcolor }]}
         onPress={() => setShowModal(true)}
         accessibilityLabel="Create new timeline"
         accessibilityRole="button"
@@ -122,7 +131,6 @@ const TimelinePage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f4f4f4",
   },
   listContent: {
     padding: 20,
