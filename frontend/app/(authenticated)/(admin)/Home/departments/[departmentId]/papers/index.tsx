@@ -25,8 +25,6 @@ const PapersIndexPage = () => {
     name: string;
   }>();
 
-  console.log("Department ID paper index", departmentId);
-
   const { data, isFetching, isError, refetch } =
     useDepartmentPapers(departmentId);
 

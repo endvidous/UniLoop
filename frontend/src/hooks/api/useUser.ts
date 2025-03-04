@@ -26,6 +26,7 @@ export const useDepartmentTeachers = (departmentId: string, filters?: any) => {
   return useQuery({
     queryKey: queryKeys.teachers.list(departmentId, filters),
     queryFn: () => teacherService.getDepartmentTeachers(departmentId),
+    enabled: !!departmentId,
   });
 };
 
