@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import { useLocalSearchParams } from "expo-router";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,6 +9,10 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
@@ -31,8 +36,10 @@ interface PaperFormData {
   papers: PaperFormItem[];
 }
 
-const PaperTable = ({ departmentId }: { departmentId: string }) => {
+const PaperTable = () => {
   // Setup React Hook Form
+  const { departmentId } = useLocalSearchParams<{departmentId: string}>();
+
   const {
     control,
     handleSubmit,
@@ -62,10 +69,32 @@ const PaperTable = ({ departmentId }: { departmentId: string }) => {
   const [showCSVCleaner, setShowCSVCleaner] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isEditingCSV, setIsEditingCSV] = useState(false);
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
 
   // Fetch papers from the backend (only for duplicate checking)
   const { data: existingPapers } = useDepartmentPapers(departmentId);
   const { mutate: createPapers, isPending: isCreating } = useCreatePapers();
+
+  // Keyboard visibility listeners
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      "keyboardDidShow",
+      () => {
+        setKeyboardVisible(true);
+      }
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      "keyboardDidHide",
+      () => {
+        setKeyboardVisible(false);
+      }
+    );
+
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
+  }, []);
 
   const checkForDuplicates = (newPapers: PaperFormItem[]): string[] => {
     if (!existingPapers) return [];
@@ -73,7 +102,7 @@ const PaperTable = ({ departmentId }: { departmentId: string }) => {
     const duplicates = newPapers
       .filter((paper) => paper.name.trim() !== "" && paper.code.trim() !== "")
       .filter((paper) =>
-        existingPapers.some(
+        existingPapers.data.some(
           (existing) =>
             existing.code.toLowerCase() === paper.code.toLowerCase() ||
             existing.name.toLowerCase() === paper.name.toLowerCase()
@@ -86,7 +115,12 @@ const PaperTable = ({ departmentId }: { departmentId: string }) => {
 
   const handleAddRow = () => {
     if (!isManualEntryDisabled) {
-      append({ name: "", code: "", semester: 1 });
+      append({
+        name: "",
+        code: "",
+        semester: 1,
+        formId: Date.now().toString(),
+      });
     }
   };
 
@@ -101,6 +135,9 @@ const PaperTable = ({ departmentId }: { departmentId: string }) => {
   };
 
   const onSubmit = (data: PaperFormData) => {
+    // Hide keyboard when submitting
+    Keyboard.dismiss();
+
     // Validate all semesters are within range
     const invalidSemesters = data.papers.filter(
       (paper) => !validateSemester(paper.semester)
@@ -130,12 +167,16 @@ const PaperTable = ({ departmentId }: { departmentId: string }) => {
     }
 
     // Create new papers - map to the API format
-    const apiNewPapers: Omit<Paper, "_id">[] = validPapers.map((item) => ({
-      name: item.name,
-      code: item.code,
-      semester: Number(item.semester),
-    }));
+    const apiNewPapers: Omit<Paper, "_id">[] = validPapers.map(
+      ({ name, code, semester }) => ({
+        name,
+        code,
+        semester: Number(semester),
+      })
+    );
 
+    console.log("Creating papers: ", apiNewPapers);
+    console.log("Department Id:  ", departmentId);
     createPapers(
       {
         departmentId,
@@ -288,7 +329,11 @@ const PaperTable = ({ departmentId }: { departmentId: string }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+    >
       {showCSVCleaner && csvFile && (
         <CSVCleaner
           filePath={csvFile.uri}
@@ -315,97 +360,50 @@ const PaperTable = ({ departmentId }: { departmentId: string }) => {
         </View>
       )}
 
-      <View style={styles.section}>
-        <Text style={styles.title}>
-          {isEditingCSV ? "Edit CSV Papers" : "Manual Paper Entry"}
-        </Text>
-        <View style={styles.tableHeader}>
-          <Text style={styles.headerText}>Paper Details</Text>
-          <TouchableOpacity
-            onPress={handleAddRow}
-            style={[styles.addButton, isManualEntryDisabled && styles.disabled]}
-            disabled={isManualEntryDisabled}
-          >
-            <Ionicons name="add-circle-outline" size={24} color="black" />
-          </TouchableOpacity>
-        </View>
-        <FlatList
-          data={fields}
-          keyExtractor={(item) => item.formId || Math.random().toString()}
-          renderItem={({ index }) => (
-            <View style={styles.paperCard}>
-              <View style={styles.rowHeader}>
-                <Text style={styles.paperIndexText}>Paper {index + 1}</Text>
-                <TouchableOpacity
-                  onPress={() => handleRemoveRow(index)}
-                  style={[
-                    styles.deleteButton,
-                    isManualEntryDisabled && !isEditingCSV && styles.disabled,
-                  ]}
-                  disabled={isManualEntryDisabled && !isEditingCSV}
-                >
-                  <Ionicons name="trash-outline" size={24} color="black" />
-                </TouchableOpacity>
-              </View>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.section}>
+          <Text style={styles.title}>
+            {isEditingCSV ? "Edit CSV Papers" : "Manual Paper Entry"}
+          </Text>
+          <View style={styles.tableHeader}>
+            <Text style={styles.headerText}>Paper Details</Text>
+            <TouchableOpacity
+              onPress={handleAddRow}
+              style={[
+                styles.addButton,
+                isManualEntryDisabled && styles.disabled,
+              ]}
+              disabled={isManualEntryDisabled}
+            >
+              <Ionicons name="add-circle-outline" size={24} color="black" />
+            </TouchableOpacity>
+          </View>
+          <FlatList
+            data={fields}
+            keyExtractor={(item) => item.formId || Math.random().toString()}
+            scrollEnabled={false} // Disable FlatList scrolling to use parent ScrollView
+            renderItem={({ index }) => (
+              <View style={styles.paperCard}>
+                <View style={styles.rowHeader}>
+                  <Text style={styles.paperIndexText}>Paper {index + 1}</Text>
+                  <TouchableOpacity
+                    onPress={() => handleRemoveRow(index)}
+                    style={[
+                      styles.deleteButton,
+                      isManualEntryDisabled && !isEditingCSV && styles.disabled,
+                    ]}
+                    disabled={isManualEntryDisabled && !isEditingCSV}
+                  >
+                    <Ionicons name="trash-outline" size={24} color="black" />
+                  </TouchableOpacity>
+                </View>
 
-              <View style={styles.inputRow}>
-                <Text style={styles.inputLabel}>Name:</Text>
-                <Controller
-                  control={control}
-                  name={`papers.${index}.name`}
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <TextInput
-                      style={[
-                        styles.input,
-                        isManualEntryDisabled &&
-                          !isEditingCSV &&
-                          styles.disabledInput,
-                      ]}
-                      placeholder="Enter paper name"
-                      value={value}
-                      onChangeText={onChange}
-                      onBlur={onBlur}
-                      editable={!isManualEntryDisabled || isEditingCSV}
-                    />
-                  )}
-                />
-              </View>
-
-              <View style={styles.inputRow}>
-                <Text style={styles.inputLabel}>Code:</Text>
-                <Controller
-                  control={control}
-                  name={`papers.${index}.code`}
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <TextInput
-                      style={[
-                        styles.input,
-                        isManualEntryDisabled &&
-                          !isEditingCSV &&
-                          styles.disabledInput,
-                      ]}
-                      placeholder="Enter paper code"
-                      value={value}
-                      onChangeText={onChange}
-                      onBlur={onBlur}
-                      editable={!isManualEntryDisabled || isEditingCSV}
-                    />
-                  )}
-                />
-              </View>
-
-              <View style={styles.inputRow}>
-                <Text style={styles.inputLabel}>Semester:</Text>
-                <Controller
-                  control={control}
-                  name={`papers.${index}.semester`}
-                  rules={{
-                    validate: (value) =>
-                      validateSemester(value) ||
-                      "Semester must be between 1 and 6",
-                  }}
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <>
+                <View style={styles.inputRow}>
+                  <Text style={styles.inputLabel}>Name:</Text>
+                  <Controller
+                    control={control}
+                    name={`papers.${index}.name`}
+                    render={({ field: { onChange, onBlur, value } }) => (
                       <TextInput
                         style={[
                           styles.input,
@@ -413,63 +411,126 @@ const PaperTable = ({ departmentId }: { departmentId: string }) => {
                             !isEditingCSV &&
                             styles.disabledInput,
                         ]}
-                        placeholder="Enter semester (1-6)"
-                        value={value.toString()}
-                        onChangeText={(text) => {
-                          const num = parseInt(text);
-                          if (isNaN(num)) {
-                            onChange(1); // Default to 1 if not a number
-                          } else {
-                            // Clamp value between 1-6
-                            onChange(Math.min(Math.max(1, num), 6));
-                          }
-                        }}
+                        placeholder="Enter paper name"
+                        value={value}
+                        onChangeText={onChange}
                         onBlur={onBlur}
-                        keyboardType="numeric"
                         editable={!isManualEntryDisabled || isEditingCSV}
+                        onFocus={() => setKeyboardVisible(true)}
                       />
-                    </>
-                  )}
-                />
+                    )}
+                  />
+                </View>
+
+                <View style={styles.inputRow}>
+                  <Text style={styles.inputLabel}>Code:</Text>
+                  <Controller
+                    control={control}
+                    name={`papers.${index}.code`}
+                    render={({ field: { onChange, onBlur, value } }) => (
+                      <TextInput
+                        style={[
+                          styles.input,
+                          isManualEntryDisabled &&
+                            !isEditingCSV &&
+                            styles.disabledInput,
+                        ]}
+                        placeholder="Enter paper code"
+                        value={value}
+                        onChangeText={onChange}
+                        onBlur={onBlur}
+                        editable={!isManualEntryDisabled || isEditingCSV}
+                        onFocus={() => setKeyboardVisible(true)}
+                      />
+                    )}
+                  />
+                </View>
+
+                <View style={styles.inputRow}>
+                  <Text style={styles.inputLabel}>Semester:</Text>
+                  <Controller
+                    control={control}
+                    name={`papers.${index}.semester`}
+                    rules={{
+                      validate: (value) =>
+                        validateSemester(value) ||
+                        "Semester must be between 1 and 6",
+                    }}
+                    render={({ field: { onChange, onBlur, value } }) => (
+                      <>
+                        <TextInput
+                          style={[
+                            styles.input,
+                            isManualEntryDisabled &&
+                              !isEditingCSV &&
+                              styles.disabledInput,
+                          ]}
+                          placeholder="Enter semester (1-6)"
+                          value={value.toString()}
+                          onChangeText={(text) => {
+                            const num = parseInt(text);
+                            if (isNaN(num)) {
+                              onChange(1); // Default to 1 if not a number
+                            } else {
+                              // Clamp value between 1-6
+                              onChange(Math.min(Math.max(1, num), 6));
+                            }
+                          }}
+                          onBlur={onBlur}
+                          keyboardType="numeric"
+                          editable={!isManualEntryDisabled || isEditingCSV}
+                          onFocus={() => setKeyboardVisible(true)}
+                        />
+                      </>
+                    )}
+                  />
+                </View>
+                {errors.papers?.[index]?.semester && (
+                  <Text style={styles.errorText}>
+                    Semester must be between 1 and 6
+                  </Text>
+                )}
               </View>
-              {errors.papers?.[index]?.semester && (
-                <Text style={styles.errorText}>
-                  Semester must be between 1 and 6
-                </Text>
-              )}
-            </View>
-          )}
-        />
-      </View>
-
-      {showUploadSection && !isEditingCSV && (
-        <View style={styles.section}>
-          <Text style={styles.title}>Upload CSV File</Text>
-          <Text style={styles.instruction}>
-            CSV must have "name", "code", and "semester" columns (semester must
-            be 1-6)
-          </Text>
-          <TouchableOpacity
-            style={styles.uploadButton}
-            onPress={handleCSVUpload}
-            disabled={isProcessing}
-          >
-            <Text style={styles.uploadButtonText}>
-              {isProcessing ? "Processing..." : "Pick CSV File"}
-            </Text>
-          </TouchableOpacity>
-
-          {csvFile && (
-            <View style={styles.fileContainer}>
-              <Ionicons name="document" size={24} color="#007BFF" />
-              <Text style={styles.fileName}>{csvFile.name}</Text>
-            </View>
-          )}
+            )}
+          />
         </View>
-      )}
+
+        {/* Only show the upload section when keyboard is closed and showUploadSection is true */}
+        {showUploadSection && !isEditingCSV && !isKeyboardVisible && (
+          <View style={styles.section}>
+            <Text style={styles.title}>Upload CSV File</Text>
+            <Text style={styles.instruction}>
+              CSV must have "name", "code", and "semester" columns (semester
+              must be 1-6)
+            </Text>
+            <TouchableOpacity
+              style={styles.uploadButton}
+              onPress={handleCSVUpload}
+              disabled={isProcessing}
+            >
+              <Text style={styles.uploadButtonText}>
+                {isProcessing ? "Processing..." : "Pick CSV File"}
+              </Text>
+            </TouchableOpacity>
+
+            {csvFile && (
+              <View style={styles.fileContainer}>
+                <Ionicons name="document" size={24} color="#007BFF" />
+                <Text style={styles.fileName}>{csvFile.name}</Text>
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* Add padding at the bottom to prevent save button from covering content */}
+        <View style={styles.bottomPadding} />
+      </ScrollView>
 
       <TouchableOpacity
-        style={styles.saveButton}
+        style={[
+          styles.saveButton,
+          isKeyboardVisible && styles.keyboardVisibleButton,
+        ]}
         onPress={handleSubmit(onSubmit)}
         disabled={isProcessing || isCreating}
       >
@@ -477,20 +538,22 @@ const PaperTable = ({ departmentId }: { departmentId: string }) => {
           {isCreating ? "Saving..." : "Save Papers"}
         </Text>
       </TouchableOpacity>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
     backgroundColor: "#f8f9fa",
-    justifyContent: "space-between",
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 80, // Add padding to account for the save button
   },
   section: {
-    flex: 1,
     padding: 10,
+    marginBottom: 20,
   },
   title: {
     fontSize: 22,
@@ -587,6 +650,10 @@ const styles = StyleSheet.create({
     bottom: 20,
     left: 20,
     right: 20,
+    zIndex: 10,
+  },
+  keyboardVisibleButton: {
+    bottom: 10, // Position closer to the keyboard when visible
   },
   saveButtonText: {
     color: "white",
@@ -639,6 +706,9 @@ const styles = StyleSheet.create({
     marginTop: -4,
     marginBottom: 8,
     marginLeft: 80, // Align with input field
+  },
+  bottomPadding: {
+    height: 60, // Extra padding to prevent content from being hidden behind save button
   },
 });
 

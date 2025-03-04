@@ -49,7 +49,9 @@ export const departmentsService = {
 };
 
 export const papersService = {
-  getPapers: async (departmentId: string): Promise<Paper[]> => {
+  getPapers: async (
+    departmentId: string
+  ): Promise<{ message: string; count: number; data: Paper[] }> => {
     const response = await axiosInstance.get(
       `/admin/departments/${departmentId}/papers`
     );

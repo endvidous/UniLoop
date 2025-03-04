@@ -68,7 +68,7 @@ export const useDeleteDepartment = () => {
 
 // Papers queries
 export const useDepartmentPapers = (departmentId: string, filters?: any) => {
-  return useQuery<Paper[]>({
+  return useQuery({
     queryKey: queryKeys.papers.list(departmentId, filters),
     queryFn: () => papersService.getPapers(departmentId),
     enabled: !!departmentId,
@@ -84,7 +84,7 @@ export const useCreatePapers = () => {
       papers,
     }: {
       departmentId: string;
-      papers: Omit<Paper, "_id">[];
+      papers: Partial<Paper>[];
     }) => papersService.createPapers(departmentId, papers),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
