@@ -120,8 +120,8 @@ const HomeScreen = () => {
         style={styles.card}
         onPress={() =>
           router.push({
-            pathname: `/Home/departments/[name]`,
-            params: { _id: item._id, name: item.name },
+            pathname: `/Home/departments/[departmentId]` as RelativePathString,
+            params: { departmentId: item._id, name: item.name },
           })
         }
       >
