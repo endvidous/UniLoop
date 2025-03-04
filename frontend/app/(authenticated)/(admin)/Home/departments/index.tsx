@@ -21,7 +21,6 @@ import {
   Swipeable,
 } from "react-native-gesture-handler";
 import Animated from "react-native-reanimated";
-import { toast } from "@backpackapp-io/react-native-toast";
 
 interface Department {
   _id: string;
@@ -89,8 +88,7 @@ const HomeScreen = () => {
                 // Handle the delete action here
                 deleteDepartment(item._id, {
                   onSuccess: () => {
-                    // setShowConfirmCard(null);
-                    toast.success("Department deleted successfully");
+                    setShowConfirmCard(null);
                     setIsDeleted(true);
                   },
                 });
@@ -116,17 +114,23 @@ const HomeScreen = () => {
     }
 
     return (
-      <TouchableOpacity
-        style={styles.card}
-        onPress={() =>
-          router.push({
-            pathname: `/Home/departments/[departmentId]` as RelativePathString,
-            params: { departmentId: item._id, name: item.name },
-          })
-        }
+      <Swipeable
+        renderRightActions={() => renderRightActions(item)}
+        renderLeftActions={() => renderLeftActions(item)}
       >
-        <Text style={styles.cardText}>{item.name}</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() =>
+            router.push({
+              pathname:
+                `/Home/departments/[departmentId]` as RelativePathString,
+              params: { departmentId: item._id, name: item.name },
+            })
+          }
+        >
+          <Text style={styles.cardText}>{item.name}</Text>
+        </TouchableOpacity>
+      </Swipeable>
     );
   };
 
