@@ -1,34 +1,22 @@
 import { Text, View, StyleSheet, TouchableOpacity } from "react-native";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useTheme } from "@/src/hooks/colors/useThemeColor";
 import Icon from "react-native-vector-icons/Ionicons";
-import { Link } from "@react-navigation/native";
 
-const CoursesPage = () => {
+const CoursesUploadPage = () => {
   const { colors } = useTheme();
-
   return (
-    <GestureHandlerRootView
+    <View
       style={[
         styles.container,
         { backgroundColor: colors.secondaryBackground },
       ]}
     >
       <View>
-        <Text style={[styles.text, { color: colors.text }]}>CoursesPage</Text>
+        <Text style={[styles.text, { color: colors.text }]}>CourseUpload</Text>
       </View>
-
-      <Link href="/Home/courses/CourseUpload" asChild>
-        <TouchableOpacity
-          style={[styles.button, { shadowColor: colors.shadowcolor }]}
-        >
-          <Icon name="add" size={30} color="white" />
-        </TouchableOpacity>
-      </Link>
-    </GestureHandlerRootView>
+    </View>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -53,4 +41,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CoursesPage;
+export default CoursesUploadPage;
