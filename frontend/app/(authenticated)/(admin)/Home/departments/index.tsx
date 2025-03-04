@@ -21,6 +21,7 @@ import {
   Swipeable,
 } from "react-native-gesture-handler";
 import Animated from "react-native-reanimated";
+import { toast } from "@backpackapp-io/react-native-toast";
 
 interface Department {
   _id: string;
@@ -88,7 +89,8 @@ const HomeScreen = () => {
                 // Handle the delete action here
                 deleteDepartment(item._id, {
                   onSuccess: () => {
-                    setShowConfirmCard(null);
+                    // setShowConfirmCard(null);
+                    toast.success("Department deleted successfully");
                     setIsDeleted(true);
                   },
                 });
@@ -183,7 +185,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   card: {
-    backgroundColor: "#007BFF",
+    backgroundColor: "#1356b4ff", //"#007BFF",
     padding: 15,
     borderRadius: 10,
     marginVertical: 8,

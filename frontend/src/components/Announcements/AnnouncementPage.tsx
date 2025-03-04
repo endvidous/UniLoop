@@ -19,10 +19,12 @@ import SearchFilterHeader from "../common/SearchFilter";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/src/context/AuthContext";
 import type { RelativePathString } from "expo-router";
+import { useTheme } from "@/src/hooks/colors/useThemeColor";
 
 const AnnouncementsPage = () => {
   const { user } = useAuth();
   const router = useRouter();
+  const { colors } = useTheme();
   const [filters, setFilters] = useState<FilterState>({
     department: "",
     course: "",
@@ -80,7 +82,12 @@ const AnnouncementsPage = () => {
     );
   }
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: colors.secondaryBackground },
+      ]}
+    >
       <SearchFilterHeader
         filters={filters}
         setFilters={setFilters}
@@ -108,7 +115,7 @@ const AnnouncementsPage = () => {
         user?.role === "admin" ||
         user?.classrep_of) && (
         <TouchableOpacity
-          style={styles.fab}
+          style={[styles.fab, { shadowColor: colors.shadowcolor }]}
           onPress={() => setShowModal(true)}
           accessibilityLabel="Create new announcement"
           accessibilityRole="button"
@@ -131,7 +138,6 @@ const AnnouncementsPage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f4f4f4",
   },
   listContent: {
     padding: 20,
@@ -156,10 +162,9 @@ const styles = StyleSheet.create({
     height: 60,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
     shadowOpacity: 0.3,
     shadowRadius: 4,
-    elevation: 5,
+    elevation: 2,
   },
   errorText: {
     color: "red",

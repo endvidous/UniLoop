@@ -11,33 +11,67 @@ import { Colors } from "react-native/Libraries/NewAppScreen";
 const AdminIndex = () => {
   const { colors } = useTheme();
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Link style={[styles.card, styles.shadow]} href="/Home/timelines" asChild>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: colors.secondaryBackground },
+      ]}
+    >
+      <Link
+        style={[
+          styles.card,
+          styles.shadow,
+          { shadowColor: colors.shadowcolor },
+          { backgroundColor: colors.background },
+        ]}
+        href="/Home/timelines"
+        asChild
+      >
         <TouchableOpacity style={styles.cardTouchable}>
           <View style={styles.cardContent}>
-            <Text style={styles.cardTitle}>Academic Timeline</Text>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>
+              Academic Timeline
+            </Text>
             {/* <Ionicons name="log-out-outline" size={30} color="#fff" /> */}
           </View>
         </TouchableOpacity>
       </Link>
 
       <Link
-        style={[styles.card, styles.shadow]}
+        style={[
+          styles.card,
+          styles.shadow,
+          { shadowColor: colors.shadowcolor },
+          { backgroundColor: colors.background },
+        ]}
         href="/Home/departments"
         asChild
       >
         <TouchableOpacity style={styles.cardTouchable}>
           <View style={styles.cardContent}>
-            <Text style={styles.cardTitle}>Departments</Text>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>
+              Departments
+            </Text>
             {/* <Ionicons name="enter-outline" size={30} color="#fff" /> */}
           </View>
         </TouchableOpacity>
       </Link>
 
-      <Link style={[styles.card, styles.shadow]} href="/Home/courses" asChild>
+      <Link
+        style={[
+          styles.card,
+          styles.shadow,
+          { shadowColor: colors.shadowcolor },
+          { backgroundColor: colors.background },
+        ]}
+        href="/Home/courses"
+        asChild
+      >
         <TouchableOpacity style={styles.cardTouchable}>
           <View style={styles.cardContent}>
-            <Text style={styles.cardTitle}>Courses</Text>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>
+              Courses
+            </Text>
             {/* <Ionicons name="book-outline" size={30} color="#fff" /> */}
           </View>
         </TouchableOpacity>
@@ -45,6 +79,7 @@ const AdminIndex = () => {
     </View>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -53,7 +88,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   card: {
-    backgroundColor: "#1E1E1E",
     borderRadius: 12,
     padding: 40,
     width: "90%",
@@ -75,7 +109,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   cardTitle: {
-    color: "#fff",
     fontSize: 30,
     marginRight: 10,
   },

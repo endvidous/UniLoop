@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Card } from "react-native-paper";
 import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "@/src/hooks/colors/useThemeColor";
 interface TimelineCardProps {
   academicYear: string;
   oddSemester: { start: string; end: string };
