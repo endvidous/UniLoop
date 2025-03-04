@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { pickCSVDocument } from "@/src/utils/csvPicker";
-import CSVCleaner from "@/src/components/common/CsvDataCleaner";
+import CSVCleaner from "@/src/components/common/csvdatacleaner";
 
 // Match your original config structure
 export interface CSVConfig {

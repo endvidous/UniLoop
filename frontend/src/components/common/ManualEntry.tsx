@@ -60,7 +60,7 @@ const ManualEntryComponent: React.FC<ManualEntryProps> = ({
       </View>
       <FlatList
         data={fields}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => item.formId || Math.random().toString()}
         renderItem={({ index }) => (
           <View style={styles.row}>
             <View style={styles.fieldsContainer}>
@@ -84,7 +84,7 @@ const ManualEntryComponent: React.FC<ManualEntryProps> = ({
                             styles.errorInput,
                         ]}
                         placeholder={config.placeholder}
-                        value={value}
+                        value={value.toString()}
                         onChangeText={onChange}
                         onBlur={onBlur}
                         editable={!isManualEntryDisabled || isEditingCSV}

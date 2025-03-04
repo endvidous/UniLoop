@@ -1,39 +1,108 @@
 import { Stack, useLocalSearchParams } from "expo-router";
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  ActivityIndicator,
+  TouchableOpacity,
+} from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { Link } from "expo-router";
+import { useDepartmentTeachers } from "@/src/hooks/api/useUser";
 
 interface Teacher {
-  id: number;
+  _id: string;
   name: string;
+  email: string;
+  role: "admin" | "teacher" | "student";
+  mentor_of?: string;
 }
 
 const TeachersIndexPage = () => {
-  const { _id, name } = useLocalSearchParams<{ _id: string; name: string }>();
+  const { departmentId, name } = useLocalSearchParams<{
+    departmentId: string;
+    name: string;
+  }>();
 
-  // Fetch teachers for the department here (you can use a custom hook or API call)
+  console.log(departmentId);
+  const { data, isFetching, isError, error, refetch } =
+    useDepartmentTeachers(departmentId);
+
+  const renderTeacher = ({ item }: { item: Teacher }) => {
+    if (!item.name) {
+      console.warn("Item is missing the 'name' property:", item);
+    }
+    if (!item.email) {
+      console.warn("Item is missing the 'email' property:", item);
+    }
+    // if (!item.role) {
+    //   console.warn("Item is missing the 'role' property:", item);
+    // }
+    return (
+      <TouchableOpacity style={styles.teacherCard}>
+        <Text style={styles.teacherText}>Name: {item.name}</Text>
+        <Text style={styles.teacherText}>Email: {item.email}</Text>
+        {/* <Text style={styles.teacherText}>Role: {item.role}</Text> */}
+        {item.mentor_of && (
+          <Text style={styles.teacherText}>Mentor Of: {item.mentor_of}</Text>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
+  if (isFetching) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#007BFF" />
+      </View>
+    );
+  }
+
+  // if (isError) {
+  //   return (
+  //     <View style={styles.errorContainer}>
+  //       <Text style={styles.errorText}>
+  //         Error loading teachers. Please try again.
+  //       </Text>
+  //       <TouchableOpacity onPress={() => refetch()}>
+  //         <Text style={styles.retryText}>Retry</Text>
+  //       </TouchableOpacity>
+  //     </View>
+  //   );
+  // }
 
   return (
     <View style={styles.container}>
-      {/* data={[]} // Replace with your teachers data
-        keyExtractor={(item) => item.id.toString()} */}
+      <Stack.Screen options={{ title: `${name} Teachers` }} />
       <Text style={styles.title}>{name} Teachers</Text>
 
-      {/* Display teachers here
-      <FlatList
-        data={[]} // Replace with your teachers data
-        renderItem={({ item }) => (
-          <View style={styles.teacherCard}>
-            <Text style={styles.teacherText}>{item.name}</Text>
-          </View>
-        )}
-        keyExtractor={(item) => item.id}
-        ListEmptyComponent={
-          <Text style={styles.emptyText}>No teachers available</Text>
-        }
-      /> */}
+      {isError ? (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>
+            Error loading teachers: {error?.message || "Unknown error"}
+          </Text>
+          <TouchableOpacity onPress={() => refetch()}>
+            <Text style={styles.retryText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <FlatList
+          data={data?.data || []}
+          keyExtractor={(item, index) => item?._id || index.toString()}
+          renderItem={renderTeacher}
+          ListEmptyComponent={
+            <Text style={styles.emptyText}>No teachers available</Text>
+          }
+          refreshing={isFetching}
+          onRefresh={refetch}
+        />
+      )}
 
-      <Link href={`/department/${_id}/teachers/teacherupload`} asChild>
+      <Link
+        href={`/Home/departments/${departmentId}/teachers/teacherUpload`}
+        asChild
+      >
         <TouchableOpacity style={styles.button}>
           <Icon name="add" size={40} color="white" />
         </TouchableOpacity>
@@ -61,7 +130,8 @@ const styles = StyleSheet.create({
   },
   teacherText: {
     color: "white",
-    fontSize: 18,
+    fontSize: 16,
+    marginBottom: 4,
   },
   emptyText: {
     textAlign: "center",
@@ -84,10 +154,27 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  buttonText: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "bold",
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  errorText: {
+    color: "red",
+    fontSize: 16,
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  retryText: {
+    color: "#007BFF",
+    fontSize: 16,
+    textDecorationLine: "underline",
   },
 });
 

@@ -30,7 +30,7 @@ export const teacherService = {
     departmentId: string
   ): Promise<{ message: string; count: number; data: Teacher[] }> => {
     const response = await axiosInstance.get(
-      `/admin/departments/${departmentId}/teachers`
+      `/admin/users/${departmentId}/teachers`
     );
     return response.data;
   },
@@ -41,7 +41,7 @@ export const teacherService = {
     teachers: TeacherCreateData[]
   ): Promise<{ message: string; data: string[] }> => {
     const response = await axiosInstance.post(
-      `/admin/departments/${departmentId}/teachers`,
+      `/admin/users/${departmentId}/teachers`,
       { teachers }
     );
     return response.data;
@@ -53,7 +53,7 @@ export const teacherService = {
     updates: TeacherUpdateData
   ): Promise<{ message: string; data: Teacher }> => {
     const response = await axiosInstance.patch(
-      `/admin/departments/${departmentId}/teachers/${teacherId}`,
+      `/admin/users/${departmentId}/teachers/${teacherId}`,
       updates
     );
     return response.data;
@@ -64,7 +64,7 @@ export const teacherService = {
     teacherId: string
   ): Promise<{ message: string; data: Teacher }> => {
     const response = await axiosInstance.delete(
-      `/admin/departments/${departmentId}/teachers/${teacherId}`
+      `/admin/users/${departmentId}/teachers/${teacherId}`
     );
     return response.data;
   },

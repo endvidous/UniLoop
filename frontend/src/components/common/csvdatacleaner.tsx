@@ -2,25 +2,31 @@ import React from "react";
 import Papa from "papaparse";
 import * as FileSystem from "expo-file-system";
 
-// Types for the configuration
 type CSVConfig = {
-  headers: string[]; // Expected headers in the CSV
-  requiredFields: string[]; // Fields that must be present
-  uniqueField?: string; // Field to check for duplicates (e.g., email or ID)
+  headers: string[];
+  requiredFields: string[];
+  uniqueField?: string;
   validators?: {
-    [key: string]: (value: string) => boolean; // Validation functions for specific fields
+    [key: string]: (value: string) => boolean;
   };
   transformers?: {
-    [key: string]: (value: string) => any; // Functions to transform specific fields
+    [key: string]: (value: string) => any;
   };
 };
 
-// Props for the CSV cleaner component
 type CSVCleanerProps = {
-  filePath: string; // URI of the CSV file
-  config: CSVConfig; // Configuration for cleaning the CSV
-  onSuccess: (data: any[]) => void; // Callback for successful cleaning
-  onError: (error: string) => void; // Callback for errors
+  filePath: string;
+  config: CSVConfig;
+  onSuccess: (data: any[]) => void;
+  onError: (error: string) => void;
+};
+
+const sanitizeHeader = (header: string): string => {
+  // Remove non-alphanumeric characters and convert to lowercase
+  return header
+    .replace(/[^a-zA-Z0-9]/g, "")
+    .toLowerCase()
+    .trim();
 };
 
 const CSVCleaner: React.FC<CSVCleanerProps> = ({
@@ -41,10 +47,15 @@ const CSVCleaner: React.FC<CSVCleanerProps> = ({
         );
       }
 
-      // Parse headers and validate
-      const fileHeaders = rows[0].split(",").map((h) => h.trim().toLowerCase());
-      const missingHeaders = headers.filter(
-        (h) => !fileHeaders.includes(h.toLowerCase())
+      // Sanitize headers and trim
+      const fileHeaders = rows[0].split(",").map((h) => sanitizeHeader(h));
+      const sanitizedConfigHeaders = headers.map((h) => sanitizeHeader(h));
+
+      console.log("Sanitized File Headers:", fileHeaders);
+      console.log("Sanitized Expected Headers:", sanitizedConfigHeaders);
+
+      const missingHeaders = sanitizedConfigHeaders.filter(
+        (h) => !fileHeaders.includes(h)
       );
 
       if (missingHeaders.length > 0) {
@@ -54,8 +65,8 @@ const CSVCleaner: React.FC<CSVCleanerProps> = ({
       }
 
       // Create a mapping of required fields to their column indices
-      const headerIndices = headers.reduce((acc, header) => {
-        acc[header] = fileHeaders.indexOf(header.toLowerCase());
+      const headerIndices = sanitizedConfigHeaders.reduce((acc, header) => {
+        acc[header] = fileHeaders.indexOf(header);
         return acc;
       }, {} as { [key: string]: number });
 
@@ -68,8 +79,9 @@ const CSVCleaner: React.FC<CSVCleanerProps> = ({
         const row: { [key: string]: any } = {};
 
         // Map values to their corresponding headers
-        headers.forEach((header) => {
-          row[header] = values[headerIndices[header]] || "";
+        sanitizedConfigHeaders.forEach((header, index) => {
+          const originalHeader = headers[index];
+          row[originalHeader] = values[headerIndices[header]] || "";
         });
 
         parsedData.push(row);
@@ -77,6 +89,7 @@ const CSVCleaner: React.FC<CSVCleanerProps> = ({
 
       return parsedData;
     } catch (error) {
+      console.error("Manual Parsing Error:", error);
       if (error instanceof Error) {
         throw new Error(`Manual CSV parsing failed: ${error.message}`);
       } else {
@@ -87,33 +100,41 @@ const CSVCleaner: React.FC<CSVCleanerProps> = ({
 
   const readCSV = async () => {
     try {
-      // Read the CSV file using expo-file-system
+      // Read file with UTF-8 encoding and handle potential BOM
       const csvString = await FileSystem.readAsStringAsync(filePath, {
-        encoding: "utf8",
-      });
+        encoding: FileSystem.EncodingType.UTF8,
+      }).then((content) =>
+        // Remove BOM (Byte Order Mark) if present
+        content.startsWith("\ufeff") ? content.slice(1) : content
+      );
+
+      console.log("Raw CSV String:", csvString);
 
       let parsedData;
 
-      // Try Papa Parse first
       try {
         const result = Papa.parse(csvString, {
           header: true,
           skipEmptyLines: true,
+          transformHeader: sanitizeHeader, // Sanitize headers during parsing
         });
 
+        console.log("Papa Parse Result:", result);
+
         if (result.errors.length > 0) {
+          console.error("Papa Parse Errors:", result.errors);
           throw new Error("Papa Parse failed");
         }
 
         parsedData = result.data;
+        console.log("Papa Parsed Data:", parsedData);
       } catch (papaError) {
-        // Fallback to manual parsing if Papa Parse fails
         console.log("Papa Parse failed, attempting manual parse...");
         parsedData = await parseCSVManually(csvString);
       }
 
-      // Validate and clean the parsed data
       const cleanedData = cleanData(parsedData);
+      console.log("Cleaned Data:", cleanedData);
 
       if (cleanedData.length === 0) {
         onError("No valid data found in CSV file after cleaning");
@@ -122,40 +143,50 @@ const CSVCleaner: React.FC<CSVCleanerProps> = ({
 
       onSuccess(cleanedData);
     } catch (error) {
+      console.error("Full Error:", error);
       if (error instanceof Error) {
         onError(error.message || "Failed to process CSV file");
       } else {
         onError("Failed to process CSV file");
       }
-      console.error("Error processing CSV file:", error);
     }
   };
 
   const cleanData = (data: any[]): any[] => {
+    console.log("Original Data before cleaning:", data);
     const cleanedData: any[] = [];
     const seenValues = new Set();
 
-    data.forEach((row) => {
+    data.forEach((row, index) => {
+      console.log(`Processing Row ${index}:`, row);
+
       // Check for missing required fields
-      const isMissingRequiredFields = requiredFields.some(
-        (field) => !row[field]
-      );
-      if (isMissingRequiredFields) {
+      const missingFields = requiredFields.filter((field) => !row[field]);
+      if (missingFields.length > 0) {
+        console.log(
+          `Skipping row due to missing fields: ${missingFields.join(", ")}`
+        );
         return;
       }
 
       // Validate fields
       if (validators) {
-        const hasInvalidFields = Object.keys(validators).some(
+        const invalidFields = Object.keys(validators).filter(
           (key) => !validators[key](row[key])
         );
-        if (hasInvalidFields) {
+        if (invalidFields.length > 0) {
+          console.log(
+            `Skipping row due to invalid fields: ${invalidFields.join(", ")}`
+          );
           return;
         }
       }
 
       // Check for duplicates
       if (uniqueField && seenValues.has(row[uniqueField])) {
+        console.log(
+          `Skipping row due to duplicate unique field value: ${row[uniqueField]}`
+        );
         return;
       }
       if (uniqueField) {
@@ -180,7 +211,7 @@ const CSVCleaner: React.FC<CSVCleanerProps> = ({
     readCSV();
   }, [filePath]);
 
-  return null; // This component doesn't render anything
+  return null;
 };
 
 export default CSVCleaner;

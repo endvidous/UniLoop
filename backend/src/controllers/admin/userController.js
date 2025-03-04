@@ -39,17 +39,19 @@ export const getDepartmentTeachers = async (req, res) => {
     // Find department with populated teachers
     const department = await Departments.findById(departmentId).populate({
       path: "teachers",
-      select: "name email role mentor_of", // Select only necessary fields
+      select: "_id name email role mentor_of", // Select only necessary fields
       options: { sort: { name: 1 } }, // Sort teachers by name
     });
+
 
     if (!department) {
       return res.status(404).json({ message: "Department not found" });
     }
 
     if (!department.teachers || department.teachers.length === 0) {
-      return res.status(404).json({
+      return res.status(200).json({
         message: "No teachers found in this department",
+        count: 0,
         data: [],
       });
     }
