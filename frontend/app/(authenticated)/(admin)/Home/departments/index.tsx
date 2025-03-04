@@ -6,22 +6,20 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
-  ListRenderItem,
+  TextInput,
 } from "react-native";
-import { Link, RelativePathString, useRouter } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import Icon from "react-native-vector-icons/Ionicons";
 import {
   useDepartments,
   useDeleteDepartment,
+  useUpdateDepartment,
 } from "@/src/hooks/api/useDepartments";
 import { useTheme } from "@/src/hooks/colors/useThemeColor";
 import {
   GestureHandlerRootView,
-  RectButton,
   Swipeable,
 } from "react-native-gesture-handler";
-import Animated from "react-native-reanimated";
-import { toast } from "@backpackapp-io/react-native-toast";
 
 interface Department {
   _id: string;
@@ -29,14 +27,30 @@ interface Department {
 }
 
 const HomeScreen = () => {
-  // Custom hooks:
   const { colors } = useTheme();
   const router = useRouter();
   const { data: departments, isFetching, isError, refetch } = useDepartments();
   const { mutate: deleteDepartment } = useDeleteDepartment();
-  // State indicators:
+  const { mutate: updateDepartment } = useUpdateDepartment();
+
   const [showConfirmCard, setShowConfirmCard] = useState<string | null>(null);
   const [isDeleted, setIsDeleted] = useState(false);
+  const [editingDepartment, setEditingDepartment] = useState<Department | null>(
+    null
+  );
+  const [newName, setNewName] = useState("");
+
+  const handleEditDepartment = (departmentId: string) => {
+    updateDepartment(
+      { departmentId, name: newName },
+      {
+        onSuccess: () => {
+          setEditingDepartment(null);
+          setNewName("");
+        },
+      }
+    );
+  };
 
   const renderRightActions = (item: Department) => {
     return (
@@ -54,12 +68,8 @@ const HomeScreen = () => {
       <TouchableOpacity
         style={styles.leftAction}
         onPress={() => {
-          void null;
-          // Handle the edit action here
-          ///router.push({
-          //pathname: "/Home/departments/edit",
-          //params: { _id: item._id, name: item.name },
-          //});
+          setEditingDepartment(item);
+          setNewName(item.name); // Set initial value of name
         }}
       >
         <Icon name="pencil-outline" size={30} color="white" />
@@ -67,34 +77,31 @@ const HomeScreen = () => {
     );
   };
 
-  const renderDepartment: ListRenderItem<Department> = ({ item }) => {
-    if (showConfirmCard === item._id) {
+  const renderDepartment = ({ item }: { item: Department }) => {
+    // If the department is being edited, replace the card with an edit form
+    if (editingDepartment && editingDepartment._id === item._id) {
       return (
         <View
           style={[styles.confirmCard, { backgroundColor: colors.background }]}
         >
           <Text style={[styles.confirmText, { color: colors.text }]}>
-            Are you sure you want to delete {item.name}?
+            Edit {item.name}
           </Text>
+          <TextInput
+            style={[styles.input, { color: colors.text }]}
+            value={newName}
+            onChangeText={setNewName}
+          />
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={styles.cancelButton}
-              onPress={() => setShowConfirmCard(null)}
+              onPress={() => setEditingDepartment(null)}
             >
               <Text style={styles.buttonText}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.confirmButton}
-              onPress={() => {
-                // Handle the delete action here
-                deleteDepartment(item._id, {
-                  onSuccess: () => {
-                    // setShowConfirmCard(null);
-                    toast.success("Department deleted successfully");
-                    setIsDeleted(true);
-                  },
-                });
-              }}
+              onPress={() => handleEditDepartment(item._id)}
             >
               <Text style={styles.buttonText}>Confirm</Text>
             </TouchableOpacity>
@@ -103,30 +110,24 @@ const HomeScreen = () => {
       );
     }
 
-    if (isDeleted && showConfirmCard === item._id) {
-      return (
-        <View
-          style={[styles.confirmCard, { backgroundColor: colors.background }]}
-        >
-          <Text style={[styles.confirmText, { color: colors.text }]}>
-            Department deleted
-          </Text>
-        </View>
-      );
-    }
-
+    // Regular render if not editing
     return (
-      <TouchableOpacity
-        style={styles.card}
-        onPress={() =>
-          router.push({
-            pathname: `/Home/departments/[departmentId]` as RelativePathString,
-            params: { departmentId: item._id, name: item.name },
-          })
-        }
+      <Swipeable
+        renderRightActions={() => renderRightActions(item)}
+        renderLeftActions={() => renderLeftActions(item)}
       >
-        <Text style={styles.cardText}>{item.name}</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() =>
+            router.push({
+              pathname: `/Home/departments/[departmentId]`,
+              params: { departmentId: item._id, name: item.name },
+            })
+          }
+        >
+          <Text style={styles.cardText}>{item.name}</Text>
+        </TouchableOpacity>
+      </Swipeable>
     );
   };
 
@@ -282,6 +283,14 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "white",
     fontSize: 16,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    padding: 10,
+    marginVertical: 10,
+    width: "100%",
   },
 });
 
