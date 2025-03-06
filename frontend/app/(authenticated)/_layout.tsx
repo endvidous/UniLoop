@@ -4,7 +4,7 @@ import { NotificationProvider } from "@/src/components/Notifications/Notificatio
 export default function AuthenticatedLayout() {
   return (
     <NotificationProvider>
-      <Stack screenOptions={{ headerShown: false }} />;
+      <Stack screenOptions={{ headerShown: false }} />
     </NotificationProvider>
   );
 }
