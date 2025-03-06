@@ -6,6 +6,9 @@ import {
 } from "../../services/announcementService.js";
 import { Batches } from "../../models/courseModels.js";
 import mongoose from "mongoose";
+import { sendBulkNotifications } from "../../utils/Notifications.js";
+import { getUsersByAssociations } from "../../services/userService.js";
+import { PushToken } from "../../models/pushTokenModels.js";
 
 //Announcement middleware to check creation permissions
 export const canCreateAnnouncement = async (req, res, next) => {
@@ -236,6 +239,48 @@ export const createAnnouncement = async (req, res) => {
     }
 
     const announcement = await Announcements.create(announcementData);
+
+    // Fire-and-forget notification logic
+    (async () => {
+      const filter = {};
+      switch (visibilityType) {
+        case "Course":
+          filter.courseId = new mongoose.Types.ObjectId(`${posted_to._id}`);
+          break;
+        case "Department":
+          filter.departmentId = new mongoose.Types.ObjectId(`${posted_to._id}`);
+          break;
+        case "Batch":
+          filter.batchId = new mongoose.Types.ObjectId(`${posted_to._id}`);
+          break;
+      }
+      try {
+        const userIds = await getUsersByAssociations(filter);
+
+        const pushTokens = await PushToken.find({
+          user: { $in: userIds },
+        })
+          .select("token -_id")
+          .lean();
+        
+          if (pushTokens.length > 0) {
+          await sendBulkNotifications(
+            pushTokens.map((t) => t.token),
+            {
+              title: "New Announcement",
+              body: announcement.title,
+              payload: {
+                type: "announcement",
+                id: announcement._id.toString(),
+              },
+            }
+          );
+        }
+      } catch (error) {
+        console.error("Notification error:", error);
+      }
+    })();
+
     res.status(201).json(announcement);
   } catch (error) {
     console.log(error);

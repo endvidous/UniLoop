@@ -68,7 +68,9 @@ export const getUserAssociations = async (req, res) => {
               .lean()
           : [],
         details.batchId
-          ? Batches.find({ _id: details.batchId }).select("_id code startYear").lean()
+          ? Batches.find({ _id: details.batchId })
+              .select("_id code startYear")
+              .lean()
           : [],
       ]);
 
