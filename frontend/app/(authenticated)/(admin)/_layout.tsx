@@ -1,4 +1,4 @@
-import { Tabs } from "expo-router";
+import { RelativePathString, Tabs } from "expo-router";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useTheme } from "@/src/hooks/colors/useThemeColor";
@@ -34,6 +34,7 @@ const TabLayout = () => {
       <Tabs.Screen
         name="Announcements"
         options={{
+          href: "/(authenticated)/(admin)/Announcements",
           title: "Announcements",
           tabBarIcon: ({ color }) => (
             <MaterialIcons size={28} name="announcement" color={color} />
