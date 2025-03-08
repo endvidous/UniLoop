@@ -56,12 +56,12 @@ export const discussionsService = {
   },
 
   upvoteDiscussion: async (id: string) => {
-    const response = await axiosInstance.post(`/discussions/${id}/upvote`);
+    const response = await axiosInstance.patch(`/discussions/${id}/upvote`);
     return response.data;
   },
 
   downvoteDiscussion: async (id: string) => {
-    const response = await axiosInstance.post(`/discussions/${id}/downvote`);
+    const response = await axiosInstance.patch(`/discussions/${id}/downvote`);
     return response.data;
   },
 
@@ -105,28 +105,28 @@ export const discussionsService = {
   },
 
   upvoteComment: async (discussionId: string, commentId: string) => {
-    const response = await axiosInstance.post(
+    const response = await axiosInstance.patch(
       `/discussions/${discussionId}/comments/${commentId}/upvote`
     );
     return response.data;
   },
 
   downvoteComment: async (discussionId: string, commentId: string) => {
-    const response = await axiosInstance.post(
+    const response = await axiosInstance.patch(
       `/discussions/${discussionId}/comments/${commentId}/downvote`
     );
     return response.data;
   },
 
   markAnswer: async (discussionId: string, commentId: string) => {
-    const response = await axiosInstance.post(
+    const response = await axiosInstance.patch(
       `/discussions/${discussionId}/comments/${commentId}/mark-answer`
     );
     return response.data;
   },
 
   unmarkAnswer: async (discussionId: string, commentId: string) => {
-    const response = await axiosInstance.post(
+    const response = await axiosInstance.patch(
       `/discussions/${discussionId}/comments/${commentId}/unmark-answer`
     );
     return response.data;

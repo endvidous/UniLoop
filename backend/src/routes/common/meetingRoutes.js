@@ -4,12 +4,16 @@ import {
   getMeetingRequests,
   updateMeetingRequest,
   deleteMeetingRequest,
+  approveMeeting,
+  rejectMeeting,
 } from "../../controllers/common/meetingController.js";
 
 const router = express.Router();
 
-router.get("/:", getMeetingRequests);
+router.get("/", getMeetingRequests);
 router.post("/", createMeetingRequest);
+router.patch("/:meetingId/approve-meeting", approveMeeting);
+router.patch("/:meetingId/reject-meeting", rejectMeeting);
 router.patch("/:meetingId", updateMeetingRequest);
 router.delete("/:meetingId", deleteMeetingRequest);
 
