@@ -77,3 +77,20 @@ export const registerPushNotifications = async (userId?: string) => {
     return null;
   }
 };
+
+export const unregisterPushNotifications = async (pushToken?: string) => {
+  try {
+    await Notifications.unregisterForNotificationsAsync();
+
+    if (pushToken) {
+      try {
+        // If you have a backend endpoint to remove the push token, call it here.
+        await axiosInstance.post("/remove-pushtoken", { token: pushToken });
+      } catch (error) {
+        console.error("Error removing push token from backend:", error);
+      }
+    }
+  } catch (error) {
+    console.error("Push notification unregistration failed:", error);
+  }
+};

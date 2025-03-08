@@ -51,13 +51,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true);
       // Clear Zustand state and appStorage
+      if (user) {
+        const response = await authService.logout(user.id);
+      } else {
+        throw new Error("User ID is undefined");
+      }
       clearAuth();
       setLoading(false);
     } catch (error) {
       console.error("Error signing out:", error);
       setLoading(false);
     }
-  }, [setLoading]);
+  }, [setLoading, user]);
 
   return (
     <AuthContext.Provider

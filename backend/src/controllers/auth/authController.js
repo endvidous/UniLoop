@@ -2,6 +2,7 @@
 import { User } from "../../models/userModels.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { PushToken } from "../../models/pushTokenModels.js";
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "30d" });
@@ -37,6 +38,26 @@ export const login = async (req, res) => {
   } catch (err) {
     console.log(err.message);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Logout function
+export const logout = async (req, res) => {
+  const { userId, platform } = req.body;
+  try {
+    await PushToken.deleteMany({
+      user: userId,
+      platform: platform,
+    });
+    res
+      .status(200)
+      .json({ success: true, message: "User logged out, and tokens removed" });
+  } catch (error) {
+    console.error("Error removing tokens on logout:", error);
+    res.status(500).json({
+      success: false,
+      message: `Error removing tokens: ${error.message}`,
+    });
   }
 };
 
@@ -130,7 +151,8 @@ export const validateUser = async (req, res) => {
     return res.status(401).json(errorResponse);
   }
 };
-//edit password
+
+// Edit password
 export const editPassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;

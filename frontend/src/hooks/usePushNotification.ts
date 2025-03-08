@@ -8,13 +8,14 @@ import { NavigationService } from "../services/navigation";
 import {
   configureNotificationHandler,
   registerPushNotifications,
+  unregisterPushNotifications,
 } from "../services/notifications";
 
 export const usePushNotifications = () => {
   const { user } = useAuth();
   const { pushToken, setPushToken } = useStore();
   const [expoPushToken, setExpoPushToken] =
-    useState<Notifications.ExpoPushToken>();
+    useState<Notifications.ExpoPushToken | null>();
   const [notification, setNotification] =
     useState<Notifications.Notification>();
   const [appState, setAppState] = useState(AppState.currentState);
@@ -44,9 +45,6 @@ export const usePushNotifications = () => {
   const handleNotification = useCallback(
     (notification: Notifications.Notification) => {
       setNotification(notification);
-      NavigationService.handleNotificationNavigation(
-        notification.request.content.data
-      );
     },
     []
   );
