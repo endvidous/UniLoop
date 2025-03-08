@@ -43,10 +43,14 @@ export const announcementsService = {
     page?: number;
     limit?: number;
   }) => {
-    const response = await axiosInstance.get("/announcements", {
-      params: filters,
-    });
-    return response.data;
+    try {
+      const response = await axiosInstance.get("/announcements", {
+        params: filters,
+      });
+      return response.data;
+    } catch (error) {
+      console.log((error as any)?.response?.data?.message);
+    }
   },
 
   // Get single announcement

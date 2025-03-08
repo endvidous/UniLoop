@@ -188,7 +188,6 @@ export const createPapers = async (req, res) => {
   const { papers } = req.body;
 
   try {
-    console.log(departmentId);
     const department = await Departments.findById(departmentId);
     if (!department) {
       return res.status(404).json({ message: "Department not found" });

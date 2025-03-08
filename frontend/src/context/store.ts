@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { appStorage } from "@/src/services/storage/secureStorage";
 import { User } from "@/src/utils/interfaces";
+import * as Notifications from "expo-notifications";
 
 interface AuthState {
   token: string | null;
@@ -12,10 +13,15 @@ interface ThemeState {
   theme: "light" | "dark";
 }
 
-interface AppState extends AuthState, ThemeState {
+interface PushToken {
+  pushToken: Notifications.ExpoPushToken | null;
+}
+
+interface AppState extends AuthState, ThemeState, PushToken {
   // Auth Actions
   setUser: (user: User | null) => void;
   setToken: (token: string | null) => void;
+  setPushToken: (pushToken: Notifications.ExpoPushToken) => void;
   setLoading: (isLoading: boolean) => void;
   clearAuth: () => void;
   initializeState: () => Promise<void>;
@@ -33,6 +39,7 @@ export const useStore = create<AppState>((set, get) => ({
   theme: "light",
   token: null,
   user: null,
+  pushToken: null,
   isLoading: true,
 
   // Auth Actions
@@ -48,26 +55,38 @@ export const useStore = create<AppState>((set, get) => ({
     set({ token });
   },
 
+  setPushToken: (pushToken) => {
+    if (pushToken) {
+      appStorage.setPushToken(pushToken);
+    } else {
+      appStorage.removePushToken();
+    }
+    set({ pushToken });
+  },
+
   setLoading: (isLoading) => set({ isLoading }),
 
   clearAuth: () => {
     appStorage.removeToken();
     appStorage.removeUser();
-    set({ token: null, user: null });
+    appStorage.removePushToken();
+    set({ token: null, user: null, pushToken: null });
   },
 
   initializeState: async () => {
     try {
-      const [theme, token, user] = await Promise.all([
+      const [theme, token, user, pushToken] = await Promise.all([
         appStorage.getTheme(),
         appStorage.getToken(),
         appStorage.getUser(),
+        appStorage.getPushToken(),
       ]);
 
       set({
         theme: theme || "light",
         token,
         user,
+        pushToken,
         isLoading: false,
       });
     } catch (error) {

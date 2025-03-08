@@ -1,5 +1,10 @@
 import { User } from "../models/userModels.js";
-import { Departments, Batches, Semesters } from "../models/courseModels.js";
+import {
+  Departments,
+  Batches,
+  Semesters,
+  Papers,
+} from "../models/courseModels.js";
 import { checkEmailExists } from "../utils/helpers.js";
 import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
@@ -99,8 +104,8 @@ export const findStudentDetails = async (studentId) => {
     const batch = await Batches.findOne({ students: studentId })
       .select("course _id")
       .lean();
-    
-      if (!batch) {
+
+    if (!batch) {
       return {
         batchId: batch?._id || null,
         courseId: [],
@@ -138,5 +143,173 @@ export const findStudentDetails = async (studentId) => {
     };
   } catch (err) {
     throw new Error(`Student detail lookup failed: ${err.message}`);
+  }
+};
+
+/* -------- Getting user ids for notification -------- */
+//Function to find all the admin IDs
+const getAdminIds = async () => {
+  const admins = await User.find({ role: "admin" }).select("_id").lean();
+  const adminIds = admins.map((a) => a._id);
+  return adminIds;
+};
+
+// Helper function to find user IDs through department association
+const getDepartmentUsers = async (departmentId) => {
+  // Get teachers directly from department
+  const department = await Departments.findById(departmentId)
+    .select("teachers")
+    .lean();
+  const teacherIds = department?.teachers?.map((id) => id) || [];
+
+  // Get students via course papers in this department
+  const studentBatches = await Batches.aggregate([
+    {
+      $lookup: {
+        from: "courses",
+        localField: "course",
+        foreignField: "_id",
+        as: "course",
+      },
+    },
+    { $unwind: "$course" },
+    {
+      $lookup: {
+        from: "semesters",
+        localField: "course._id",
+        foreignField: "course",
+        as: "semesters",
+      },
+    },
+    { $unwind: "$semesters" },
+    {
+      $lookup: {
+        from: "papers",
+        localField: "semesters.papers.paper",
+        foreignField: "_id",
+        as: "papers",
+      },
+    },
+    {
+      $match: {
+        "papers.department": new mongoose.Types.ObjectId(`${departmentId}`),
+      },
+    },
+    { $group: { _id: "$_id", students: { $first: "$students" } } },
+  ]);
+
+  const studentIds = studentBatches.flatMap((b) => b.students.map((id) => id));
+
+  return [...new Set([...teacherIds, ...studentIds])];
+};
+
+// Helper function to find users through course association
+const getCourseUsers = async (courseId) => {
+  // Get students directly from course batches
+  const batches = await Batches.find({ course: courseId })
+    .select("students")
+    .lean();
+  const studentIds = batches.flatMap((b) => b.students.map((id) => id));
+
+  // Get teachers via course papers' departments
+  const papers = await Papers.find({
+    _id: {
+      $in: await Semesters.distinct("papers.paper", { course: courseId }),
+    },
+  }).select("department");
+
+  const departmentIds = [...new Set(papers.map((p) => p.department))];
+  const departments = await Departments.find({ _id: { $in: departmentIds } })
+    .select("teachers")
+    .lean();
+
+  const teacherIds = departments.flatMap((d) => d.teachers.map((id) => id));
+
+  return [...new Set([...teacherIds, ...studentIds])];
+};
+
+// Helper function to find users through batch association
+const getBatchUsers = async (batchId) => {
+  const batch = await Batches.findById(batchId)
+    .populate({
+      path: "course",
+      populate: {
+        path: "semesters",
+        populate: {
+          path: "papers.teacher",
+          select: "_id",
+        },
+      },
+    })
+    .select("students mentors course currentSemester")
+    .lean();
+
+  if (!batch) return [];
+
+  // Get direct batch participants
+  const students = batch.students?.map((id) => id) || [];
+  const mentors = batch.mentors?.map((id) => id) || [];
+
+  // Filter semesters based on current semester
+  const currentSemester = batch.currentSemester;
+  const relevantSemesters =
+    typeof currentSemester === "number"
+      ? batch.course?.semesters?.filter((s) => s.number <= currentSemester)
+      : [];
+
+  // Get teachers from relevant semesters' papers
+  const courseTeachers =
+    relevantSemesters.flatMap(
+      (semester) => semester.papers?.map((paper) => paper.teacher?._id) || []
+    ) || [];
+
+  // Combine and deduplicate
+  const allUsers = [...students, ...mentors, ...courseTeachers];
+  return [...new Set(allUsers.filter(Boolean))];
+};
+
+// Main intersection logic
+const intersectArrays = (arrays) => {
+  if (arrays.length === 0) return [];
+  return arrays.reduce((a, b) => a.filter((c) => b.includes(c)));
+};
+
+export const getUsersByAssociations = async (filters) => {
+  try {
+    const { departmentId, courseId, batchId } = filters;
+    const resultSets = [];
+
+    if (!departmentId && !courseId && !batchId) {
+      const allUsers = await User.find().select("_id").lean();
+      return allUsers.map((u) => u._id);
+    }
+
+    if (departmentId) {
+      resultSets.push(await getDepartmentUsers(departmentId));
+    }
+
+    if (courseId) {
+      resultSets.push(await getCourseUsers(courseId));
+    }
+
+    if (batchId) {
+      resultSets.push(await getBatchUsers(batchId));
+    }
+
+    const adminIds = await getAdminIds();
+    resultSets.push(adminIds);
+
+    // Handle no filters case
+    if (resultSets.length === 0) {
+      const allUsers = await User.find().select("_id").lean();
+      return allUsers.map((u) => u._id);
+    }
+
+    // Find common IDs across all filters
+    const intersected = intersectArrays(resultSets);
+    return [...new Set(intersected)];
+  } catch (error) {
+    console.error("Association search error:", error);
+    throw error;
   }
 };
