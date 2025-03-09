@@ -16,6 +16,7 @@ import {
   View,
 } from "react-native";
 import { useTheme } from "@/src/hooks/colors/useThemeColor";
+import SearchablePicker from "../common/PickerSearch";
 
 type FormData = {
   title: string;
@@ -93,6 +94,30 @@ const CreateDiscussion = ({ onDismiss }: CreateDiscussionProps) => {
         return associations?.batches || [];
       default:
         return [];
+    }
+  };
+  const getConfigData = () => {
+    switch (visibilityType?.toLowerCase()) {
+      case "department":
+        return {
+          labelKey: "name",
+          valueKey: "_id",
+          searchKeys: ["name"],
+        };
+      case "course":
+        return {
+          labelKey: "name",
+          valueKey: "_id",
+          searchKeys: ["name", "code"],
+        };
+      case "batch":
+        return {
+          labelKey: "code",
+          valueKey: "_id",
+          searchKeys: ["code", "startYear"],
+        };
+      default:
+        return {};
     }
   };
 
@@ -196,20 +221,13 @@ const CreateDiscussion = ({ onDismiss }: CreateDiscussionProps) => {
               <Text style={[styles.label, { color: colors.text }]}>
                 {visibilityType}
               </Text>
-              <Picker
-                selectedValue={field.value}
+              <SearchablePicker
+                items={getAssociationData()}
+                selectedValue={field.value ?? null}
                 onValueChange={field.onChange}
-                style={styles.picker}
-              >
-                <Picker.Item label={`Select ${visibilityType}`} value="" />
-                {getAssociationData().map((item: any) => (
-                  <Picker.Item
-                    key={item._id}
-                    label={item.name}
-                    value={item._id}
-                  />
-                ))}
-              </Picker>
+                placeholder={`Select ${visibilityType}`}
+                config={getConfigData()}
+              />
               {fieldState.error && (
                 <Text style={styles.error}>{fieldState.error.message}</Text>
               )}
