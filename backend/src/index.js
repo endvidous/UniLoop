@@ -9,6 +9,7 @@ import associationsRoutes from "./routes/common/associationsRoutes.js";
 import classroomRoutes from "./routes/common/classroomFinderRoutes.js";
 import assignmentRoutes from "./routes/common/assignmentRoutes.js";
 import notificationRoutes from "./routes/notifications/notificationRoutes.js";
+import classRep_MentorRoutes from "./routes/common/classrepMentorRoutes.js";
 import { authMiddleware, isAdmin } from "./middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -39,4 +40,5 @@ router.use(
 router.use("/classrooms", highLimitJsonParser, authMiddleware, classroomRoutes);
 router.use("/assignments", defaultJsonParser, authMiddleware, assignmentRoutes);
 router.use("/", defaultJsonParser, authMiddleware, notificationRoutes);
+router.use("/user", defaultJsonParser, classRep_MentorRoutes);
 export default router;
