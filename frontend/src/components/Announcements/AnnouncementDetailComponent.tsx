@@ -25,6 +25,7 @@ import { useForm, Controller } from "react-hook-form";
 import { useFileDelete } from "@/src/hooks/api/useFiles";
 import { toast } from "@backpackapp-io/react-native-toast";
 import { useTheme } from "@/src/hooks/colors/useThemeColor";
+import SearchablePicker from "../common/PickerSearch";
 
 type PostedTo = {
   model: string | null;
@@ -71,7 +72,7 @@ const AnnouncementDetailComponent = ({ id }: { id: string }) => {
   const deleteMutation = useDeleteAnnouncement();
   const { data: associations } = useUserAssociations();
   const router = useRouter();
-  const { control, handleSubmit, reset, getValues } = useForm<FormValues>({
+  const { control, handleSubmit, reset, watch } = useForm<FormValues>({
     defaultValues: {
       title: "",
       description: "",
@@ -96,7 +97,7 @@ const AnnouncementDetailComponent = ({ id }: { id: string }) => {
         priority: data.priority,
         visibilityType: data.visibilityType,
         postedToId: data.posted_to?.id?._id || null,
-        expiresAt: new Date(data.expiresAt),
+        expiresAt: data.expiresAt ? new Date(data.expiresAt) : new Date(),
       });
       setAttachments(data.attachments || []);
     }
@@ -217,6 +218,46 @@ const AnnouncementDetailComponent = ({ id }: { id: string }) => {
     );
   }
 
+  const visibilityType = watch("visibilityType");
+
+  const getAssociationData = () => {
+    switch (visibilityType?.toLowerCase()) {
+      case "department":
+        return associations?.departments || [];
+      case "course":
+        return associations?.courses || [];
+      case "batch":
+        return associations?.batches || [];
+      default:
+        return [];
+    }
+  };
+
+  const getConfigData = () => {
+    switch (visibilityType?.toLowerCase()) {
+      case "department":
+        return {
+          labelKey: "name",
+          valueKey: "_id",
+          searchKeys: ["name"],
+        };
+      case "course":
+        return {
+          labelKey: "name",
+          valueKey: "_id",
+          searchKeys: ["name", "code"],
+        };
+      case "batch":
+        return {
+          labelKey: "code",
+          valueKey: "_id",
+          searchKeys: ["code", "startYear"],
+        };
+      default:
+        return {};
+    }
+  };
+
   return (
     <ScrollView
       contentContainerStyle={[
@@ -300,49 +341,21 @@ const AnnouncementDetailComponent = ({ id }: { id: string }) => {
             )}
           />
 
-          {getValues("visibilityType") !== "General" && (
+          {visibilityType && visibilityType !== "General" && (
             <Controller
               control={control}
               name="postedToId"
-              render={({ field: { onChange, value } }) => (
+              rules={{ required: `${visibilityType} is required` }}
+              render={({ field, fieldState }) => (
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>
-                    {getValues("visibilityType")}
-                  </Text>
-                  <Picker
-                    selectedValue={value}
-                    onValueChange={onChange}
-                    style={styles.picker}
-                  >
-                    <Picker.Item
-                      label={`Select ${getValues("visibilityType")}`}
-                      value={null}
-                    />
-                    {getValues("visibilityType") === "Department" &&
-                      associations?.departments.map((dept: Department) => (
-                        <Picker.Item
-                          key={dept._id}
-                          label={dept.name}
-                          value={dept._id}
-                        />
-                      ))}
-                    {getValues("visibilityType") === "Course" &&
-                      associations?.courses.map((course: Course) => (
-                        <Picker.Item
-                          key={course._id}
-                          label={course.name}
-                          value={course._id}
-                        />
-                      ))}
-                    {getValues("visibilityType") === "Batch" &&
-                      associations?.batches.map((batch: Batch) => (
-                        <Picker.Item
-                          key={batch._id}
-                          label={batch.code}
-                          value={batch._id}
-                        />
-                      ))}
-                  </Picker>
+                  <Text style={styles.label}>{visibilityType}</Text>
+                  <SearchablePicker
+                    items={getAssociationData()}
+                    selectedValue={field.value ?? null}
+                    onValueChange={field.onChange}
+                    placeholder={`Select ${visibilityType}`}
+                    config={getConfigData()}
+                  />
                 </View>
               )}
             />
@@ -400,14 +413,18 @@ const AnnouncementDetailComponent = ({ id }: { id: string }) => {
       ) : (
         <>
           <View style={styles.header}>
-            <Text style={styles.title}>{data.title}</Text>
+            <Text style={[styles.title, { color: colors.text }]}>
+              {data.title}
+            </Text>
             <View style={styles.priorityBadge}>
               <Text style={styles.priorityText}>
                 {["Low", "Normal", "High"][data.priority - 1]} Priority
               </Text>
             </View>
           </View>
-          <Text style={styles.description}>{data.description}</Text>
+          <Text style={[styles.description, { color: colors.text }]}>
+            {data.description}
+          </Text>
           <View style={styles.metaContainer}>
             <MetaItem
               icon="visibility"
