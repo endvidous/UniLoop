@@ -33,12 +33,12 @@ export const SaveUserToken = async (req, res) => {
 
 // Delete a token
 export const deleteUserToken = async (req, res) => {
-  const { token } = req.body;
+  const { platform } = req.body;
   const userId = req.user._id;
   try {
-    await PushToken.deleteOne({
+    await PushToken.deleteMany({
       user: userId,
-      token: token,
+      platform: platform,
     });
     res.status(200).json({ success: true });
   } catch (error) {
