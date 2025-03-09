@@ -129,6 +129,16 @@ export const queryKeys = {
     detail: (id: string) => [...queryKeys.assignments.details(), id] as const,
   },
 
+  // Meetings keys
+  meetings: {
+    all: ["meetings"] as const,
+    lists: () => [...queryKeys.meetings.all, "list"] as const,
+    list: (filters?: any) =>
+      [...queryKeys.meetings.lists(), { ...filters }] as const,
+    details: () => [...queryKeys.meetings.all, "detail"] as const,
+    detail: (id: string) => [...queryKeys.meetings.details(), id] as const,
+  },
+
   //classroom keys
   classrooms: {
     all: ["classrooms"] as const, // Invalidate all classrooms

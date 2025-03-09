@@ -1,6 +1,4 @@
-// utils/notifications.js
 import { Expo } from "expo-server-sdk";
-// import admin from "../config/firebase-admin.js";
 
 const expo = new Expo({
   accessToken: process.env.EXPO_ACCESS_TOKEN,

@@ -11,8 +11,8 @@ export const getMeeting = async (req, res) => {
       _id: meetingId,
       $or: [{ requestedBy: req.user._id }, { requestedTo: req.user._id }],
     })
-      .populate("requestedBy", "name email role")
-      .populate("requestedTo", "name email role");
+      .populate("requestedBy", "_id name email role roll_no mentor_of")
+      .populate("requestedTo", "_id name email role roll_no mentor_of");
 
     if (!meeting) {
       return res
@@ -32,10 +32,15 @@ export const getMeetingRequests = async (req, res) => {
     const meetings = await Meetings.find({
       $or: [{ requestedBy: req.user._id }, { requestedTo: req.user._id }],
     })
-      .populate("requestedBy", "name email role")
-      .populate("requestedTo", "name email role");
+      .populate("requestedBy", "_id name email role roll_no mentor_of")
+      .populate("requestedTo", "_id name email role roll_no mentor_of");
 
-    res.status(200).json(meetings);
+    res
+      .status(200)
+      .json({
+        message: "Successfully retrieved the meetings",
+        meetings: meetings,
+      });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -104,120 +109,172 @@ export const createMeetingRequest = async (req, res) => {
   }
 };
 
-// Update Meeting
+// Updated Update Meeting Request (no status handling)
 export const updateMeetingRequest = async (req, res) => {
   const { meetingId } = req.params;
+
   try {
     const meeting = await Meetings.findOne({
       _id: meetingId,
       $or: [{ requestedBy: req.user._id }, { requestedTo: req.user._id }],
-    });
+    })
+      .populate("requestedBy", "role")
+      .populate("requestedTo", "role");
 
-    if (!meeting)
+    if (!meeting) {
       return res
         .status(404)
         .json({ message: "Meeting not found or unauthorized" });
+    }
 
-    const [requester, recipient] = await Promise.all([
-      User.findById(meeting.requestedBy),
-      User.findById(meeting.requestedTo),
-    ]);
+    // Prevent updates on rejected meetings
+    if (meeting.status === "rejected") {
+      return res
+        .status(400)
+        .json({ message: "Cannot update rejected meeting" });
+    }
 
-    if (!requester || !recipient)
-      return res.status(404).json({ message: "Invalid participants" });
-
-    const student = requester.isStudent()
-      ? requester
-      : recipient.isStudent()
-      ? recipient
-      : null;
-    const isRequester = meeting.requestedBy.equals(req.user._id);
-    const isRecipient = meeting.requestedTo.equals(req.user._id);
-
-    // Handle role-based updates
-    const handleStudentUpdates = () => {
-      if (!isRequester && !isRecipient) return;
-      if (isRequester && meeting.status !== "pending") {
-        throw new Error("Can only update pending requests");
+    // Role-based updates
+    if (req.user.isStudent()) {
+      // Students can only update purpose of their pending requests
+      if (!meeting.requestedBy.equals(req.user._id)) {
+        return res.status(403).json({ message: "Cannot update this meeting" });
+      }
+      if (meeting.status !== "pending") {
+        return res
+          .status(400)
+          .json({ message: "Can only update pending requests" });
       }
       if (req.body.purpose) meeting.purpose = req.body.purpose;
-      if (isRecipient && req.body.status === "rejected") {
-        if (!req.body.rejectionReason)
-          throw new Error("Rejection reason required");
-        meeting.status = "rejected";
-        meeting.rejectionReason = req.body.rejectionReason;
-      }
-    };
-
-    const handleStaffUpdates = () => {
-      if (isRequester) {
+    } else {
+      // Staff can update their own requests (purpose, timing, venue)
+      if (meeting.requestedBy.equals(req.user._id)) {
         if (req.body.purpose) meeting.purpose = req.body.purpose;
         if (req.body.timing) meeting.timing = req.body.timing;
         if (req.body.venue) meeting.venue = req.body.venue;
       }
-      if (isRecipient && req.body.status) {
-        if (req.body.status === "rejected" && !req.body.rejectionReason) {
-          throw new Error("Rejection reason required");
-        }
-        meeting.status = req.body.status;
-        meeting.rejectionReason = req.body.rejectionReason;
-      }
-    };
+    }
 
-    req.user.isStudent() ? handleStudentUpdates() : handleStaffUpdates();
+    // Update reminders if timing/venue changed
+    if (meeting.isModified(["timing", "venue"])) {
+      const student =
+        meeting.requestedBy.role === "student"
+          ? meeting.requestedBy
+          : meeting.requestedTo.role === "student"
+          ? meeting.requestedTo
+          : null;
 
-    // Handle reminders
-    const updateExistingReminder = async () => {
-      await Reminders.updateOne(
-        {
-          _id: student._id,
-          "reminders.description": {
-            $regex: `\\[Meeting ID: ${meeting._id}\\]`,
-          },
-        },
-        { $set: { "reminders.$": createReminderData(meeting) } }
-      );
-    };
-
-    const createNewReminder = async () => {
-      await Reminders.findOneAndUpdate(
-        { _id: student._id },
-        { $push: { reminders: createReminderData(meeting) } },
-        { upsert: true, new: true }
-      );
-    };
-
-    if (student) {
-      if (meeting.isModified(["timing", "venue"])) {
-        await updateExistingReminder();
-      }
-
-      if (req.body.status === "approved") {
-        const existingReminder = await Reminders.findOne({
-          _id: student._id,
-          "reminders.description": {
-            $regex: `\\[Meeting ID: ${meeting._id}\\]`,
-          },
-        });
-        existingReminder
-          ? await updateExistingReminder()
-          : await createNewReminder();
-      }
-
-      if (req.body.status === "rejected" && requester.isStudent()) {
-        await Reminders.findOneAndUpdate(
-          { _id: student._id },
-          {
-            $push: {
-              reminders: createRejectionReminder(meeting),
-            },
-          },
-          { upsert: true, new: true }
-        );
+      if (student) {
+        const reminderData = createReminderData(meeting);
+        await updateOrCreateReminder(student._id, meeting._id, reminderData);
       }
     }
 
     await meeting.save();
+    res.status(200).json({ success: true, meeting: meeting });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// Approve Meeting
+export const approveMeeting = async (req, res) => {
+  const { meetingId } = req.params;
+  const { timing, venue } = req.body;
+
+  try {
+    const meeting = await Meetings.findOne({
+      _id: meetingId,
+      requestedTo: req.user._id,
+      status: "pending",
+    })
+      .populate("requestedBy", "role")
+      .populate("requestedTo", "role");
+
+    if (!meeting) {
+      return res
+        .status(404)
+        .json({ message: "Meeting not found or unauthorized" });
+    }
+
+    // Authorization: Only staff can approve
+    if (!req.user.isTeacher() && !req.user.isAdmin()) {
+      return res
+        .status(403)
+        .json({ message: "Only staff can approve meetings" });
+    }
+
+    // Validation: Require timing/venue for student requests
+    if (meeting.requestedBy.role === "student") {
+      if (!timing || !venue) {
+        return res.status(400).json({ message: "Timing and venue required" });
+      }
+      meeting.timing = timing;
+      meeting.venue = venue;
+    }
+
+    // Update meeting status
+    meeting.status = "approved";
+    await meeting.save();
+
+    // Create/Update reminder
+    const student =
+      meeting.requestedBy.role === "student"
+        ? meeting.requestedBy
+        : meeting.requestedTo.role === "student"
+        ? meeting.requestedTo
+        : null;
+
+    if (student) {
+      const reminderData = createReminderData(meeting);
+      await updateOrCreateReminder(student._id, meeting._id, reminderData);
+    }
+
+    res.status(200).json(meeting);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// Reject Meeting
+export const rejectMeeting = async (req, res) => {
+  const { meetingId } = req.params;
+  const { rejectionReason } = req.body;
+
+  if (!rejectionReason) {
+    return res.status(400).json({ message: "Rejection reason required" });
+  }
+
+  try {
+    const meeting = await Meetings.findOne({
+      _id: meetingId,
+      requestedTo: req.user._id,
+      status: "pending",
+    })
+      .populate("requestedBy", "role")
+      .populate("requestedTo", "role");
+
+    if (!meeting) {
+      return res
+        .status(404)
+        .json({ message: "Meeting not found or unauthorized" });
+    }
+
+    // Update meeting status
+    meeting.status = "rejected";
+    meeting.rejectionReason = rejectionReason;
+    await meeting.save();
+
+    // Create rejection reminder for student requester
+    if (meeting.requestedBy.role === "student") {
+      const rejectionReminder = createRejectionReminder(meeting);
+      await Reminders.findOneAndUpdate(
+        { _id: meeting.requestedBy._id },
+        { $push: { reminders: rejectionReminder } },
+        { upsert: true, new: true }
+      );
+    }
+
     res.status(200).json(meeting);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -247,6 +304,29 @@ export const deleteMeetingRequest = async (req, res) => {
 };
 
 //HELPER FUNCTIONS FOR REMINDERS
+const updateOrCreateReminder = async (userId, meetingId, reminderData) => {
+  const existing = await Reminders.findOne({
+    _id: userId,
+    "reminders.description": { $regex: `\\[Meeting ID: ${meetingId}\\]` },
+  });
+
+  if (existing) {
+    await Reminders.updateOne(
+      {
+        _id: userId,
+        "reminders.description": { $regex: `\\[Meeting ID: ${meetingId}\\]` },
+      },
+      { $set: { "reminders.$": reminderData } }
+    );
+  } else {
+    await Reminders.findOneAndUpdate(
+      { _id: userId },
+      { $push: { reminders: reminderData } },
+      { upsert: true, new: true }
+    );
+  }
+};
+
 const createReminderData = (meeting) => ({
   title: `Upcoming Meeting: ${meeting.purpose}`,
   description: `[Meeting ID: ${meeting._id}] Venue: ${

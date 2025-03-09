@@ -3,72 +3,67 @@ import { User } from "./userModels.js";
 import { Reminders } from "./remindersModels.js";
 const Schema = mongoose.Schema;
 
-const meetingSchema = new Schema({
-  requestedBy: {
-    type: Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
-    validate: {
-      validator: async function (userId) {
-        const user = await User.findById(userId);
-        return !!user;
+const meetingSchema = new Schema(
+  {
+    requestedBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      validate: {
+        validator: async function (userId) {
+          const user = await User.findById(userId);
+          return !!user;
+        },
+        message: "Invalid requester",
       },
-      message: "Invalid requester",
     },
-  },
-  requestedTo: {
-    type: Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
-    validate: {
-      validator: async function (userId) {
-        const user = await User.findById(userId);
-        return !!user;
+    requestedTo: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      validate: {
+        validator: async function (userId) {
+          const user = await User.findById(userId);
+          return !!user;
+        },
+        message: "Invalid recipient",
       },
-      message: "Invalid recipient",
     },
-  },
-  purpose: {
-    type: String,
-    required: true,
-    minlength: [20, "Purpose must be at least 20 characters"],
-  },
-  timing: {
-    type: Date,
-    required: function () {
-      return this.requesterIsStaff();
+    purpose: {
+      type: String,
+      required: true,
+      minlength: [20, "Purpose must be at least 20 characters"],
     },
-  },
-  venue: {
-    type: String,
-    required: function () {
-      return this.requesterIsStaff();
-    },
-  },
-  rejectionReason: String,
-  status: {
-    type: String,
-    enum: ["pending", "approved", "rejected", "completed"],
-    default: "pending",
-    validate: {
-      validator: function (status) {
-        if (status === "rejected" && !this.rejectionReason) {
-          return false;
-        }
-        return true;
+    timing: {
+      type: Date,
+      required: function () {
+        return this.requesterIsStaff();
       },
-      message: "Rejection reason is required when status is rejected",
+    },
+    venue: {
+      type: String,
+      required: function () {
+        return this.requesterIsStaff();
+      },
+    },
+    rejectionReason: String,
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected", "completed"],
+      default: "pending",
+      validate: {
+        validator: function (status) {
+          if (status === "rejected" && !this.rejectionReason) {
+            return false;
+          }
+          return true;
+        },
+        message: "Rejection reason is required when status is rejected",
+      },
     },
   },
-  created_at: {
-    type: Date,
-    default: Date.now,
-  },
-  updated_at: {
-    type: Date,
-    default: Date.now,
-  },
-});
+  { timestamps: true }
+);
 
 //Helper methods
 meetingSchema.methods.requesterIsStaff = async function () {
