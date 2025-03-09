@@ -1,10 +1,12 @@
 //FUNCTIONS TO BE ADDED: updateComments
 import { Discussion } from "../../models/discussionModels.js";
+import { PushToken } from "../../models/pushTokenModels.js";
 import {
   buildDiscussionQuery,
   validateDiscussionPosting,
 } from "../../services/discussionService.js";
 import mongoose from "mongoose";
+import { sendBulkNotifications } from "../../utils/Notifications.js";
 
 //Middleware
 export const discussionFilterValidator = (req, res, next) => {
@@ -496,6 +498,34 @@ export const addComment = async (req, res) => {
       { $push: { comments: comment } },
       { new: true }
     );
+
+    // Fire-and-forget notification logic
+    (async () => {
+      try {
+        const pushTokens = await PushToken.find({
+          user: { $eq: discussion.postedBy },
+        })
+          .select("token -_id")
+          .lean();
+        console.log(pushTokens);
+
+        // if (pushTokens.length > 0) {
+        //   await sendBulkNotifications(
+        //     pushTokens.map((t) => t.token),
+        //     {
+        //       title: "New comment on your discussion",
+        //       body: comment.content,
+        //       payload: {
+        //         type: "discussion",
+        //         id: discussion._id.toString(),
+        //       },
+        //     }
+        //   );
+        // }
+      } catch (error) {
+        console.error("Notification Error: ", error.message);
+      }
+    })();
 
     res.json(updated);
   } catch (error) {
