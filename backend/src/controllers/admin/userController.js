@@ -422,7 +422,7 @@ export const deleteStudent = async (req, res) => {
 };
 
 export const assignClassRep = async (req, res) => {
-  const { batchId, studentId } = req.params;
+  const { batchId, studentId } = req.body;
   try {
     if (
       !mongoose.Types.ObjectId.isValid(studentId) ||

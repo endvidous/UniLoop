@@ -40,5 +40,5 @@ router.use(
 router.use("/classrooms", highLimitJsonParser, authMiddleware, classroomRoutes);
 router.use("/assignments", defaultJsonParser, authMiddleware, assignmentRoutes);
 router.use("/", defaultJsonParser, authMiddleware, notificationRoutes);
-router.use("/user", defaultJsonParser, classRep_MentorRoutes);
+router.use("/users", defaultJsonParser, classRep_MentorRoutes);
 export default router;
