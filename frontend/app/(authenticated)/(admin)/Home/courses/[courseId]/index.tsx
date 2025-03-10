@@ -43,10 +43,10 @@ const CourseDetailScreen = () => {
 
     switch (section) {
       case "batches":
-        uploadPath = `/Home/courses/${courseId}/batches/batchesUpload`; 
+        uploadPath=`/Home/courses/${courseId}/batches/batchesUpload`; 
         break;
       case "semesters":
-        uploadPath = `/Home/courses/${courseId}/semesters/semesterUpload`; 
+        uploadPath=`/Home/courses/${courseId}/semesters/semesterUpload`; 
         break;
       default:
         console.error("Invalid section for upload");
@@ -64,10 +64,10 @@ const CourseDetailScreen = () => {
 
     switch (section) {
       case "batches":
-        indexPath = `/Home/courses/${courseId}/batches`; 
+        indexPath=`/Home/courses/${courseId}/batches`; 
         break;
       case "semesters":
-        indexPath = `/Home/courses/${courseId}/semesters`; 
+        indexPath=`/Home/courses/${courseId}/semesters`; 
         break;
       default:
         console.error("Invalid section for index");
