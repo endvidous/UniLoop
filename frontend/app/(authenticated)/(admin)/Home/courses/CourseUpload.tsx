@@ -15,7 +15,6 @@ import { useCourses, useCreateCourses } from "@/src/hooks/api/useCourses";
 import CsvUploaderComponent from "@/src/components/common/CsvEntry";
 import ManualEntryComponent from "@/src/components/common/ManualEntry";
 
-// Extend Course interface to include an internal form ID
 interface CourseFormItem {
   name: string;
   code: string;
