@@ -115,7 +115,7 @@ const batchSchema = new Schema({
       ref: "User",
     },
   ],
-  classRepresentatives: [
+  classReps: [
     {
       type: Schema.Types.ObjectId,
       ref: "User",

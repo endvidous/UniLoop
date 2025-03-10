@@ -16,10 +16,7 @@ export const authService = {
 
   logout: async (userId: string) => {
     try {
-      const response = await axiosInstance.post("/auth/logout", {
-        userId,
-        platform: Platform.OS,
-      });
+      const response = await axiosInstance.post("/auth/logout");
       return response.data;
     } catch (error: any) {
       throw error.response;
