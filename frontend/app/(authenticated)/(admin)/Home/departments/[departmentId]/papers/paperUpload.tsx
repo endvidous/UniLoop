@@ -210,21 +210,18 @@ const PaperTable = () => {
       field: "name",
       label: "Name",
       placeholder: "Enter paper name",
-      required: true,
     },
     {
       name: "papers",
       field: "code",
       label: "Code",
       placeholder: "Enter paper code",
-      required: true,
     },
     {
       name: "papers",
       field: "semester",
       label: "Semester",
       placeholder: "Enter semester (1-6)",
-      required: true,
     },
   ];
 
