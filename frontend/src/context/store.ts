@@ -69,6 +69,7 @@ export const useStore = create<AppState>((set, get) => ({
   clearAuth: () => {
     appStorage.removeToken();
     appStorage.removeUser();
+    appStorage.removePushToken();
     set({ token: null, user: null, pushToken: null });
   },
 

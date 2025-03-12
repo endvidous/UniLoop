@@ -2,6 +2,7 @@ import { createContext, useContext, useCallback, useEffect } from "react";
 import { useStore } from "./store";
 import { User } from "../utils/interfaces";
 import { authService } from "@/src/services/api/auth";
+import { unregisterPushNotifications } from "../services/notifications";
 
 const enum ROLES {
   ADMIN = "admin",
@@ -51,13 +52,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true);
       // Clear Zustand state and appStorage
+      if (user) {
+        try {
+          await unregisterPushNotifications(user.id);
+        } catch (error: any) {
+          console.log("Error in notifications: " + error.message);
+        }
+      } else {
+        throw new Error("User ID is undefined");
+      }
       clearAuth();
       setLoading(false);
     } catch (error) {
       console.error("Error signing out:", error);
       setLoading(false);
     }
-  }, [setLoading]);
+  }, [setLoading, user]);
 
   return (
     <AuthContext.Provider

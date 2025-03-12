@@ -3,6 +3,7 @@ import {
   Batches,
   Semesters,
   Papers,
+  AcademicTimeline,
 } from "../../models/courseModels.js";
 import { User } from "../../models/userModels.js";
 import { checkIfEmpty } from "../../utils/helpers.js";
@@ -74,10 +75,46 @@ export const createCourses = async (req, res) => {
 
     const createdCourses = await Courses.insertMany(courses);
 
-    res.status(201).json({
-      message: "Courses created sucessfully",
-      data: createdCourses,
+    const academicTimelines = await AcademicTimeline.find().sort({
+      academicYear: 1,
     });
+
+    //To create the batches for the courses automatically
+    if (academicTimelines.length > 0) {
+      let batchesToInsert = [];
+      createdCourses.forEach((course) => {
+        academicTimelines.forEach((timeline) => {
+          const [startYearStr] = timeline.academicYear.split("-");
+          const startYear = parseInt(startYearStr, 10);
+          const batchCode = `${course.code}-${startYear}`;
+
+          batchesToInsert.push({
+            course: course._id,
+            startYear: startYear,
+            code: batchCode,
+          });
+        });
+      });
+
+      // Save each batch individually so pre-save hooks are executed
+      const batchSavePromises = batchesToInsert.map((batchData) => {
+        const batch = new Batches(batchData);
+        return batch.save();
+      });
+
+      const createdBatches = await Promise.all(batchSavePromises);
+
+      res.status(201).json({
+        message: "Courses and batches created successfully",
+        data: { courses: createdCourses, batches: createdBatches },
+      });
+    } else {
+      // If no academic timelines exist, only return the courses
+      res.status(201).json({
+        message: "Courses created successfully. No batches were generated.",
+        data: createdCourses,
+      });
+    }
   } catch (err) {
     res
       .status(500)

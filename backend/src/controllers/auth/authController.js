@@ -40,6 +40,18 @@ export const login = async (req, res) => {
   }
 };
 
+// Logout function
+export const logout = async (req, res) => {
+  try {
+    res.status(200).json({ success: true, message: "User logged out" });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: `Error logging out: ${error.message}`,
+    });
+  }
+};
+
 // Validate User Function
 export const validateUser = async (req, res) => {
   try {
@@ -130,7 +142,8 @@ export const validateUser = async (req, res) => {
     return res.status(401).json(errorResponse);
   }
 };
-//edit password
+
+// Edit password
 export const editPassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;

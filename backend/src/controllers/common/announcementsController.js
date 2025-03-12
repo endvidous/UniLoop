@@ -258,7 +258,7 @@ export const createAnnouncement = async (req, res) => {
         const userIds = await getUsersByAssociations(filter);
 
         const pushTokens = await PushToken.find({
-          user: { $in: userIds },
+          user: { $in: userIds, $ne: user._id },
         })
           .select("token -_id")
           .lean();

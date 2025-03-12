@@ -10,7 +10,6 @@ export type Course = {
 
 export type Batch = {
   _id: string;
-  name: string;
   course: Partial<Course>;
   code: string;
   startYear: string;
@@ -67,7 +66,10 @@ export const batchService = {
     return response.data;
   },
 
-  createBatches: async (courseId: string, batches: { startYear: number }[]) => {
+  createBatches: async (
+    courseId: string,
+    batches: { code: string; startYear: number }[]
+  ) => {
     const response = await axiosInstance.post(
       `/admin/courses/${courseId}/batches`,
       { batches }

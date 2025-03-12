@@ -43,7 +43,6 @@ export const getDepartmentTeachers = async (req, res) => {
       options: { sort: { name: 1 } }, // Sort teachers by name
     });
 
-
     if (!department) {
       return res.status(404).json({ message: "Department not found" });
     }
@@ -184,6 +183,119 @@ export const deleteTeacher = async (req, res) => {
   }
 };
 
+export const assignMentor = async (req, res) => {
+  const { teacherId, batchId } = req.body;
+  try {
+    // Validate teacherId and batchId format
+    if (
+      !mongoose.Types.ObjectId.isValid(teacherId) ||
+      !mongoose.Types.ObjectId.isValid(batchId)
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Invalid teacherId or batchId format" });
+    }
+
+    // Check if the teacher exists
+    const teacher = await User.findById(teacherId);
+    if (!teacher) {
+      return res.status(404).json({ message: "Teacher not found" });
+    }
+
+    // Check if the batch exists
+    const batch = await Batches.findById(batchId);
+    if (!batch) {
+      return res.status(404).json({ message: "Batch not found" });
+    }
+
+    // Check the number of mentors
+    if (batch.mentors.length >= 6) {
+      return res
+        .status(400)
+        .json({
+          message:
+            "Cannot have more than two mentors. Remove a mentor to add new ones",
+        });
+    }
+
+    // Update the teacher document: add the batchId to the mentor_of field.
+    // $addToSet ensures that the batchId is added only if it is not already present.
+    const updatedTeacher = await User.findByIdAndUpdate(
+      teacherId,
+      { $set: { mentor_of: batchId } },
+      { new: true }
+    ).select("name email role mentor_of");
+
+    // Update batch: add the teacherId to the mentors field using $addToSet
+    const updatedBatch = await Batches.findByIdAndUpdate(
+      batchId,
+      { $addToSet: { mentors: teacherId } },
+      { new: true }
+    );
+
+    res.status(200).json({
+      message: "Mentor assigned successfully",
+      data: { teacher: updatedTeacher, batch: updatedBatch },
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Error assigning mentor",
+      error: err.message,
+    });
+  }
+};
+
+export const removeMentor = async (req, res) => {
+  const { teacherId, batchId } = req.body;
+  try {
+    // Validate teacherId and batchId format
+    if (
+      !mongoose.Types.ObjectId.isValid(teacherId) ||
+      !mongoose.Types.ObjectId.isValid(batchId)
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Invalid teacherId or batchId format" });
+    }
+
+    // Check if the teacher exists
+    const teacher = await User.findById(teacherId);
+    if (!teacher) {
+      return res.status(404).json({ message: "Teacher not found" });
+    }
+
+    // Check if the batch exists
+    const batch = await Batches.findById(batchId);
+    if (!batch) {
+      return res.status(404).json({ message: "Batch not found" });
+    }
+
+    // Update the teacher document: remove the batchId from the mentor_of field.
+    const updatedTeacher = await User.findByIdAndUpdate(
+      teacherId,
+      { $unset: { mentor_of: "" } },
+      { new: true }
+    ).select("name email role mentor_of");
+
+    // Update batch: remove the teacherId from the mentors field using $pull
+    const updatedBatch = await Batches.findByIdAndUpdate(
+      batchId,
+      { $pull: { mentors: teacherId } },
+      { new: true }
+    );
+
+    res.status(200).json({
+      message: "Mentor removed successfully",
+      data: { teacher: updatedTeacher, batch: updatedBatch },
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Error removing mentor",
+      error: err.message,
+    });
+  }
+};
+
 /*------------------------------Student Controllers------------------------------*/
 
 //Get one student
@@ -208,20 +320,22 @@ export const getOneStudent = async (req, res) => {
 
 //Get all the students in a batch
 export const getBatchStudents = async (req, res) => {
-  const { batchID } = req.params; // Expecting a single batch ID from the URL
+  const { batchId } = req.params; // Expecting a single batch ID from the URL
 
   try {
     // Validate batch ID format
-    if (!mongoose.Types.ObjectId.isValid(batchID)) {
+    if (!mongoose.Types.ObjectId.isValid(batchId)) {
       return res.status(400).json({ message: "Invalid batch ID format" });
     }
 
     // Find the batch and populate the students
-    const batch = await Batches.findById(batchID).populate({
-      path: "students",
-      select: "name email roll_no", // Select only necessary fields
-      options: { sort: { name: 1 } }, // Sort students by name
-    }).lean();
+    const batch = await Batches.findById(batchId)
+      .populate({
+        path: "students",
+        select: "name email roll_no", // Select only necessary fields
+        options: { sort: { name: 1 } }, // Sort students by name
+      })
+      .lean();
 
     if (!batch) {
       return res.status(404).json({ message: "Batch not found" });
@@ -249,7 +363,7 @@ export const getBatchStudents = async (req, res) => {
 
 //Create students for a batch
 export const createStudents = async (req, res) => {
-  const { batchID } = req.params;
+  const { batchId } = req.params;
   const { students } = req.body;
   try {
     //Validate if empty
@@ -276,7 +390,7 @@ export const createStudents = async (req, res) => {
     );
 
     const updatedBatch = await Batches.updateOne(
-      { _id: batchID },
+      { _id: batchId },
       { $push: { students: { $each: studentIDs } } },
       { new: true }
     );
@@ -297,14 +411,14 @@ export const createStudents = async (req, res) => {
 
 //Update a student in the batch
 export const updateStudent = async (req, res) => {
-  const { batchID, studentId } = req.params;
+  const { batchId, studentId } = req.params;
   const updates = req.body;
   if (Object.prototype.hasOwnProperty.call(updates, "role")) {
     delete updates.role;
   }
   try {
     // Validate batch exists
-    const batch = await Batches.findById(batchID);
+    const batch = await Batches.findById(batchId);
     if (!batch) {
       return res.status(404).json({ message: "Batch not found" });
     }
@@ -333,12 +447,12 @@ export const updateStudent = async (req, res) => {
 
 //Delete the student in the batch
 export const deleteStudent = async (req, res) => {
-  const { batchID, studentId } = req.params;
+  const { batchId, studentId } = req.params;
 
   try {
     // Remove student from batch
     const batch = await Batches.findByIdAndUpdate(
-      batchID,
+      batchId,
       { $pull: { students: studentId } },
       { new: true }
     );
@@ -363,6 +477,152 @@ export const deleteStudent = async (req, res) => {
   } catch (err) {
     res.status(500).json({
       message: "Error deleting Student",
+      error: err.message,
+    });
+  }
+};
+
+export const assignClassRep = async (req, res) => {
+  const { batchId, studentId } = req.body;
+  try {
+    if (
+      !mongoose.Types.ObjectId.isValid(studentId) ||
+      !mongoose.Types.ObjectId.isValid(batchId)
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Invalid studentId or batchId format" });
+    }
+
+    // Check if the student exists
+    const student = await User.findById(studentId);
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    // Check if the batch exists
+    const batch = await Batches.findById(batchId);
+    if (!batch) {
+      return res.status(404).json({ message: "Batch not found" });
+    }
+
+    // Check the number of class reps
+    if (batch.classReps.length >= 6) {
+      return res.status(400).json({
+        message:
+          "Cannot have more than 6 classreps. Remove one to change or add another",
+      });
+    }
+
+    // Update the student document: add the batchId to the classrep_of field.
+    const updatedStudent = await User.findByIdAndUpdate(
+      studentId,
+      { $set: { classrep_of: batchId } },
+      { new: true }
+    ).select("name email role classrep_of");
+
+    // Update batch: add the studentId to the classReps field using $addToSet
+    const updatedBatch = await Batches.findByIdAndUpdate(
+      batchId,
+      { $addToSet: { classReps: studentId } },
+      { new: true }
+    );
+
+    res.status(200).json({
+      message: "Class rep assigned successfully",
+      data: { student: updatedStudent, batch: updatedBatch },
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Error assigning class rep",
+      error: err.message,
+    });
+  }
+};
+
+export const removeClassRep = async (req, res) => {
+  const { batchId, studentId } = req.body;
+  try {
+    if (
+      !mongoose.Types.ObjectId.isValid(studentId) ||
+      !mongoose.Types.ObjectId.isValid(batchId)
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Invalid studentId or batchId format" });
+    }
+
+    // Check if the student exists
+    const student = await User.findById(studentId);
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    // Check if the batch exists
+    const batch = await Batches.findById(batchId);
+    if (!batch) {
+      return res.status(404).json({ message: "Batch not found" });
+    }
+
+    // Update the student document: remove the batchId from the classrep_of field.
+    const updatedStudent = await User.findByIdAndUpdate(
+      studentId,
+      { $unset: { classrep_of: "" } },
+      { new: true }
+    ).select("name email role classrep_of");
+
+    // Update batch: remove the studentId from the classReps field using $pull
+    const updatedBatch = await Batches.findByIdAndUpdate(
+      batchId,
+      { $pull: { classReps: studentId } },
+      { new: true }
+    );
+
+    res.status(200).json({
+      message: "Class rep removed successfully",
+      data: { student: updatedStudent, batch: updatedBatch },
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Error removing class rep",
+      error: err.message,
+    });
+  }
+};
+
+export const removeAllClassReps = async (req, res) => {
+  const { batchId } = req.params;
+  try {
+    if (!mongoose.Types.ObjectId.isValid(batchId)) {
+      return res.status(400).json({ message: "Invalid batchId format" });
+    }
+
+    // Check if the batch exists
+    const batch = await Batches.findById(batchId);
+    if (!batch) {
+      return res.status(404).json({ message: "Batch not found" });
+    }
+
+    // Remove classRep_of field from all students in the batch
+    await User.updateMany(
+      { _id: { $in: batch.classReps } },
+      { $unset: { classrep_of: "" } }
+    );
+
+    // Update batch: remove all studentIds from the classReps field
+    const updatedBatch = await Batches.findByIdAndUpdate(
+      batchId,
+      { $set: { classReps: [] } },
+      { new: true }
+    );
+
+    res.status(200).json({
+      message: "All class reps removed successfully",
+      data: updatedBatch,
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Error removing all class reps",
       error: err.message,
     });
   }

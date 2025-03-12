@@ -84,16 +84,20 @@ export const useBatches = (courseId: string) => {
   });
 };
 
-export const useCreateBatches = (
-  courseId: string,
-  batches: { startYear: number }[]
-) => {
+export const useCreateBatches = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => batchService.createBatches(courseId, batches),
-    onSuccess: () => {
+    mutationFn: ({
+      courseId,
+      batches,
+    }: {
+      courseId: string;
+      batches: { code: string; startYear: number }[];
+    }) => batchService.createBatches(courseId, batches),
+    onSuccess: (_, variables) => {
+      // Invalidate queries for the specific courseId
       queryClient.invalidateQueries({
-        queryKey: queryKeys.batches.lists({ courseId }),
+        queryKey: queryKeys.batches.lists({ courseId: variables.courseId }), // variables.courseId is courseId
       });
     },
   });

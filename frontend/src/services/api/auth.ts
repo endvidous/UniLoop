@@ -1,4 +1,5 @@
 import axiosInstance from "./axiosConfig";
+import { Platform } from "react-native";
 
 export const authService = {
   login: async (email: string, password: string) => {
@@ -13,12 +14,12 @@ export const authService = {
     }
   },
 
-  logout: async () => {
+  logout: async (userId: string) => {
     try {
-      const response = await axiosInstance.post("/auth/index.ts");
+      const response = await axiosInstance.post("/auth/logout");
       return response.data;
-    } catch (error) {
-      throw error;
+    } catch (error: any) {
+      throw error.response;
     }
   },
 

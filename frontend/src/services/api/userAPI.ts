@@ -68,6 +68,22 @@ export const teacherService = {
     );
     return response.data;
   },
+
+  assignMentor: async (batchId: string, teacherId: string) => {
+    const response = await axiosInstance.post(`users/assign-mentor`, {
+      teacherId,
+      batchId,
+    });
+    return response.data;
+  },
+
+  removeMentor: async (batchId: string, teacherId: string) => {
+    const response = await axiosInstance.post("users/remove-mentor", {
+      teacherId,
+      batchId,
+    });
+    return response.data;
+  },
 };
 
 export type Student = {
@@ -140,6 +156,29 @@ export const studentService = {
     const response = await axiosInstance.delete(
       `/admin/${batchId}/students/${studentId}`
     );
+    return response.data;
+  },
+
+  assignClassRep: async (batchId: string, studentId: string) => {
+    const response = await axiosInstance.post(`/users/assign-classrep`, {
+      batchId,
+      studentId,
+    });
+    return response.data;
+  },
+
+  removeClassRep: async (batchId: string, studentId: string) => {
+    const response = await axiosInstance.post(`/users/remove-classrep`, {
+      batchId,
+      studentId,
+    });
+    return response.data;
+  },
+
+  removeAllClassReps: async (batchId: string) => {
+    const response = await axiosInstance.delete(`/users/remove-all-classreps`, {
+      data: batchId,
+    });
     return response.data;
   },
 };

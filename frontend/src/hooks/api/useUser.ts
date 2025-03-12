@@ -98,6 +98,50 @@ export const useDeleteTeacher = () => {
   });
 };
 
+export const useAssignMentor = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      teacherId,
+      batchId,
+    }: {
+      teacherId: string;
+      batchId: string;
+    }) => teacherService.assignMentor(teacherId, batchId),
+    onSuccess: (_data, variables) => {
+      // Invalidate the relevant queries after deletion
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.batches.detail(variables.batchId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.teachers.detail(variables.teacherId),
+      });
+    },
+  });
+};
+
+export const useRemoveMentor = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      teacherId,
+      batchId,
+    }: {
+      teacherId: string;
+      batchId: string;
+    }) => teacherService.removeMentor(teacherId, batchId),
+    onSuccess: (_data, variables) => {
+      // Invalidate the relevant queries after deletion
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.batches.detail(variables.batchId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.teachers.detail(variables.teacherId),
+      });
+    },
+  });
+};
+
 // ===================
 // STUDENT HOOKS
 // ===================
@@ -178,6 +222,64 @@ export const useDeleteStudent = () => {
       });
       queryClient.invalidateQueries({
         queryKey: queryKeys.students.list(variables.batchId),
+      });
+    },
+  });
+};
+
+export const useAssignClassRep = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      studentId,
+      batchId,
+    }: {
+      studentId: string;
+      batchId: string;
+    }) => studentService.assignClassRep(studentId, batchId),
+    onSuccess: (_data, variables) => {
+      // Invalidate the relevant queries after deletion
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.students.detail(variables.studentId),
+      });
+    },
+  });
+};
+
+export const useRemoveClassRep = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      studentId,
+      batchId,
+    }: {
+      studentId: string;
+      batchId: string;
+    }) => studentService.removeClassRep(studentId, batchId),
+    onSuccess: (_data, variables) => {
+      // Invalidate the relevant queries after deletion
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.batches.detail(variables.batchId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.students.detail(variables.studentId),
+      });
+    },
+  });
+};
+
+export const useRemoveAllClassReps = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ batchId }: { batchId: string }) =>
+      studentService.removeAllClassReps(batchId),
+    onSuccess: (_data, variables) => {
+      // Invalidate the relevant queries after deletion
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.batches.detail(variables.batchId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.students.list,
       });
     },
   });
