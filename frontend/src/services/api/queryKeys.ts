@@ -164,4 +164,14 @@ export const queryKeys = {
         ["classrooms", "bookings", "detail", bookingId] as const,
     },
   },
+
+  // Reminders keys
+  reminders: {
+    all: ["reminders"] as const,
+    lists: () => [...queryKeys.reminders.all, "list"] as const,
+    list: (filters?: any) =>
+      [...queryKeys.reminders.lists(), { ...filters }] as const,
+    details: () => [...queryKeys.reminders.all, "detail"] as const,
+    detail: (id: string) => [...queryKeys.reminders.details(), id] as const,
+  }
 };
