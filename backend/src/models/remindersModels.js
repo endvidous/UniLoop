@@ -7,17 +7,15 @@ const reminderSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
-    title: { type: String, required: true, trim: true, index: true },
+    title: { type: String, required: true, trim: true },
     description: { type: String, trim: true },
-    deadline: { type: Date, index: true },
+    deadline: { type: Date },
     completed: { type: Boolean, default: false },
     priority: {
       type: Number, // 0 = Low, 1 = Normal, 2 = High
       enum: [0, 1, 2],
       default: 1,
-      index: true,
     },
     remindAt: [
       {
@@ -28,16 +26,15 @@ const reminderSchema = new Schema(
   },
   {
     timestamps: true,
-    validate: {
-      validator: function (value) {
-        return value.remindAt.length <= 5; // Limit to 5 remindAt values
-      },
-      message: "You can specify up to 5 remindAt values.",
-    },
   }
 );
 
-//Simple indexes
+// Custom validator for remindAt field
+reminderSchema.path('remindAt').validate(function (value) {
+  return value.length <= 5; // Limit to 5 remindAt values
+}, "You can specify up to 5 remindAt values.");
+
+// Simple indexes
 reminderSchema.index({ userId: 1 });
 reminderSchema.index({ deadline: 1 });
 reminderSchema.index({ priority: 1 });
