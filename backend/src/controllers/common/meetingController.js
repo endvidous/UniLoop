@@ -1,7 +1,7 @@
 //COMPLETED
 import { Meetings } from "../../models/meetingModels.js";
 import { User } from "../../models/userModels.js";
-import { Reminders } from "../../models/remindersModels.js";
+import { Reminder } from "../../models/remindersModels.js";
 
 // Get Single Meeting
 export const getMeeting = async (req, res) => {
@@ -35,12 +35,10 @@ export const getMeetingRequests = async (req, res) => {
       .populate("requestedBy", "_id name email role roll_no mentor_of")
       .populate("requestedTo", "_id name email role roll_no mentor_of");
 
-    res
-      .status(200)
-      .json({
-        message: "Successfully retrieved the meetings",
-        meetings: meetings,
-      });
+    res.status(200).json({
+      message: "Successfully retrieved the meetings",
+      meetings: meetings,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -268,11 +266,11 @@ export const rejectMeeting = async (req, res) => {
     // Create rejection reminder for student requester
     if (meeting.requestedBy.role === "student") {
       const rejectionReminder = createRejectionReminder(meeting);
-      await Reminders.findOneAndUpdate(
-        { _id: meeting.requestedBy._id },
-        { $push: { reminders: rejectionReminder } },
-        { upsert: true, new: true }
-      );
+
+      await Reminder.create({
+        userId: meeting.requestedBy._id,
+        ...rejectionReminder,
+      });
     }
 
     res.status(200).json(meeting);
@@ -305,25 +303,17 @@ export const deleteMeetingRequest = async (req, res) => {
 
 //HELPER FUNCTIONS FOR REMINDERS
 const updateOrCreateReminder = async (userId, meetingId, reminderData) => {
-  const existing = await Reminders.findOne({
-    _id: userId,
-    "reminders.description": { $regex: `\\[Meeting ID: ${meetingId}\\]` },
+  const existing = await Reminder.findOne({
+    userId,
+    description: { $regex: `\\[Meeting ID: ${meetingId}\\]` },
   });
 
   if (existing) {
-    await Reminders.updateOne(
-      {
-        _id: userId,
-        "reminders.description": { $regex: `\\[Meeting ID: ${meetingId}\\]` },
-      },
-      { $set: { "reminders.$": reminderData } }
-    );
+    // Update the existing reminder
+    await Reminder.updateOne({ _id: existing._id }, { $set: reminderData });
   } else {
-    await Reminders.findOneAndUpdate(
-      { _id: userId },
-      { $push: { reminders: reminderData } },
-      { upsert: true, new: true }
-    );
+    // Create a new reminder
+    await Reminder.create({ userId, ...reminderData });
   }
 };
 

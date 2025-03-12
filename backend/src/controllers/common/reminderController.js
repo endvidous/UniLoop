@@ -1,22 +1,18 @@
-import { Reminders } from "../../models/remindersModel.js";
+import { Reminder } from "../../models/remindersModels.js";
 import mongoose from "mongoose";
 
-// 1. Create Reminder
+// Create Reminder
 export const createReminder = async (req, res) => {
-  const { title, description, deadline, priority, remind_at } = req.body;
+  const { title, description, deadline, priority, remindAt } = req.body; // expect remindAt to be an array
 
   try {
-    const reminder = new Reminders({
-      _id: new mongoose.Types.ObjectId(`${req.user._id}`),
-      reminders: [
-        {
-          title,
-          description,
-          deadline,
-          priority,
-          remind_at,
-        },
-      ],
+    const reminder = new Reminder({
+      userId: req.user._id,
+      title,
+      description,
+      deadline,
+      priority,
+      remindAt, // ensure client sends an array of remindAt objects
     });
 
     await reminder.save();
@@ -29,54 +25,47 @@ export const createReminder = async (req, res) => {
       .json({ message: "Error creating reminder", error: error.message });
   }
 };
-// 2. Update remainder
+
+// Update Reminder
 export const updateReminder = async (req, res) => {
   const { reminderId } = req.params;
 
   try {
-    // Define allowed fields and create update object
     const allowedFields = [
       "title",
       "description",
       "deadline",
-      "completed",
       "priority",
-      "remind_at",
+      "remindAt", // using the field name as in the schema
     ];
     const update = {};
 
     // Populate update object with valid fields from request body
     allowedFields.forEach((field) => {
       if (req.body[field] !== undefined) {
-        update[`reminders.$.${field}`] = req.body[field];
+        update[field] = req.body[field];
+      }
+      // for backward compatibility, if client sends "remind_at" instead of "remindAt"
+      if (field === "remindAt" && req.body.remind_at !== undefined) {
+        update.remindAt = req.body.remind_at;
       }
     });
 
-    // Check if any valid fields were provided
     if (Object.keys(update).length === 0) {
       return res
         .status(400)
         .json({ message: "No valid fields provided for update" });
     }
 
-    // Find and update in one operation using positional $ operator
-    const updatedUser = await Reminders.findOneAndUpdate(
-      {
-        _id: req.user._id,
-        "reminders._id": reminderId,
-      },
+    const updatedReminder = await Reminder.findOneAndUpdate(
+      { _id: reminderId, userId: req.user._id },
       { $set: update },
-      { new: true, runValidators: true } // Return updated doc and validate updates
+      { new: true, runValidators: true }
     );
 
-    if (!updatedUser) {
+    if (!updatedReminder) {
       return res.status(404).json({ message: "Reminder not found" });
     }
-
-    // Find the specific updated reminder to return
-    const updatedReminder = updatedUser.reminders.find(
-      (reminder) => reminder._id.toString() === reminderId
-    );
 
     res.status(200).json({
       message: "Reminder updated successfully",
@@ -89,28 +78,25 @@ export const updateReminder = async (req, res) => {
     });
   }
 };
-//3. Delete reminder
+
+// Delete Reminder
 export const deleteReminder = async (req, res) => {
   const { reminderId } = req.params;
 
   try {
-    // checks if reminderId is of valid format
+    // Validate ObjectId format
     if (!mongoose.Types.ObjectId.isValid(reminderId)) {
       return res.status(400).json({
         message: "Invalid reminder ID format",
       });
     }
 
-    const result = await Reminders.findOneAndUpdate(
-      {
-        _id: req.user._id,
-        "reminders._id": reminderId,
-      },
-      { $pull: { reminders: { _id: reminderId } } },
-      { new: true }
-    );
+    const deletedReminder = await Reminder.findOneAndDelete({
+      _id: reminderId,
+      userId: req.user._id,
+    });
 
-    if (!result) {
+    if (!deletedReminder) {
       return res.status(404).json({
         message: "Reminder not found or already deleted",
       });
@@ -127,80 +113,8 @@ export const deleteReminder = async (req, res) => {
     });
   }
 };
-export const searchAndFilterReminders = async (req, res) => {
-  try {
-    const sortOptions = {
-      newest: { "reminders.created_at": -1 }, // Sort by latest
-      priority: { "reminders.priority": -1 }, // High priority first
-      deadline: { "reminders.deadline": 1 }, // Closest deadline first
-    };
 
-    const filters = {
-      search: req.query.search, // Search term for title
-      priority: req.query.priority, // Priority level (0,1,2)
-      completed: req.query.completed, // Completed status (true/false)
-      remind_at: req.query.remind_at, // Specific reminder time
-    };
-
-    // Base query: Only search within the logged-in user’s reminders
-    const matchQuery = { _id: req.user._id };
-
-    // If any filters exist, apply them
-    if (
-      filters.search ||
-      filters.priority ||
-      filters.completed !== undefined ||
-      filters.remind_at
-    ) {
-      matchQuery.reminders = { $elemMatch: {} };
-
-      if (filters.search) {
-        matchQuery.reminders.$elemMatch.title = {
-          $regex: filters.search,
-          $options: "i", // Case-insensitive search
-        };
-      }
-
-      if (filters.priority !== undefined) {
-        matchQuery.reminders.$elemMatch.priority = Number(filters.priority);
-      }
-
-      if (filters.completed !== undefined) {
-        matchQuery.reminders.$elemMatch.completed =
-          filters.completed === "true";
-      }
-
-      if (filters.remind_at) {
-        matchQuery.reminders.$elemMatch.remind_at = new Date(filters.remind_at);
-      }
-    }
-
-    const sortBy = sortOptions[req.query.sort] || {
-      "reminders.created_at": -1,
-    };
-
-    // Fetch reminders matching filters
-    const result = await Reminders.findOne(matchQuery, { "reminders.$": 1 })
-      .sort(sortBy)
-      .lean();
-
-    if (!result || !result.reminders.length) {
-      return res.status(404).json({ message: "No matching reminders found" });
-    }
-
-    res.json({
-      reminders: result.reminders,
-      total: result.reminders.length,
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: "Error retrieving reminders",
-      error: error.message,
-    });
-  }
-};
-
-//4. Get one reminder
+// Get One Reminder
 export const getOneReminder = async (req, res) => {
   const { reminderId } = req.params;
 
@@ -210,19 +124,18 @@ export const getOneReminder = async (req, res) => {
       return res.status(400).json({ message: "Invalid reminder ID format" });
     }
 
-    // Use findOne to fetch the specific reminder
-    const result = await Reminders.findOne(
-      { _id: req.user._id, "reminders._id": reminderId },
-      { "reminders.$": 1 }
-    );
+    const reminder = await Reminder.findOne({
+      _id: reminderId,
+      userId: req.user._id,
+    });
 
-    if (!result || result.reminders.length === 0) {
+    if (!reminder) {
       return res.status(404).json({ message: "Reminder not found" });
     }
 
     res.status(200).json({
       message: "Reminder retrieved successfully",
-      data: result.reminders[0],
+      data: reminder,
     });
   } catch (error) {
     res.status(500).json({
@@ -231,24 +144,98 @@ export const getOneReminder = async (req, res) => {
     });
   }
 };
-export const getAllReminders = async (req, res) => {
-  try {
-    const userReminders = await Reminders.findOne({ _id: req.user._id })
-      .select("reminders") // Only fetches the 'reminders' field
-      .sort({ "reminders.created_at": -1 }) // Sort by newest reminder first
-      .lean(); // Converts MongoDB document to a plain JavaScript object
 
-    if (!userReminders || userReminders.reminders.length === 0) {
-      return res.status(404).json({ message: "No reminders found" });
+// Get all reminders with search and filter
+export const getReminders = async (req, res) => {
+  const user_id = req.user._id;
+  const { sort, search, priority, completed, remind_at } = req.query;
+  try {
+    // Define available sort options.
+    const sortOptions = {
+      newest: { createdAt: -1 },
+      priority: { priority: -1 },
+      deadline: { deadline: 1 },
+    };
+
+    // Base filter: only include reminders for the logged-in user.
+    const filters = { userId: user_id };
+
+    // Apply optional filters from query parameters.
+    if (search) {
+      filters.title = { $regex: search, $options: "i" };
+    }
+    if (priority !== undefined) {
+      filters.priority = Number(priority);
+    }
+    if (completed !== undefined) {
+      filters.completed = completed === "true";
     }
 
-    res.json({
-      reminders: userReminders.reminders, // Returns all reminders
-      total: userReminders.reminders.length, // Returns count
+    //Not sure if we should allow this need to check
+    if (remind_at) {
+      // Find reminders with at least one scheduled reminder time matching the provided date.
+      filters.remindAt = {
+        $elemMatch: { date_time: new Date(remind_at) },
+      };
+    }
+
+    // Choose sort order based on query parameter or default to newest.
+    const sortBy = sortOptions[sort] || { createdAt: -1 };
+
+    // Retrieve the reminders from the database.
+    const reminders = await Reminder.find(filters).sort(sortBy).lean();
+
+    // Return a 200 status with an empty array if no reminders are found.
+    if (!reminders || reminders.length === 0) {
+      return res
+        .status(200)
+        .json({ reminders: [], message: "No reminders found" });
+    }
+
+    // Return the retrieved reminders along with their total count.
+    res.status(200).json({
+      reminders,
+      total: reminders.length,
     });
   } catch (error) {
     res.status(500).json({
       message: "Error retrieving reminders",
+      error: error.message,
+    });
+  }
+};
+
+// Mark/Unmark Reminder as Completed
+export const toggleReminderCompletion = async (req, res) => {
+  const { reminderId } = req.params;
+
+  try {
+    // Validate ObjectId format
+    if (!mongoose.Types.ObjectId.isValid(reminderId)) {
+      return res.status(400).json({ message: "Invalid reminder ID format" });
+    }
+
+    const reminder = await Reminder.findOne({
+      _id: reminderId,
+      userId: req.user._id,
+    });
+
+    if (!reminder) {
+      return res.status(404).json({ message: "Reminder not found" });
+    }
+
+    reminder.completed = !reminder.completed;
+    await reminder.save();
+
+    res.status(200).json({
+      message: `Reminder ${
+        reminder.completed ? "marked as completed" : "marked as pending"
+      }`,
+      data: reminder,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error toggling reminder completion",
       error: error.message,
     });
   }
