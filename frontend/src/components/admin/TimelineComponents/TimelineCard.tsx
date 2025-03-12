@@ -98,7 +98,7 @@ const TimelineCard: React.FC<TimelineCardProps> = ({
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.modalButton}
-                onPress={handleConfirmDelete} // Confirm deletion
+                onPress={() => deleteTimeline(id)} // Confirm deletion
                 disabled={isDeleting} // Disable the button while deletion is in progress
               >
                 <Text style={styles.modalButtonText}>

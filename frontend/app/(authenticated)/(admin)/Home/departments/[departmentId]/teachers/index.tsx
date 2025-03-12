@@ -1,4 +1,423 @@
+// import { Stack, useLocalSearchParams } from "expo-router";
+// import { useState } from "react";
+// import {
+//   View,
+//   Text,
+//   StyleSheet,
+//   FlatList,
+//   ActivityIndicator,
+//   TouchableOpacity,
+//   TextInput,
+// } from "react-native";
+// import Icon from "react-native-vector-icons/Ionicons";
+// import { Link } from "expo-router";
+// import { useDepartmentTeachers } from "@/src/hooks/api/useUser";
+// import { useTheme } from "@/src/hooks/colors/useThemeColor";
+// import { Swipeable } from "react-native-gesture-handler";
+// import { useUpdateTeacher } from "@/src/hooks/api/useUser"; // Import the update hook
+
+// interface Teacher {
+//   _id: string;
+//   name: string;
+//   email: string;
+//   role: "admin" | "teacher" | "student";
+//   mentor_of?: string;
+// }
+
+// const TeachersIndexPage = () => {
+//   const { departmentId, name } = useLocalSearchParams<{
+//     departmentId: string;
+//     name: string;
+//   }>();
+//   const { colors } = useTheme();
+//   const { data, isFetching, isError, error, refetch } =
+//     useDepartmentTeachers(departmentId);
+
+//   // Use the update hook
+//   const { mutate: updateTeacher, isLoading: isUpdating } = useUpdateTeacher();
+
+//   // State to handle teacher editing
+//   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
+//   const [editedName, setEditedName] = useState<string>("");
+//   const [editedEmail, setEditedEmail] = useState<string>("");
+//   const [editedRole, setEditedRole] = useState<string>("teacher");
+//   const [editedPassword, setEditedPassword] = useState<string>("");
+
+//   // State for confirmation dialog
+//   const [showDeleteConfirmation, setShowDeleteConfirmation] =
+//     useState<boolean>(false);
+//   const [teacherToDelete, setTeacherToDelete] = useState<Teacher | null>(null);
+
+//   const renderTeacher = ({ item }: { item: Teacher }) => {
+//     const renderRightActions = () => (
+//       <View style={styles.swipeActionsContainer}>
+//         <TouchableOpacity
+//           style={[styles.swipeButton, styles.editButton]}
+//           onPress={() => handleEdit(item)}
+//         >
+//           <Icon name="pencil" size={30} color="white" />
+//         </TouchableOpacity>
+//         <TouchableOpacity
+//           style={[styles.swipeButton, styles.deleteButton]}
+//           onPress={() => handleDelete(item)}
+//         >
+//           <Icon name="trash" size={30} color="white" />
+//         </TouchableOpacity>
+//       </View>
+//     );
+
+//     const handleEdit = (teacher: Teacher) => {
+//       setEditingTeacher(teacher);
+//       setEditedName(teacher.name);
+//       setEditedEmail(teacher.email);
+//       setEditedRole(teacher.role);
+//       setEditedPassword(""); // Clear password field when editing
+//     };
+
+//     const handleDelete = (teacher: Teacher) => {
+//       setTeacherToDelete(teacher); // Set the teacher to be deleted
+//       setShowDeleteConfirmation(true); // Show the confirmation dialog
+//     };
+
+//     const handleCancelDelete = () => {
+//       setShowDeleteConfirmation(false); // Close the confirmation dialog
+//       setTeacherToDelete(null); // Reset the teacher to delete
+//     };
+
+//     const handleConfirmDelete = () => {
+//       // Placeholder for the actual delete functionality
+//       console.log("Teacher to be deleted:", teacherToDelete);
+//       setShowDeleteConfirmation(false); // Close the confirmation dialog
+//       setTeacherToDelete(null); // Reset the teacher to delete
+//     };
+
+//     return (
+//       <View style={styles.teacherCardContainer}>
+//         {/* Confirmation dialog, positioned relative to the teacher card */}
+//         {showDeleteConfirmation && teacherToDelete?._id === item._id && (
+//           <View style={styles.confirmationOverlay}>
+//             <View style={styles.confirmationCard}>
+//               <Text style={styles.confirmationTitle}>
+//                 Are you sure you want to delete {item.name}?
+//               </Text>
+//               <View style={styles.confirmationButtons}>
+//                 <TouchableOpacity
+//                   style={styles.cancelButton}
+//                   onPress={handleCancelDelete}
+//                 >
+//                   <Text style={styles.confirmationButtonText}>Cancel</Text>
+//                 </TouchableOpacity>
+//                 <TouchableOpacity
+//                   style={[styles.confirmButton, styles.deleteButton]}
+//                   onPress={handleConfirmDelete}
+//                 >
+//                   <Text style={styles.confirmationButtonText}>Delete</Text>
+//                 </TouchableOpacity>
+//               </View>
+//             </View>
+//           </View>
+//         )}
+
+//         {/* Edit form */}
+//         {editingTeacher?._id === item._id && (
+//           <View style={styles.editFormOverlay}>
+//             <View style={styles.editFormCard}>
+//               <Text style={styles.editFormTitle}>Edit Teacher</Text>
+//               <TextInput
+//                 style={styles.input}
+//                 placeholder="Edit Name"
+//                 value={editedName}
+//                 onChangeText={setEditedName}
+//               />
+//               <TextInput
+//                 style={styles.input}
+//                 placeholder="Edit Email"
+//                 value={editedEmail}
+//                 onChangeText={setEditedEmail}
+//               />
+//               <TextInput
+//                 style={styles.input}
+//                 placeholder="Edit Role"
+//                 value={editedRole}
+//                 onChangeText={setEditedRole}
+//               />
+//               <TextInput
+//                 style={styles.input}
+//                 placeholder="Edit Password"
+//                 value={editedPassword}
+//                 secureTextEntry
+//                 onChangeText={setEditedPassword}
+//               />
+//               <View style={styles.editFormButtons}>
+//                 <TouchableOpacity
+//                   style={styles.cancelButton}
+//                   onPress={handleCancelEdit}
+//                 >
+//                   <Text style={styles.confirmationButtonText}>Cancel</Text>
+//                 </TouchableOpacity>
+//                 <TouchableOpacity
+//                   style={[
+//                     styles.confirmButton,
+//                     isUpdating && styles.disabledButton,
+//                   ]}
+//                   onPress={handleConfirmEdit}
+//                   disabled={isUpdating}
+//                 >
+//                   <Text style={styles.confirmationButtonText}>
+//                     {isUpdating ? "Updating..." : "Confirm"}
+//                   </Text>
+//                 </TouchableOpacity>
+//               </View>
+//             </View>
+//           </View>
+//         )}
+
+//         {/* Teacher card */}
+//         <Swipeable renderRightActions={renderRightActions}>
+//           <TouchableOpacity style={styles.teacherCard}>
+//             <Text style={styles.teacherText}>Name: {item.name}</Text>
+//             <Text style={styles.teacherText}>Email: {item.email}</Text>
+//             {item.mentor_of && (
+//               <Text style={styles.teacherText}>
+//                 Mentor Of: {item.mentor_of}
+//               </Text>
+//             )}
+//           </TouchableOpacity>
+//         </Swipeable>
+//       </View>
+//     );
+//   };
+
+//   if (isFetching) {
+//     return (
+//       <View style={styles.loadingContainer}>
+//         <ActivityIndicator size="large" color="#007BFF" />
+//       </View>
+//     );
+//   }
+
+//   return (
+//     <View
+//       style={[
+//         styles.container,
+//         { backgroundColor: colors.secondaryBackground },
+//       ]}
+//     >
+//       <Stack.Screen options={{ title: `${name} Teachers` }} />
+//       <Text style={[styles.title, { color: colors.text }]}>
+//         {name} Teachers
+//       </Text>
+
+//       {isError ? (
+//         <View style={styles.errorContainer}>
+//           <Text style={styles.errorText}>
+//             Error loading teachers: {error?.message || "Unknown error"}
+//           </Text>
+//           <TouchableOpacity onPress={() => refetch()}>
+//             <Text style={styles.retryText}>Retry</Text>
+//           </TouchableOpacity>
+//         </View>
+//       ) : (
+//         <FlatList
+//           data={data?.data || []}
+//           keyExtractor={(item, index) => item?._id || index.toString()}
+//           renderItem={renderTeacher}
+//           ListEmptyComponent={
+//             <Text style={styles.emptyText}>No teachers available</Text>
+//           }
+//           refreshing={isFetching}
+//           onRefresh={refetch}
+//         />
+//       )}
+
+//       <Link
+//         href={`/Home/departments/${departmentId}/teachers/teacherUpload`}
+//         asChild
+//       >
+//         <TouchableOpacity style={styles.button}>
+//           <Icon name="add" size={40} color="white" />
+//         </TouchableOpacity>
+//       </Link>
+//     </View>
+//   );
+// };
+
+// const styles = StyleSheet.create({
+//   container: {
+//     flex: 1,
+//     padding: 20,
+//   },
+//   title: {
+//     fontSize: 24,
+//     fontWeight: "bold",
+//     marginBottom: 20,
+//   },
+//   teacherCardContainer: {
+//     position: "relative",
+//     marginVertical: 8,
+//   },
+//   teacherCard: {
+//     backgroundColor: "#007BFF",
+//     padding: 15,
+//     borderRadius: 10,
+//   },
+//   teacherText: {
+//     color: "white",
+//     fontSize: 16,
+//     marginBottom: 4,
+//   },
+//   input: {
+//     backgroundColor: "#f2f2f2",
+//     padding: 10,
+//     marginVertical: 8,
+//     borderRadius: 5,
+//   },
+//   editFormOverlay: {
+//     position: "absolute",
+//     top: 50,
+//     left: 0,
+//     right: 0,
+//     bottom: 0,
+//     backgroundColor: "rgba(0, 0, 0, 0.5)",
+//     justifyContent: "center",
+//     alignItems: "center",
+//     zIndex: 999,
+//   },
+//   editFormCard: {
+//     backgroundColor: "white",
+//     padding: 30,
+//     borderRadius: 10,
+//     width: "100%",
+//     marginTop: 30,
+//     marginBottom: -400,
+//     alignItems: "center",
+//   },
+//   editFormTitle: {
+//     fontSize: 20,
+//     fontWeight: "bold",
+//     marginBottom: 10,
+//   },
+//   editFormButtons: {
+//     flexDirection: "row",
+//     justifyContent: "center",
+//     marginTop: 15,
+//   },
+//   cancelButton: {
+//     backgroundColor: "#007BFF",
+//     padding: 7,
+//     borderRadius: 5,
+//     marginRight: -130,
+//     marginBottom: 5,
+//   },
+//   confirmButton: {
+//     backgroundColor: "#F44336",
+//     padding: 7,
+//     borderRadius: 5,
+//     marginBottom: 5,
+//   },
+//   confirmationButtonText: {
+//     fontSize: 16,
+//     color: "white",
+//   },
+//   disabledButton: {
+//     backgroundColor: "#ddd", // Grey out the button when disabled
+//   },
+//   swipeActionsContainer: {
+//     flexDirection: "row",
+//     justifyContent: "flex-end",
+//     paddingVertical: 20,
+//   },
+//   swipeButton: {
+//     marginHorizontal: 5,
+//     justifyContent: "center",
+//     alignItems: "center",
+//     height: 50,
+//     width: 50,
+//     borderRadius: 25,
+//   },
+//   editButton: {
+//     backgroundColor: "green",
+//   },
+//   deleteButton: {
+//     backgroundColor: "#F44336",
+//   },
+//   loadingContainer: {
+//     flex: 1,
+//     justifyContent: "center",
+//     alignItems: "center",
+//   },
+//   emptyText: {
+//     textAlign: "center",
+//     fontSize: 16,
+//     color: "#666",
+//     marginTop: 20,
+//   },
+//   button: {
+//     position: "absolute",
+//     bottom: 20,
+//     right: 20,
+//     backgroundColor: "#007BFF",
+//     borderRadius: 50,
+//     width: 60,
+//     height: 60,
+//     justifyContent: "center",
+//     alignItems: "center",
+//     shadowColor: "#000",
+//     shadowOpacity: 0.3,
+//     shadowRadius: 4,
+//     elevation: 5,
+//   },
+//   errorContainer: {
+//     flex: 1,
+//     justifyContent: "center",
+//     alignItems: "center",
+//     padding: 20,
+//   },
+//   errorText: {
+//     color: "red",
+//     fontSize: 16,
+//     textAlign: "center",
+//     marginBottom: 20,
+//   },
+//   retryText: {
+//     color: "#007BFF",
+//     fontSize: 16,
+//     textDecorationLine: "underline",
+//   },
+//   confirmationOverlay: {
+//     position: "absolute",
+//     top: 0,
+//     left: 0,
+//     right: 0,
+//     bottom: 0,
+//     backgroundColor: "rgba(0, 0, 0, 0.5)",
+//     justifyContent: "center",
+//     alignItems: "center",
+//     zIndex: 999,
+//   },
+//   confirmationCard: {
+//     backgroundColor: "white",
+//     padding: 4,
+//     borderRadius: 10,
+//     width: "100%",
+//     alignItems: "center",
+//   },
+//   confirmationTitle: {
+//     fontSize: 18,
+//     fontWeight: "bold",
+//     marginBottom: 20,
+//   },
+//   confirmationButtons: {
+//     flexDirection: "row",
+//     justifyContent: "space-around",
+//     width: "100%",
+//   },
+// });
+
+// export default TeachersIndexPage;
+
 import { Stack, useLocalSearchParams } from "expo-router";
+import { useState } from "react";
 import {
   View,
   Text,
@@ -6,10 +425,17 @@ import {
   FlatList,
   ActivityIndicator,
   TouchableOpacity,
+  TextInput,
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { Link } from "expo-router";
-import { useDepartmentTeachers } from "@/src/hooks/api/useUser";
+import {
+  useDepartmentTeachers,
+  useDeleteTeacher,
+} from "@/src/hooks/api/useUser";
+import { useTheme } from "@/src/hooks/colors/useThemeColor";
+import { Swipeable } from "react-native-gesture-handler";
+import { useUpdateTeacher } from "@/src/hooks/api/useUser"; // Import the update hook
 
 interface Teacher {
   _id: string;
@@ -24,30 +450,176 @@ const TeachersIndexPage = () => {
     departmentId: string;
     name: string;
   }>();
-
-  console.log(departmentId);
+  const { colors } = useTheme();
   const { data, isFetching, isError, error, refetch } =
     useDepartmentTeachers(departmentId);
 
+  // Use the update hook
+  const { mutate: updateTeacher } = useUpdateTeacher();
+
+  // Use the delete hook
+  const { mutate: deleteTeacher } = useDeleteTeacher();
+
+  // State to handle teacher editing
+  const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
+  const [editedName, setEditedName] = useState<string>("");
+  const [editedEmail, setEditedEmail] = useState<string>("");
+  const [editedRole, setEditedRole] = useState<string>("teacher");
+  //const [editedPassword, setEditedPassword] = useState<string>("");
+  const [loading, setLoading] = useState(false);
+
+  // State for confirmation dialog
+  const [showDeleteConfirmation, setShowDeleteConfirmation] =
+    useState<boolean>(false);
+  const [teacherToDelete, setTeacherToDelete] = useState<Teacher | null>(null);
+
   const renderTeacher = ({ item }: { item: Teacher }) => {
-    if (!item.name) {
-      console.warn("Item is missing the 'name' property:", item);
-    }
-    if (!item.email) {
-      console.warn("Item is missing the 'email' property:", item);
-    }
-    // if (!item.role) {
-    //   console.warn("Item is missing the 'role' property:", item);
-    // }
+    const renderRightActions = () => (
+      <View style={styles.swipeActionsContainer}>
+        <TouchableOpacity
+          style={[styles.swipeButton, styles.editButton]}
+          onPress={() => handleEdit(item)}
+        >
+          <Icon name="pencil" size={30} color="white" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.swipeButton, styles.deleteButton]}
+          onPress={() => handleDelete(item)}
+        >
+          <Icon name="trash" size={30} color="white" />
+        </TouchableOpacity>
+      </View>
+    );
+
+    const handleEdit = (teacher: Teacher) => {
+      setEditingTeacher(teacher);
+      setEditedName(teacher.name);
+      setEditedEmail(teacher.email);
+      setEditedRole(teacher.role);
+      //setEditedPassword(""); // Clear password field when editing
+    };
+
+    const handleConfirmEdit = () => {
+      // updateTeacher({})
+    };
+
+    const handleDelete = (teacher: Teacher) => {
+      setTeacherToDelete(teacher); // Set the teacher to be deleted
+      setShowDeleteConfirmation(true); // Show the confirmation dialog
+    };
+
+    const handleCancelDelete = () => {
+      setShowDeleteConfirmation(false); // Close the confirmation dialog
+      setTeacherToDelete(null); // Reset the teacher to delete
+    };
+
+    const handleConfirmDelete = async () => {
+      if (teacherToDelete) {
+        // Call the deleteTeacher mutation
+        deleteTeacher({ departmentId, teacherId: teacherToDelete._id });
+        setShowDeleteConfirmation(false); // Close the confirmation dialog
+        setTeacherToDelete(null); // Reset the teacher to delete
+        refetch(); // Refetch the teacher list
+      }
+    };
+
     return (
-      <TouchableOpacity style={styles.teacherCard}>
-        <Text style={styles.teacherText}>Name: {item.name}</Text>
-        <Text style={styles.teacherText}>Email: {item.email}</Text>
-        {/* <Text style={styles.teacherText}>Role: {item.role}</Text> */}
-        {item.mentor_of && (
-          <Text style={styles.teacherText}>Mentor Of: {item.mentor_of}</Text>
+      <View style={styles.teacherCardContainer}>
+        {/* Confirmation dialog, positioned relative to the teacher card */}
+        {showDeleteConfirmation && teacherToDelete?._id === item._id && (
+          <View style={styles.confirmationOverlay}>
+            <View style={styles.confirmationCard}>
+              <Text style={styles.confirmationTitle}>
+                Are you sure you want to delete {item.name}?
+              </Text>
+              <View style={styles.confirmationButtons}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={handleCancelDelete}
+                >
+                  <Text style={styles.confirmationButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.confirmButton, styles.deleteButton]}
+                  onPress={handleConfirmDelete}
+                  disabled={loading}
+                >
+                  <Text style={styles.confirmationButtonText}>
+                    {loading ? "Deleting..." : "Delete"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
         )}
-      </TouchableOpacity>
+
+        {/* Edit form */}
+        {editingTeacher?._id === item._id && (
+          <View style={styles.editFormOverlay}>
+            <View style={styles.editFormCard}>
+              <Text style={styles.editFormTitle}>Edit Teacher</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Edit Name"
+                value={editedName}
+                onChangeText={setEditedName}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Edit Email"
+                value={editedEmail}
+                onChangeText={setEditedEmail}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Edit Role"
+                value={editedRole}
+                onChangeText={setEditedRole}
+              />
+              {/* <TextInput
+                style={styles.input}
+                placeholder="Edit Password"
+                value={editedPassword}
+                secureTextEntry
+                onChangeText={setEditedPassword}
+              /> */}
+              <View style={styles.editFormButtons}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={handleCancelDelete}
+                >
+                  <Text style={styles.confirmationButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.confirmButton,
+                    loading && styles.disabledButton,
+                  ]}
+                  onPress={handleConfirmEdit}
+                  disabled={loading}
+                >
+                  <Text style={styles.confirmationButtonText}>
+                    {loading ? "Updating..." : "Confirm"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* Teacher card */}
+        <Swipeable renderRightActions={renderRightActions}>
+          <TouchableOpacity style={styles.teacherCard}>
+            <Text style={styles.teacherText}>Name: {item.name}</Text>
+            <Text style={styles.teacherText}>Email: {item.email}</Text>
+            {item.mentor_of && (
+              <Text style={styles.teacherText}>
+                Mentor Of: {item.mentor_of}
+              </Text>
+            )}
+          </TouchableOpacity>
+        </Swipeable>
+      </View>
     );
   };
 
@@ -59,23 +631,17 @@ const TeachersIndexPage = () => {
     );
   }
 
-  // if (isError) {
-  //   return (
-  //     <View style={styles.errorContainer}>
-  //       <Text style={styles.errorText}>
-  //         Error loading teachers. Please try again.
-  //       </Text>
-  //       <TouchableOpacity onPress={() => refetch()}>
-  //         <Text style={styles.retryText}>Retry</Text>
-  //       </TouchableOpacity>
-  //     </View>
-  //   );
-  // }
-
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: colors.secondaryBackground },
+      ]}
+    >
       <Stack.Screen options={{ title: `${name} Teachers` }} />
-      <Text style={styles.title}>{name} Teachers</Text>
+      <Text style={[styles.title, { color: colors.text }]}>
+        {name} Teachers
+      </Text>
 
       {isError ? (
         <View style={styles.errorContainer}>
@@ -115,23 +681,105 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: "#f5f5f5",
   },
   title: {
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 20,
   },
+  teacherCardContainer: {
+    position: "relative",
+    marginVertical: 8,
+  },
   teacherCard: {
     backgroundColor: "#007BFF",
     padding: 15,
     borderRadius: 10,
-    marginVertical: 8,
   },
   teacherText: {
     color: "white",
     fontSize: 16,
     marginBottom: 4,
+  },
+  input: {
+    backgroundColor: "#f2f2f2",
+    padding: 10,
+    marginVertical: 8,
+    borderRadius: 5,
+  },
+  editFormOverlay: {
+    position: "absolute",
+    top: 50,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 999,
+  },
+  editFormCard: {
+    backgroundColor: "white",
+    padding: 30,
+    borderRadius: 10,
+    width: "100%",
+    marginTop: 30,
+    marginBottom: -400,
+    alignItems: "center",
+  },
+  editFormTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  editFormButtons: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 15,
+  },
+  cancelButton: {
+    backgroundColor: "#007BFF",
+    padding: 7,
+    borderRadius: 5,
+    marginRight: -130,
+    marginBottom: 5,
+  },
+  confirmButton: {
+    backgroundColor: "#F44336",
+    padding: 7,
+    borderRadius: 5,
+    marginBottom: 5,
+  },
+  confirmationButtonText: {
+    fontSize: 16,
+    color: "white",
+  },
+  disabledButton: {
+    backgroundColor: "#ddd", // Grey out the button when disabled
+  },
+  swipeActionsContainer: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    paddingVertical: 20,
+  },
+  swipeButton: {
+    marginHorizontal: 5,
+    justifyContent: "center",
+    alignItems: "center",
+    height: 50,
+    width: 50,
+    borderRadius: 25,
+  },
+  editButton: {
+    backgroundColor: "green",
+  },
+  deleteButton: {
+    backgroundColor: "#F44336",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   emptyText: {
     textAlign: "center",
@@ -154,11 +802,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
   errorContainer: {
     flex: 1,
     justifyContent: "center",
@@ -175,6 +818,34 @@ const styles = StyleSheet.create({
     color: "#007BFF",
     fontSize: 16,
     textDecorationLine: "underline",
+  },
+  confirmationOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 999,
+  },
+  confirmationCard: {
+    backgroundColor: "white",
+    padding: 4,
+    borderRadius: 10,
+    width: "100%",
+    alignItems: "center",
+  },
+  confirmationTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 20,
+  },
+  confirmationButtons: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: "100%",
   },
 });
 

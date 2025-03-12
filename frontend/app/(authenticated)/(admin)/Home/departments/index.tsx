@@ -52,6 +52,19 @@ const HomeScreen = () => {
     );
   };
 
+  const handleDeleteDepartment = (departmentId: string) => {
+    deleteDepartment(departmentId, {
+      onSuccess: () => {
+        setIsDeleted(true);
+        setShowConfirmCard(null); // Hide the confirm card after successful deletion
+      },
+      onError: () => {
+        setIsDeleted(false);
+        setShowConfirmCard(null); // Hide the confirm card on error
+      },
+    });
+  };
+
   const renderRightActions = (item: Department) => {
     return (
       <TouchableOpacity
@@ -110,7 +123,35 @@ const HomeScreen = () => {
       );
     }
 
-    // Regular render if not editing
+    // If confirmation card should be shown
+    if (showConfirmCard === item._id) {
+      return (
+        <View
+          style={[styles.confirmCard, { backgroundColor: colors.background }]}
+        >
+          <Text style={[styles.confirmText, { color: colors.text }]}>
+            Are you sure you want to delete {item.name} ? It will delete all the
+            papers and teachers in this department.
+          </Text>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => setShowConfirmCard(null)} // Close confirmation
+            >
+              <Text style={styles.buttonText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.confirmButton}
+              onPress={() => handleDeleteDepartment(item._id)}
+            >
+              <Text style={styles.buttonText}>Delete</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      );
+    }
+
+    // Regular render if not editing or confirming delete
     return (
       <Swipeable
         renderRightActions={() => renderRightActions(item)}
