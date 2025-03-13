@@ -507,21 +507,20 @@ export const addComment = async (req, res) => {
         })
           .select("token -_id")
           .lean();
-        console.log(pushTokens);
 
-        // if (pushTokens.length > 0) {
-        //   await sendBulkNotifications(
-        //     pushTokens.map((t) => t.token),
-        //     {
-        //       title: "New comment on your discussion",
-        //       body: comment.content,
-        //       payload: {
-        //         type: "discussion",
-        //         id: discussion._id.toString(),
-        //       },
-        //     }
-        //   );
-        // }
+        if (pushTokens.length > 0) {
+          await sendBulkNotifications(
+            pushTokens.map((t) => t.token),
+            {
+              title: "New comment on your discussion",
+              body: comment.content,
+              payload: {
+                type: "discussion",
+                id: discussion._id.toString(),
+              },
+            }
+          );
+        }
       } catch (error) {
         console.error("Notification Error: ", error.message);
       }
