@@ -17,15 +17,16 @@ export const useClassrooms = (filters?: {
     queryFn: () => classroomService.getClassrooms(filters),
   });
 };
-export const useBlocks = () => {
-  return useQuery({
-    queryKey: ["blocks"],
-    queryFn: async () => {
-      const response = await axiosInstance.get("/blocks");
-      return response.data;
-    },
-  });
-};
+
+// export const useBlocks = () => {
+//   return useQuery({
+//     queryKey: ["blocks"],
+//     queryFn: async () => {
+//       const response = await axiosInstance.get("/blocks");
+//       return response.data;
+//     },
+//   });
+// };
 /*------------------------------
  Get a single classroom by ID
 -------------------------------*/
