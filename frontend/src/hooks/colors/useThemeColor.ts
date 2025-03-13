@@ -6,6 +6,8 @@ const tintColorDark = "#fff";
 
 export const LightTheme = {
   text: "#36393b",
+  textSecondary: "#687076",
+  primary: "007BFF",
   background: "#ffffff",
   secondaryBackground: "#d0cfcf",
   tint: tintColorLight,
@@ -16,6 +18,8 @@ export const LightTheme = {
 };
 export const DarkTheme = {
   text: "#ECEDEE",
+  textSecondary: "#687076",
+  primary: "007BFF",
   background: "#151718",
   secondaryBackground: "#1c1d1f",
   tint: tintColorDark,

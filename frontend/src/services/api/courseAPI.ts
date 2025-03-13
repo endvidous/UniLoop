@@ -22,6 +22,11 @@ export type Semester = {
   papers: { Paper: Partial<Paper>; Teacher: Partial<Teacher> }[];
 };
 
+export type CreatePapersType = {
+  paper: string,
+  teacher: string
+}
+
 export const courseService = {
   getCourses: async (): Promise<{ data: Course[]; message: string }> => {
     const response = await axiosInstance.get("/admin/courses/");
@@ -115,7 +120,7 @@ export const SemesterService = {
   createSemesters: async (
     courseId: string,
     sem_no: number,
-    papers: Semester["papers"]
+    papers: Array<CreatePapersType>
   ) => {
     const response = await axiosInstance.post(
       `/admin/courses/${courseId}/semesters/${sem_no}`,

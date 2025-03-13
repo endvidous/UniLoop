@@ -281,7 +281,7 @@ export const getBatchStudents = async (req, res) => {
     }
 
     if (!batch.students || batch.students.length === 0) {
-      return res.status(404).json({
+      return res.status(200).json({
         message: "No students found in this batch",
         data: [],
       });
@@ -307,6 +307,7 @@ export const createStudents = async (req, res) => {
   try {
     //Validate if empty
     checkIfEmpty(students);
+    console.log(batchId, students);
 
     //Format the students
     const studentIDs = await Promise.all(
@@ -320,9 +321,9 @@ export const createStudents = async (req, res) => {
             roll_no: student.roll_no,
           });
           return newStudent._id;
-        } catch {
+        } catch (error) {
           throw new Error(
-            `Error creating student ${student.name}: ${student.email}`
+            `Error creating student ${student.name}: ${student.email}: ${error.message}`
           );
         }
       })
