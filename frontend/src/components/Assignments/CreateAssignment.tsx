@@ -35,8 +35,6 @@ const CreateAssignment = ({ onDismiss }: { onDismiss: () => void }) => {
       defaultValues: {
         title: "",
         description: "",
-        deadline: new Date(),
-        late_deadline: new Date(),
         posted_to: "",
       },
     });

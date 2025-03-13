@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/src/context/AuthContext";
 import { NavigationService } from "@/src/services/navigation";
+import { usePushNotifications } from "@/src/hooks/usePushNotification";
 
 export const NotificationProvider = ({
   children,
@@ -11,7 +12,7 @@ export const NotificationProvider = ({
 }) => {
   const router = useRouter();
   const { user } = useAuth();
-
+  const { expoPushToken, notification } = usePushNotifications();
   useEffect(() => {
     if (user?.role) {
       NavigationService.initialize(router, user.role);

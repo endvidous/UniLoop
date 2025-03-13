@@ -21,7 +21,7 @@ router.delete("/:departmentId", deleteDepartment);
 //Paper routes
 router.get("/:departmentId/papers", getPapers);
 router.post("/:departmentId/papers", createPapers);
-router.patch(":departmentId/papers/:paperId", updatePaper);
-router.delete(":departmentId/papers/:paperId", deletePaper);
+router.patch("/:departmentId/papers/:paperId", updatePaper);
+router.delete("/:departmentId/papers/:paperId", deletePaper);
 
 export default router;

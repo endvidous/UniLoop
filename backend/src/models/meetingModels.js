@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { User } from "./userModels.js";
-import { Reminders } from "./remindersModels.js";
+import { Reminder } from "./remindersModels.js";
 const Schema = mongoose.Schema;
 
 const meetingSchema = new Schema(
@@ -104,19 +104,14 @@ meetingSchema.pre("save", async function (next) {
         : null;
 
       if (studentId) {
-        // Safe regex pattern for title matching
+        // Escape regex for safety
         const safePurpose = this.purpose.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        await Reminders.updateOne(
-          { _id: studentId },
-          {
-            $pull: {
-              reminders: {
-                deadline: this.timing,
-                title: { $regex: new RegExp(safePurpose, "i") },
-              },
-            },
-          }
-        );
+
+        await Reminder.deleteMany({
+          userId: studentId,
+          deadline: this.timing,
+          title: { $regex: new RegExp(safePurpose, "i") },
+        });
       }
     } catch (error) {
       return next(error);
@@ -142,16 +137,10 @@ meetingSchema.pre("remove", async function (next) {
     });
 
     if (student) {
-      await Reminders.updateOne(
-        { _id: student._id },
-        {
-          $pull: {
-            reminders: {
-              description: { $regex: `\\[Meeting ID: ${this._id}\\]` },
-            },
-          },
-        }
-      );
+      await Reminder.deleteMany({
+        userId: student._id,
+        description: { $regex: `\\[Meeting ID: ${this._id}\\]` },
+      });
     }
     next();
   } catch (err) {

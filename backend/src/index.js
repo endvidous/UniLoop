@@ -11,6 +11,7 @@ import assignmentRoutes from "./routes/common/assignmentRoutes.js";
 import notificationRoutes from "./routes/notifications/notificationRoutes.js";
 import classRep_MentorRoutes from "./routes/common/classrepMentorRoutes.js";
 import { authMiddleware, isAdmin } from "./middleware/authMiddleware.js";
+import reminderRoutes from "./routes/common/reminderRoutes.js";
 
 const router = express.Router();
 
@@ -40,5 +41,6 @@ router.use(
 router.use("/classrooms", highLimitJsonParser, authMiddleware, classroomRoutes);
 router.use("/assignments", defaultJsonParser, authMiddleware, assignmentRoutes);
 router.use("/", defaultJsonParser, authMiddleware, notificationRoutes);
-router.use("/users", defaultJsonParser, classRep_MentorRoutes);
+router.use("/users", defaultJsonParser, authMiddleware, classRep_MentorRoutes);
+router.use("/reminders", defaultJsonParser, authMiddleware, reminderRoutes);
 export default router;

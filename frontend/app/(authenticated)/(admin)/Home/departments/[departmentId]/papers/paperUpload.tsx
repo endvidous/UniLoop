@@ -21,6 +21,7 @@ import {
 import { Paper } from "@/src/services/api/departmentAPI";
 import CsvUploaderComponent from "@/src/components/common/CsvEntry";
 import ManualEntryComponent from "@/src/components/common/ManualEntry";
+import { useTheme } from "@/src/hooks/colors/useThemeColor";
 
 // Extend Paper interface to include an internal form ID
 interface PaperFormItem extends Omit<Paper, "_id"> {
@@ -36,6 +37,7 @@ interface PaperFormData {
 
 const PaperTable = () => {
   const { departmentId } = useLocalSearchParams<{ departmentId: string }>();
+  const { colors } = useTheme();
 
   const {
     control,
@@ -227,7 +229,10 @@ const PaperTable = () => {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[
+        styles.container,
+        { backgroundColor: colors.secondaryBackground },
+      ]}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
     >
@@ -245,7 +250,7 @@ const PaperTable = () => {
               isEditingCSV={isEditingCSV}
               errors={errors}
               inputConfig={inputConfig}
-              title="Manual Paper Entry"
+              title="Manule Paper" //{<Text style={styles.title}>Manual Paper Entry</Text>}
             />
 
             {showUploadSection && !isEditingCSV && !isKeyboardVisible && (
@@ -281,7 +286,6 @@ const PaperTable = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f9fa",
   },
   saveButton: {
     backgroundColor: "#28A745",
@@ -305,6 +309,11 @@ const styles = StyleSheet.create({
   bottomPadding: {
     height: 60,
   },
+  // title: {
+  //   color: 'blue', // Change this to your preferred color
+  //   fontSize: 18,  // Optional: Adjust the font size if needed
+  //   fontWeight: 'bold', // Optional: Add styling like bold
+  // },
 });
 
 export default PaperTable;

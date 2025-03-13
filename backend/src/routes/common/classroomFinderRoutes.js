@@ -17,7 +17,6 @@ router.get("/", getAllClassrooms);
 router.get("/:classroomId", getClassroomById);
 router.post(
   "/",
-  express.json({ limit: "50mb" }),
   isAdmin,
   createBulkClassrooms
 );

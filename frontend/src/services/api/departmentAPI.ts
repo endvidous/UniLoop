@@ -71,11 +71,16 @@ export const papersService = {
     paperId: string,
     paperData: Partial<Paper>
   ) => {
-    const response = await axiosInstance.patch(
-      `/admin/departments/${departmentId}/papers/${paperId}`,
-      paperData
-    );
-    return response.data;
+    try {
+      const response = await axiosInstance.patch(
+        `/admin/departments/${departmentId}/papers/${paperId}`,
+        paperData
+      );
+      return response.data;
+    } catch (error: any) {
+      const message = error.response;
+      console.log("Update paper message", message);
+    }
   },
 
   deletePaper: async (departmentId: string, paperId: string) => {
