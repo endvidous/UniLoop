@@ -23,10 +23,12 @@ type CSVCleanerProps = {
 
 const sanitizeHeader = (header: string): string => {
   // Remove non-alphanumeric characters and convert to lowercase
-  return header
-    .replace(/[^a-zA-Z0-9]/g, "")
-    .toLowerCase()
-    .trim();
+  return (
+    header
+      // .replace(/[^a-zA-Z0-9]/g, "")
+      .toLowerCase()
+      .trim()
+  );
 };
 
 const CSVCleaner: React.FC<CSVCleanerProps> = ({
