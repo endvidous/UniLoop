@@ -94,7 +94,7 @@ const SemestersScreen = () => {
             <TouchableOpacity
               style={[
                 styles.paperTeacherButton,
-                { backgroundColor: colors.background },
+                { backgroundColor: colors.secondaryBackground },
               ]}
               onPress={() => navigateToPaperTeacherMapping(item._id)}
             >
@@ -124,15 +124,21 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     opacity: 0.8,
-    marginBottom: 20,
+    marginBottom: 10,
   },
   cardContainer: {
-    marginVertical: 8,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 10,
+    gap: 10,
   },
   card: {
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 10,
+    borderRadius: 8,
+    width: "48%",
   },
   cardText: {
     color: "white",
@@ -144,8 +150,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 10,
     borderRadius: 8,
-    marginLeft: "auto",
-    marginRight: "auto",
+    width: "48%",
   },
   buttonText: {
     color: "white",

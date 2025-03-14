@@ -353,7 +353,7 @@ export const bookClassroom = async (req, res) => {
     });
   }
 };
-export const getAllBookings = async(req, res);
+// export const getAllBookings = async(req, res);
 // Approval Controller
 export const approveBooking = async (req, res) => {
   const session = await mongoose.startSession();

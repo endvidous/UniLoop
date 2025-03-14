@@ -5,7 +5,7 @@ import {
   courseService,
   Semester,
   SemesterService,
-  CreatePapersType
+  CreatePapersType,
 } from "@/src/services/api/courseAPI";
 import { queryKeys } from "@/src/services/api/queryKeys";
 
@@ -181,7 +181,7 @@ export const useUpdateSemester = () => {
       papers,
     }: {
       semesterId: string;
-      papers: Semester["papers"];
+      papers: { paper: string; teacher: string }[];
     }) => SemesterService.updateOneSemester(semesterId, papers),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({

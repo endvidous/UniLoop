@@ -1,5 +1,6 @@
 import axiosInstance from "./axiosConfig";
 import { Paper, Teacher } from "./departmentAPI";
+import { Student } from "./userAPI";
 
 export type Course = {
   _id: string;
@@ -13,6 +14,9 @@ export type Batch = {
   course: Partial<Course>;
   code: string;
   startYear: string;
+  students: Student[] | string[];
+  classReps: Student[] | string[];
+  mentors_of: Teacher[] | string[];
 };
 
 export type Semester = {
@@ -23,9 +27,9 @@ export type Semester = {
 };
 
 export type CreatePapersType = {
-  paper: string,
-  teacher: string
-}
+  paper: string;
+  teacher: string;
+};
 
 export const courseService = {
   getCourses: async (): Promise<{ data: Course[]; message: string }> => {
@@ -136,7 +140,10 @@ export const SemesterService = {
     return response.data;
   },
 
-  updateOneSemester: async (semesterId: string, papers: Semester["papers"]) => {
+  updateOneSemester: async (
+    semesterId: string,
+    papers: { paper: string; teacher: string }[]
+  ) => {
     const response = await axiosInstance.patch(
       `/admin/courses/semesters/${semesterId}`,
       {

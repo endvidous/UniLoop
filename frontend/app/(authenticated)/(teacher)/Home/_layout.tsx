@@ -1,12 +1,13 @@
 import { HeaderBackButton } from "@react-navigation/elements";
-import { Stack, useNavigation } from "expo-router";
+import { Stack, useNavigation, usePathname } from "expo-router";
 
 export default function AnnouncementsLayout() {
   const navigation = useNavigation();
+  const route = usePathname();
   return (
     <Stack
       screenOptions={() => ({
-        headerShown: navigation.canGoBack(),
+        headerShown: route !== "/Home",
         headerLeft: (props) =>
           navigation.canGoBack() ? (
             <HeaderBackButton

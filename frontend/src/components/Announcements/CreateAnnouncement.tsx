@@ -11,7 +11,7 @@ import {
 import { toast } from "@backpackapp-io/react-native-toast";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
   ActivityIndicator,
@@ -43,6 +43,9 @@ type FormData = {
 type FileWithKey = SelectedFile & { key: string };
 type CreateAnnouncementProps = {
   onDismiss: () => void;
+  batchId?: string;
+  departmentId?: string;
+  courseId?: string;
 };
 const MAX_ATTACHMENTS = 3;
 
@@ -52,13 +55,32 @@ const modelMapping = {
   Course: "Courses",
 };
 
-const CreateAnnouncement = ({ onDismiss }: CreateAnnouncementProps) => {
+const CreateAnnouncement = ({
+  onDismiss,
+  batchId,
+  departmentId,
+  courseId,
+}: CreateAnnouncementProps) => {
   const { control, handleSubmit, setValue, watch } = useForm<FormData>({
     defaultValues: {
       priority: 2,
       visibilityType: "General",
     },
   });
+
+  useEffect(() => {
+    if (departmentId) {
+      setValue("visibilityType", "Department");
+      setValue("postedToId", departmentId);
+    } else if (courseId) {
+      setValue("visibilityType", "Course");
+      setValue("postedToId", courseId);
+    } else if (batchId) {
+      setValue("visibilityType", "Batch");
+      setValue("postedToId", batchId);
+    }
+  }, [batchId, departmentId, courseId, setValue]);
+
   const { user } = useAuth();
   const { colors } = useTheme();
   const { data: associations } = useUserAssociations();

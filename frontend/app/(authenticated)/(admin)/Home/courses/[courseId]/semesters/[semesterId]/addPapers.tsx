@@ -294,7 +294,7 @@ const AddPaperPage = () => {
   }, [paperTeacherMappings]);
 
   // Initialize the mutation hook
-  const updateSemesterMutation = useUpdateSemester();
+  const { mutate: updateSemesterMutation } = useUpdateSemester();
 
   // Reset selections when department changes
   useEffect(() => {
@@ -389,15 +389,13 @@ const AddPaperPage = () => {
 
     // Convert paperTeacherMappings to the format expected by the API
     const formattedPapers = paperTeacherMappings.map((mapping) => ({
-      Paper: { _id: mapping.paperId },
-      Teacher: { _id: mapping.teacherId },
+      paper: mapping.paperId,
+      teacher: mapping.teacherId,
     }));
     console.log("Formatted data: ", formattedPapers);
     // Use the update semester mutation
-    console.log(
-        semesterId
-    );
-    updateSemesterMutation.mutate(
+    console.log(semesterId);
+    updateSemesterMutation(
       {
         semesterId: semesterId as string,
         papers: formattedPapers,

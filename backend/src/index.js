@@ -10,7 +10,7 @@ import classroomRoutes from "./routes/common/classroomFinderRoutes.js";
 import assignmentRoutes from "./routes/common/assignmentRoutes.js";
 import notificationRoutes from "./routes/notifications/notificationRoutes.js";
 import classRep_MentorRoutes from "./routes/common/classrepMentorRoutes.js";
-import { authMiddleware, isAdmin } from "./middleware/authMiddleware.js";
+import { authMiddleware } from "./middleware/authMiddleware.js";
 import reminderRoutes from "./routes/common/reminderRoutes.js";
 
 const router = express.Router();
@@ -22,7 +22,7 @@ const highLimitJsonParser = express.json({ limit: "5mb" });
 
 // Define routes
 router.use("/auth", defaultJsonParser, authRoutes);
-router.use("/admin", defaultJsonParser, authMiddleware, isAdmin, adminRoutes);
+router.use("/admin", defaultJsonParser, authMiddleware, adminRoutes);
 router.use(
   "/announcements",
   defaultJsonParser,

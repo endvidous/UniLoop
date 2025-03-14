@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -27,7 +27,13 @@ import { useTheme } from "@/src/hooks/colors/useThemeColor";
 type FileWithKey = SelectedFile & { key: string };
 const MAX_ATTACHMENTS = 2;
 
-const CreateAssignment = ({ onDismiss }: { onDismiss: () => void }) => {
+const CreateAssignment = ({
+  onDismiss,
+  batchId,
+}: {
+  onDismiss: () => void;
+  batchId?: string;
+}) => {
   const { colors } = useTheme();
 
   const { control, handleSubmit, setValue, watch } =
@@ -38,6 +44,12 @@ const CreateAssignment = ({ onDismiss }: { onDismiss: () => void }) => {
         posted_to: "",
       },
     });
+
+  useEffect(() => {
+    if (batchId) {
+      setValue("posted_to", batchId);
+    }
+  }, [batchId, setValue]);
 
   const deadline: Date | undefined = watch("deadline");
   const lateDeadline: Date | undefined = watch("late_deadline");
@@ -117,7 +129,12 @@ const CreateAssignment = ({ onDismiss }: { onDismiss: () => void }) => {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView
+      contentContainerStyle={[
+        styles.container,
+        { backgroundColor: colors.background },
+      ]}
+    >
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Create Assignment</Text>
         <TouchableOpacity onPress={onDismiss}>

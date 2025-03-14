@@ -207,7 +207,9 @@ export const deleteCourse = async (req, res) => {
     }
 
     // Find and delete all related semesters
-    const semesters = await Semesters.find({ course: courseId }).session(session);
+    const semesters = await Semesters.find({ course: courseId }).session(
+      session
+    );
     const semesterIds = semesters.map((semester) => semester._id);
     await Semesters.deleteMany({ _id: { $in: semesterIds } }).session(session);
 
@@ -217,7 +219,10 @@ export const deleteCourse = async (req, res) => {
     await Batches.deleteMany({ _id: { $in: batchIds } }).session(session);
 
     // Delete all students related to those batches
-    const studentIds = batches.reduce((acc, batch) => acc.concat(batch.students), []);
+    const studentIds = batches.reduce(
+      (acc, batch) => acc.concat(batch.students),
+      []
+    );
     await User.deleteMany({ _id: { $in: studentIds } }).session(session);
 
     // Delete the course
@@ -225,7 +230,10 @@ export const deleteCourse = async (req, res) => {
 
     await session.commitTransaction();
 
-    res.status(200).json({ message: "Course, related semesters, batches, and students deleted successfully" });
+    res.status(200).json({
+      message:
+        "Course, related semesters, batches, and students deleted successfully",
+    });
   } catch (err) {
     await session.abortTransaction();
     res.status(500).json({ message: `Error deleting course: ${err.message}` });
@@ -250,7 +258,7 @@ export const getOneBatch = async (req, res) => {
     const batch = await Batches.findById(batchId)
       .populate("course", "name code type") // populate course with selected fields
       .populate("students", "name email roll_no") // populate students with essential user details
-      .populate("classRepresentatives", "name email roll_no") // populate class reps similarly
+      .populate("classReps", "name email roll_no") // populate class reps similarly
       .populate("mentors", "name email"); // populate mentors
 
     if (!batch) {

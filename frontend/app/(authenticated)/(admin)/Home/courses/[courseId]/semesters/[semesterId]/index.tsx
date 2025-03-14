@@ -8,11 +8,16 @@ import {
   ScrollView,
   Alert,
 } from "react-native";
-import { useLocalSearchParams, Link, useRouter, RelativePathString } from "expo-router";
+import {
+  useLocalSearchParams,
+  Link,
+  useRouter,
+  RelativePathString,
+} from "expo-router";
 import Icon from "react-native-vector-icons/Ionicons";
 import { useTheme } from "@/src/hooks/colors/useThemeColor";
 import { useGetSemester } from "@/src/hooks/api/useCourses"; // Custom hook for semester papers
-import { useFocusEffect } from "@react-navigation/native";  // Import useFocusEffect
+import { useFocusEffect } from "@react-navigation/native"; // Import useFocusEffect
 
 // Mapping type definition
 interface PaperTeacherMapping {
@@ -191,7 +196,7 @@ const SemesterDetailsCard = ({
           <View style={styles.statItem}>
             <Icon name="people-outline" size={20} color={colors.primary} />
             <Text style={[styles.statValue, { color: colors.text }]}>
-              {new Set(semesterData.papers?.map((p: any) => p.Teacher._id))
+              {new Set(semesterData.papers?.map((p: any) => p.teacher._id))
                 .size || 0}{" "}
               Teachers
             </Text>
@@ -236,15 +241,16 @@ const SemesterPage = () => {
   useEffect(() => {
     if (semesterData && !isFetching) {
       // Transform the API response to match the PaperTeacherMapping format
+      console.log(semesterData.data);
       const transformedMappings = semesterData.data.papers.map(
-        (paper: any) => ({
-          paperId: paper.Paper._id,
-          paperName: paper.Paper.name,
-          paperCode: paper.Paper.code,
-          teacherId: paper.Teacher._id,
-          teacherName: paper.Teacher.name,
-          departmentId: paper.Paper.department._id,
-          departmentName: paper.Paper.department.name,
+        (paperAssignment: any) => ({
+          paperId: paperAssignment.paper._id,
+          paperName: paperAssignment.paper.name,
+          paperCode: paperAssignment.paper.code,
+          teacherId: paperAssignment.teacher._id,
+          teacherName: paperAssignment.teacher.name,
+          // departmentId: paperAssignment.paper.department,
+          // departmentName: "Unknown", // Assuming department name is not available in the current data structure
         })
       );
 
@@ -314,7 +320,8 @@ const SemesterPage = () => {
         style={[styles.button]}
         onPress={() =>
           router.push({
-            pathname: `/Home/courses/${courseId}/semesters/${semesterId}/addPapers` as RelativePathString,
+            pathname:
+              `/Home/courses/${courseId}/semesters/${semesterId}/addPapers` as RelativePathString,
           })
         }
       >
