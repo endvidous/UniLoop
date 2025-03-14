@@ -23,7 +23,7 @@ import ManualEntryComponent from "@/src/components/common/ManualEntry";
 interface StudentFormItem extends Omit<Student, "_id" | "role"> {
   name: string;
   email: string;
-  roll_no?: string;
+  rollnumber?: string;
   password: string; // Required for creating new students
   formId?: string; // Internal ID for form management only
 }
@@ -43,7 +43,7 @@ const StudentUpload = () => {
     formState: { errors },
   } = useForm<StudentFormData>({
     defaultValues: {
-      students: [{ name: "", email: "", roll_no: "", password: "" }],
+      students: [{ name: "", email: "", rollnumber: "", password: "" }],
     },
   });
 
@@ -85,20 +85,39 @@ const StudentUpload = () => {
   const checkForDuplicates = (newStudents: StudentFormItem[]): string[] => {
     if (!existingStudents) return [];
 
-    const duplicates = newStudents
+    // Check for duplicates in the newStudents array itself
+    const duplicateRollNumbers = newStudents
       .filter(
-        (student) => student.name.trim() !== "" && student.email.trim() !== ""
+        (student) => student.rollnumber && student.rollnumber.trim() !== ""
+      )
+      .filter(
+        (student, index, self) =>
+          self.findIndex((s) => s.rollnumber === student.rollnumber) !== index
+      )
+      .map((student) => `Roll Number: ${student.rollnumber}`);
+
+    // Check for duplicates in the existingStudents array
+    const duplicatesInExisting = newStudents
+      .filter(
+        (student) =>
+          student.name.trim() !== "" &&
+          student.email.trim() !== "" &&
+          student.rollnumber?.trim() !== ""
       )
       .filter((student) =>
         existingStudents.data.some(
           (existing) =>
             existing.email.toLowerCase() === student.email.toLowerCase() ||
-            existing.name.toLowerCase() === student.name.toLowerCase()
+            existing.name.toLowerCase() === student.name.toLowerCase() ||
+            existing.roll_no === student.rollnumber
         )
       )
-      .map((student) => `${student.email} (${student.name})`);
+      .map(
+        (student) =>
+          `${student.email} (${student.name}) - Roll Number: ${student.rollnumber}`
+      );
 
-    return duplicates;
+    return [...duplicateRollNumbers, ...duplicatesInExisting];
   };
 
   const handleAddRow = () => {
@@ -106,7 +125,7 @@ const StudentUpload = () => {
       append({
         name: "",
         email: "",
-        roll_no: "",
+        rollnumber: "",
         password: "",
         formId: Date.now().toString(),
       });
@@ -128,10 +147,19 @@ const StudentUpload = () => {
     return password.length >= 6; // Minimum password length of 6 characters
   };
 
+  const capitalizeFirstLetter = (str: string): string => {
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  };
+
   const onSubmit = (data: StudentFormData) => {
     Keyboard.dismiss();
 
-    const validStudents = data.students.filter(
+    const capitalizedStudents = data.students.map((student) => ({
+      ...student,
+      name: capitalizeFirstLetter(student.name.trim()), // Capitalize and trim the name
+    }));
+
+    const validStudents = capitalizedStudents.filter(
       (student) =>
         student.name.trim() !== "" &&
         student.email.trim() !== "" &&
@@ -168,11 +196,11 @@ const StudentUpload = () => {
     }
 
     const apiNewStudents: StudentCreateData[] = validStudents.map(
-      ({ name, email, password, roll_no }) => ({
+      ({ name, email, password, rollnumber }) => ({
         name,
         email,
         password,
-        roll_no: roll_no || "", // Ensure roll_no is always a string
+        roll_no: rollnumber || "", // Ensure rollnumber is always a string
       })
     );
 
@@ -185,7 +213,7 @@ const StudentUpload = () => {
         onSuccess: () => {
           Alert.alert("Success", "Students saved successfully!");
           reset({
-            students: [{ name: "", email: "", roll_no: "", password: "" }],
+            students: [{ name: "", email: "", rollnumber: "", password: "" }],
           });
           setIsEditingCSV(false);
         },
@@ -202,7 +230,18 @@ const StudentUpload = () => {
       email: row.email.toLowerCase(), // Normalize email to lowercase
       password: row.password || "defaultPassword", // Default password if not provided
     }));
-    console.log("Validated data: ", validatedData);
+
+    const duplicates = checkForDuplicates(validatedData);
+    if (duplicates.length > 0) {
+      Alert.alert(
+        "Error",
+        `The following duplicates were found in the CSV: ${duplicates.join(
+          ", "
+        )}`
+      );
+      return;
+    }
+
     reset({ students: validatedData });
     setShowUploadSection(false);
     setIsEditingCSV(true);
@@ -216,12 +255,17 @@ const StudentUpload = () => {
   };
 
   const csvConfig = {
-    headers: ["name", "email", "roll_no", "password"],
+    headers: ["name", "email", "rollnumber", "password"],
     requiredFields: ["name", "email", "password"],
-    uniqueField: "email",
+    uniqueField: ["email", "rollnumber"],
     validators: {
       email: (value: string) => validateEmail(value),
       password: (value: string) => validatePassword(value),
+      rollnumber: (value: string, data: Array<StudentFormItem>) => {
+        // Check if the rollnumber is unique in the CSV data
+        const count = data.filter((row) => row.rollnumber === value).length;
+        return count === 1; // Return true if the rollnumber is unique
+      },
     },
   };
 
@@ -242,7 +286,7 @@ const StudentUpload = () => {
     },
     {
       name: "students",
-      field: "roll_no",
+      field: "rollnumber",
       label: "Roll No",
       placeholder: "Enter roll number",
       required: false,

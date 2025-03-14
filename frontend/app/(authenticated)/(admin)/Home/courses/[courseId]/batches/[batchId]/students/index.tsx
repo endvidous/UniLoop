@@ -27,7 +27,10 @@ interface Student {
 
 const IndexPage = () => {
   const { colors } = useTheme();
-  const { batchId, courseId } = useLocalSearchParams<{ batchId: string, courseId: string }>();
+  const { batchId, courseId } = useLocalSearchParams<{
+    batchId: string;
+    courseId: string;
+  }>();
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
   // Fetch students for the batch
@@ -38,22 +41,56 @@ const IndexPage = () => {
     refetch,
   } = useBatchStudents(batchId as string);
 
+  // Sort students by roll_no
+  const sortedStudents = React.useMemo(() => {
+    if (!students?.data) return [];
+
+    return [...students.data].sort((a, b) => {
+      const rollA = a.roll_no || ""; // Handle missing roll_no
+      const rollB = b.roll_no || ""; // Handle missing roll_no
+      return rollA.localeCompare(rollB, undefined, { numeric: true });
+    });
+  }, [students?.data]);
+
   // Update student mutation
   const { mutate: updateStudent } = useUpdateStudent();
 
   // Delete student mutation
   const { mutate: deleteStudent } = useDeleteStudent();
 
+  // Check if a roll number is a duplicate
+  const isRollNumberDuplicate = (
+    roll_no: string,
+    studentId: string
+  ): boolean => {
+    if (!students?.data) return false;
+
+    return students.data.some(
+      (student) => student._id !== studentId && student.roll_no === roll_no
+    );
+  };
+
   // Handle updating a student
   const handleUpdateStudent = (
     studentId: string,
     updates: Partial<Student>
   ) => {
+    // Check if the roll number is being updated and if it's a duplicate
+    if (updates.roll_no && isRollNumberDuplicate(updates.roll_no, studentId)) {
+      Alert.alert(
+        "Error",
+        `A student is already assigned with the roll number: ${updates.roll_no}`
+      );
+      return;
+    }
+
+    // If no duplicate, proceed with the update
     updateStudent(
       { batchId: batchId as string, studentId, updates },
       {
         onSuccess: () => {
           Alert.alert("Success", "Student updated successfully!");
+          setSelectedStudent(null); // Close the edit modal
         },
         onError: (error) => {
           Alert.alert("Error", error.message || "Failed to update student.");
@@ -122,7 +159,7 @@ const IndexPage = () => {
 
       {/* Students Table */}
       <FlatList
-        data={students?.data}
+        data={sortedStudents}
         keyExtractor={(item) => item._id}
         renderItem={({ item }) => (
           <View
@@ -175,6 +212,7 @@ const IndexPage = () => {
             <Text style={styles.headerText}>Actions</Text>
           </View>
         )}
+        ListFooterComponent={<View style={styles.bottomPadding} />} // Add bottom padding
         ListEmptyComponent={
           <Text style={[styles.emptyText, { color: colors.text }]}>
             No students available.
@@ -239,12 +277,13 @@ const IndexPage = () => {
               { backgroundColor: colors.secondaryBackground },
             ]}
             onPress={() => {
-              handleUpdateStudent(selectedStudent._id, {
-                name: selectedStudent.name,
-                email: selectedStudent.email,
-                roll_no: selectedStudent.roll_no,
-              });
-              setSelectedStudent(null);
+              if (selectedStudent) {
+                handleUpdateStudent(selectedStudent._id, {
+                  name: selectedStudent.name,
+                  email: selectedStudent.email,
+                  roll_no: selectedStudent.roll_no,
+                });
+              }
             }}
           >
             <Text style={styles.saveButtonText}>Save</Text>
@@ -408,6 +447,9 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  bottomPadding: {
+    height: 80, 
   },
 });
 

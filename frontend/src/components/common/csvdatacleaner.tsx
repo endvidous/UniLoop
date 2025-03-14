@@ -25,7 +25,7 @@ const sanitizeHeader = (header: string): string => {
   // Remove non-alphanumeric characters and convert to lowercase
   return (
     header
-      // .replace(/[^a-zA-Z0-9]/g, "")
+      .replace(/[^a-zA-Z0-9]/g, "")
       .toLowerCase()
       .trim()
   );
