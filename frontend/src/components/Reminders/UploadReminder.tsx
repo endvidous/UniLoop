@@ -14,7 +14,8 @@ import { Picker } from "@react-native-picker/picker";
 import { toast } from "@backpackapp-io/react-native-toast";
 import { useTheme } from "@/src/hooks/colors/useThemeColor";
 import { useCreateReminder } from "@/src/hooks/api/useReminders";
-import CalendarModal from "@/src/components/calendar/calendarModal";
+import DateTimePicker from "react-native-modal-datetime-picker";
+import React from "react";
 
 type ReminderTime = {
   id: string;
@@ -35,6 +36,7 @@ type CreateReminderProps = {
 const CreateReminder = ({ onDismiss }: CreateReminderProps) => {
   const { control, handleSubmit, setValue, watch } = useForm<FormData>({
     defaultValues: {
+      deadline: new Date(),
       priority: 2,
     },
   });
@@ -49,23 +51,6 @@ const CreateReminder = ({ onDismiss }: CreateReminderProps) => {
     null
   );
   const [showReminderTimeInput, setShowReminderTimeInput] = useState(false);
-
-  const deadline = watch("deadline");
-
-  const handleDeadlineSelect = (dateString: string) => {
-    const isoDateStr = dateString.replace(/\//g, "-");
-    const [year, month, day] = isoDateStr.split("-").map(Number);
-    setValue("deadline", new Date(year, month - 1, day));
-    setShowDeadlineCalendar(false);
-  };
-
-  const handleReminderTimeSelect = (dateString: string) => {
-    const isoDateStr = dateString.replace(/\//g, "-");
-    const [year, month, day] = isoDateStr.split("-").map(Number);
-    setCurrentReminderTime(new Date(year, month - 1, day));
-    setShowReminderCalendar(false);
-    setShowReminderTimeInput(true);
-  };
 
   const addReminderTime = () => {
     if (!currentReminderTime) return;
@@ -184,104 +169,59 @@ const CreateReminder = ({ onDismiss }: CreateReminderProps) => {
               onValueChange={field.onChange}
               style={styles.picker}
             >
-              <Picker.Item label="High" value={3} />
-              <Picker.Item label="Normal" value={2} />
-              <Picker.Item label="Low" value={1} />
+              <Picker.Item label="High" value={2} />
+              <Picker.Item label="Normal" value={1} />
+              <Picker.Item label="Low" value={0} />
             </Picker>
           </View>
         )}
       />
 
-      <View style={styles.inputGroup}>
-        <Text style={[styles.label, { color: colors.text }]}>Deadline</Text>
-        <TouchableOpacity
-          style={styles.dateInput}
-          onPress={() => setShowDeadlineCalendar(true)}
-        >
-          <Text>
-            {deadline ? deadline.toLocaleDateString() : "Select deadline date"}
-          </Text>
-          <MaterialIcons name="calendar-today" size={20} color="#666" />
-        </TouchableOpacity>
-        <CalendarModal
-          visible={showDeadlineCalendar}
-          onClose={() => setShowDeadlineCalendar(false)}
-          onDateSelect={handleDeadlineSelect}
-        />
-      </View>
-
-      {/* <View style={styles.inputGroup}>
-        <Text style={[styles.label, { color: colors.text }]}>
-          Reminder Times
-        </Text>
-
-        {reminderTimes.map((reminder) => (
-          <View key={reminder.id} style={styles.reminderItem}>
-            <Text style={styles.reminderText}>
-              {reminder.date_time.toLocaleString()}
-            </Text>
-            <TouchableOpacity onPress={() => removeReminderTime(reminder.id)}>
-              <MaterialIcons name="close" size={20} color="#ff4444" />
-            </TouchableOpacity>
-          </View>
-        ))}
-
-        {showReminderTimeInput && currentReminderTime && (
-          <View style={styles.timeInputContainer}>
-            <Text style={styles.dateText}>
-              {currentReminderTime.toLocaleDateString()}
-            </Text>
-            <View style={styles.timeInputs}>
-              <TextInput
-                style={styles.timeInput}
-                placeholder="HH"
-                keyboardType="number-pad"
-                maxLength={2}
-                onChangeText={(text) =>
-                  handleTimeInput(
-                    text,
-                    currentReminderTime.getMinutes().toString()
-                  )
-                }
-              />
-              <Text style={styles.timeSeparator}>:</Text>
-              <TextInput
-                style={styles.timeInput}
-                placeholder="MM"
-                keyboardType="number-pad"
-                maxLength={2}
-                onChangeText={(text) =>
-                  handleTimeInput(
-                    currentReminderTime.getHours().toString(),
-                    text
-                  )
-                }
+      <Controller
+        control={control}
+        name="deadline"
+        render={({ field: { onChange, value } }) => (
+          <>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Deadline</Text>
+              <TouchableOpacity
+                style={[
+                  styles.input,
+                  {
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                  },
+                ]}
+                onPress={() => setShowReminderCalendar(true)}
+              >
+                <Text style={styles.dateText}>
+                  {value
+                    ? new Date(value).toLocaleString("en-GB", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                        hour12: true,
+                      })
+                    : "Select Timing"}
+                </Text>
+                <MaterialIcons name="calendar-today" size={28} color="#666" />
+              </TouchableOpacity>
+              <DateTimePicker
+                isVisible={showReminderCalendar}
+                mode="datetime"
+                minimumDate={new Date()}
+                onConfirm={(date) => {
+                  onChange(date);
+                  setShowReminderCalendar(false);
+                }}
+                onCancel={() => setShowReminderCalendar(false)}
               />
             </View>
-            <TouchableOpacity
-              style={styles.addTimeButton}
-              onPress={addReminderTime}
-            >
-              <Text style={styles.buttonText}>Add Time</Text>
-            </TouchableOpacity>
-          </View>
+          </>
         )}
-
-        {!showReminderTimeInput && (
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => setShowReminderCalendar(true)}
-          >
-            <Text style={styles.buttonText}>Add Reminder Time</Text>
-          </TouchableOpacity>
-        )}
-
-        <CalendarModal
-          visible={showReminderCalendar}
-          onClose={() => setShowReminderCalendar(false)}
-          onDateSelect={handleReminderTimeSelect}
-        />
-      </View> */}
+      />
 
       <TouchableOpacity
         style={[styles.submitButton, isSubmitting && styles.buttonDisabled]}
@@ -368,8 +308,10 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   dateText: {
-    marginBottom: 10,
-    fontWeight: "500",
+    fontWeight: "400",
+    fontSize: 15,
+    alignItems: "center",
+    marginVertical: "auto",
   },
   timeInputs: {
     flexDirection: "row",

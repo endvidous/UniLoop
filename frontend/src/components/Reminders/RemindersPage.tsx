@@ -8,15 +8,16 @@ import {
   Dimensions,
   ActivityIndicator,
   Modal,
+  TextInput,
+  FlatList,
 } from "react-native";
-import { MaterialIcons } from "@expo/vector-icons";
 import { useTheme } from "@/src/hooks/colors/useThemeColor";
 import {
   useReminders,
   useToggleReminderCompletion,
 } from "@/src/hooks/api/useReminders";
 import ReminderCard from "@/src/components/Reminders/ReminderCard";
-import Icon from "react-native-vector-icons/Ionicons";
+import { Feather, MaterialIcons } from "@expo/vector-icons";
 import { Reminder as APIReminder } from "@/src/services/api/reminderAPI";
 import UploadReminder from "./UploadReminder";
 import { RelativePathString, useRouter } from "expo-router";
@@ -32,7 +33,7 @@ interface Reminder extends APIReminder {
 
 const RemindersPage = () => {
   const { colors } = useTheme();
-  const { data: reminders, isLoading, isError, refetch } = useReminders();
+  const { data, isLoading, isError, refetch } = useReminders();
   const [activeReminders, setActiveReminders] = useState<Reminder[]>([]);
   const [completedReminders, setCompletedReminders] = useState<Reminder[]>([]);
   const [showCompleted, setShowCompleted] = useState(false);
@@ -40,7 +41,10 @@ const RemindersPage = () => {
   const [showModal, setShowModal] = useState(false);
   const { user } = useAuth();
   const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedPriority, setSelectedPriority] = useState<number | null>(null);
 
+  console.log("Data reminders", data);
   const navigateToUploadPage = () => {
     setShowModal(true);
   };
@@ -64,18 +68,38 @@ const RemindersPage = () => {
   const cardsContainerHeight = (windowHeight * 2) / 3;
 
   useEffect(() => {
-    if (reminders?.data) {
-      const active = reminders.data.filter(
+    if (data?.reminders) {
+      const active = data.reminders.filter(
         (reminder: Reminder) => !reminder.completed
       );
-      const completed = reminders.data.filter(
+      const completed = data.reminders.filter(
         (reminder: Reminder) => reminder.completed
       );
-
+      console.log(active);
+      console.log(completed);
       setActiveReminders(active);
       setCompletedReminders(completed);
     }
-  }, [reminders]);
+  }, [data]);
+
+  const filteredActiveReminders = activeReminders.filter((reminder) => {
+    const matchesSearchQuery =
+      reminder.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      reminder.description.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesPriority =
+      selectedPriority === null || reminder.priority === selectedPriority;
+
+    return matchesSearchQuery && matchesPriority;
+  });
+
+  const handlePriorityFilter = (priority: number | null) => {
+    if (selectedPriority === priority) {
+      setSelectedPriority(null); // Reset to no filter (toggle off)
+    } else {
+      setSelectedPriority(priority); // Apply filter for selected priority
+    }
+  };
 
   // Function to handle reminder completion toggle
   const handleToggleCompletion = async (reminderId: string) => {
@@ -103,111 +127,145 @@ const RemindersPage = () => {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Text style={[styles.pageTitle, { color: colors.text }]}>
-        My Reminders
-      </Text>
-
-      {/* Active Reminders Card Section (2/3 of screen) */}
+    <View style={{ flex: 1 }}>
+      {/* Filter between high low and normal priority and maybe a local search feature */}
+      {/* Filter and Search Section */}
       <View
-        style={[
-          styles.cardsContainer,
-          {
-            height: cardsContainerHeight,
-            backgroundColor: colors.background,
-            shadowColor: colors.shadowcolor,
-          },
-        ]}
+        style={[styles.filterSection, { backgroundColor: colors.background }]}
       >
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Tasks</Text>
+        {/* Search Bar */}
+        <TextInput
+          style={[
+            styles.searchInput,
+            { borderColor: colors.text, color: colors.text },
+          ]}
+          placeholder="Search Reminders"
+          placeholderTextColor={colors.text}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
 
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#007BFF" />
-          </View>
-        ) : isError ? (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>Failed to load reminders</Text>
-          </View>
-        ) : activeReminders.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No active tasks</Text>
-          </View>
-        ) : (
-          <ScrollView style={styles.scrollView}>
-            {activeReminders.map((reminder) => (
-              <View key={reminder._id} style={styles.cardWrapper}>
-                <ReminderCard
-                  reminder={{
-                    ...reminder,
-                    deadline: reminder.deadline.toISOString(),
-                  }}
-                  onToggleCompletion={() =>
-                    handleToggleCompletion(reminder._id)
-                  }
-                />
-              </View>
-            ))}
-          </ScrollView>
-        )}
+        {/* Filter by Priority */}
+        <View style={styles.filterContainer}>
+          <TouchableOpacity
+            style={[
+              styles.filterButton,
+              selectedPriority === 2 && [
+                styles.activeFilter,
+                { backgroundColor: "#dc2626" },
+              ],
+            ]}
+            onPress={() => handlePriorityFilter(2)}
+          >
+            <Text style={styles.filterText}>High</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.filterButton,
+              selectedPriority === 1 && [
+                styles.activeFilter,
+                { backgroundColor: "#16a34a" },
+              ],
+            ]}
+            onPress={() => handlePriorityFilter(1)}
+          >
+            <Text style={styles.filterText}>Medium</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.filterButton,
+              selectedPriority === 0 && [
+                styles.activeFilter,
+                { backgroundColor: "#3b82f6" },
+              ],
+            ]}
+            onPress={() => handlePriorityFilter(0)}
+          >
+            <Text style={styles.filterText}>Low</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-
-      {/* Completed Tasks Toggle Section */}
-      <View style={styles.completedSection}>
-        <TouchableOpacity
-          style={styles.completedToggle}
-          onPress={() => setShowCompleted(!showCompleted)}
+      <ScrollView
+        style={[styles.container, { backgroundColor: colors.background }]}
+      >
+        {/* Active Reminders Card Section (2/3 of screen) */}
+        <View
+          style={[
+            styles.cardsContainer,
+            {
+              backgroundColor: colors.background,
+              shadowColor: colors.shadowcolor,
+            },
+          ]}
         >
-          <Text style={[styles.completedToggleText, { color: colors.text }]}>
-            Completed ({completedReminders.length})
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Tasks
           </Text>
-          <MaterialIcons
-            name={showCompleted ? "keyboard-arrow-up" : "keyboard-arrow-down"}
-            size={24}
-            color={colors.text}
-          />
-        </TouchableOpacity>
 
-        {showCompleted && (
-          <View style={styles.completedDropdown}>
-            {completedReminders.length === 0 ? (
-              <Text style={styles.emptyText}>No completed tasks</Text>
-            ) : (
-              <ScrollView style={styles.completedScrollView}>
-                {completedReminders.map((reminder) => (
-                  <View key={reminder._id} style={styles.cardWrapper}>
+          <View style={styles.scrollView}>
+            {filteredActiveReminders.map((reminder) => (
+              <ReminderCard
+                key={reminder._id}
+                reminder={reminder}
+                onToggleCompletion={() => handleToggleCompletion(reminder._id)}
+              />
+            ))}
+          </View>
+        </View>
+
+        {/* Completed Tasks Toggle Section */}
+        <View style={styles.completedSection}>
+          <TouchableOpacity
+            style={styles.completedToggle}
+            onPress={() => setShowCompleted(!showCompleted)}
+          >
+            <Text style={[styles.completedToggleText, { color: colors.text }]}>
+              Completed ({completedReminders.length})
+            </Text>
+            <MaterialIcons
+              name={showCompleted ? "keyboard-arrow-up" : "keyboard-arrow-down"}
+              size={24}
+              color={colors.text}
+            />
+          </TouchableOpacity>
+
+          {showCompleted && (
+            <View style={styles.completedDropdown}>
+              {completedReminders.length === 0 ? (
+                <Text style={styles.emptyText}>No completed tasks</Text>
+              ) : (
+                <View style={styles.completedScrollView}>
+                  {completedReminders.map((reminder) => (
                     <ReminderCard
-                      reminder={{
-                        ...reminder,
-                        deadline: reminder.deadline.toISOString(),
-                      }}
+                      key={reminder._id}
+                      reminder={reminder}
                       onToggleCompletion={() =>
                         handleToggleCompletion(reminder._id)
                       }
                     />
-                  </View>
-                ))}
-              </ScrollView>
-            )}
-          </View>
-        )}
-        <TouchableOpacity
-          style={[styles.addButton, { shadowColor: colors.shadowcolor }]}
-          onPress={navigateToUploadPage}
-          accessibilityLabel="Create new reminder"
-          accessibilityRole="button"
-        >
-          <Icon name="add" size={30} color="white" />
-        </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
+          )}
+        </View>
+      </ScrollView>
+      <TouchableOpacity
+        style={[styles.addButton, { shadowColor: colors.shadowcolor }]}
+        onPress={navigateToUploadPage}
+        accessibilityLabel="Create new reminder"
+        accessibilityRole="button"
+      >
+        <Feather name="bell" size={30} color="white" />
+      </TouchableOpacity>
 
-        <Modal
-          visible={showModal}
-          animationType="slide"
-          onRequestClose={() => setShowModal(false)}
-        >
-          <UploadReminder onDismiss={handleReminderCreated} />
-        </Modal>
-      </View>
+      <Modal
+        visible={showModal}
+        animationType="fade"
+        onRequestClose={() => setShowModal(false)}
+      >
+        <UploadReminder onDismiss={handleReminderCreated} />
+      </Modal>
     </View>
   );
 };
@@ -216,6 +274,39 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
+  },
+  filterSection: {
+    paddingTop: 16,
+    paddingBottom: 8,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+  },
+  searchInput: {
+    height: 40,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingLeft: 8,
+    marginBottom: 8,
+  },
+  filterContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  filterButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    backgroundColor: "#f3f4f6",
+    elevation: 5,
+  },
+  activeFilter: {
+    backgroundColor: "#007BFF",
+  },
+  filterText: {
+    fontSize: 15,
+    fontWeight: "500",
+    color: "#000",
   },
   pageTitle: {
     fontSize: 28,
@@ -264,10 +355,11 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
   },
   cardWrapper: {
-    marginBottom: 12,
+    marginBottom: 2,
   },
   completedSection: {
-    marginTop: 8,
+    marginTop: 3,
+    marginBottom: 150,
   },
   completedToggle: {
     flexDirection: "row",

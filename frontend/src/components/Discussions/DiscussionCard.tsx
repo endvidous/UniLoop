@@ -85,14 +85,14 @@ const DiscussionCard = ({ discussion }: { discussion: Discussion }) => {
           onUpvote={() => upvoteDiscussion(discussion._id)}
           onDownvote={() => downvoteDiscussion(discussion._id)}
         />
-        <View style={styles.reportContainer}>
-          <TouchableOpacity
-            onPress={openReportDialog}
-            style={styles.reportButton}
-          >
+        <TouchableOpacity
+          onPress={openReportDialog}
+          style={styles.reportContainer}
+        >
+          <View style={styles.reportButton}>
             <Ionicons name="flag-outline" size={18} color={"red"} />
-          </TouchableOpacity>
-        </View>
+          </View>
+        </TouchableOpacity>
       </View>
 
       {/* Report Dialog */}
