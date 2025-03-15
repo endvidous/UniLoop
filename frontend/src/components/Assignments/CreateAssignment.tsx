@@ -206,7 +206,7 @@ const CreateAssignment = ({
 
       {/* Late Deadline Picker */}
       <View style={styles.inputGroup}>
-        <Text style={[styles.label, { marginBottom: 2 }]}>Late Deadline</Text>
+        <Text style={[styles.label, { marginBottom: 2 }]}>Final Deadline</Text>
         <Text
           style={{
             fontSize: 12,
@@ -215,14 +215,20 @@ const CreateAssignment = ({
             color: "#393737d8",
           }}
         >
-          Optional | Has to be prior to deadline
+          Optional | Submissions after deadline will be marked as late and
+          closed once final deadline is reached
         </Text>
         <TouchableOpacity
           style={styles.dateInput}
           onPress={() => {
+            if (!deadline) {
+              toast.error("Please set the main deadline first");
+              return;
+            }
             setSelectedField("late_deadline");
             setDateTimePickerVisibility(true);
           }}
+          disabled={!deadline}
         >
           <Text
             style={!lateDeadline ? styles.placeholderText : styles.dateText}
@@ -332,7 +338,7 @@ const CreateAssignment = ({
           setDateTimePickerVisibility(false);
           setSelectedField(null);
         }}
-        minimumDate={new Date()}
+        minimumDate={selectedField === "late_deadline" ? deadline : new Date()}
         maximumDate={new Date(new Date().setMonth(new Date().getMonth() + 6))}
       />
     </ScrollView>

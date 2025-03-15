@@ -21,7 +21,7 @@ export const StudentAssignmentCard = ({
 
   const onPress = () => {
     const basepath =
-      `/(authenticated)/(${user?.role})/Assignment/[assignmentId]` as RelativePathString;
+      `/(authenticated)/(${user?.role})/Assignments/[assignmentId]` as RelativePathString;
     router.push({
       pathname: basepath,
       params: { assignmentId: assignment._id },

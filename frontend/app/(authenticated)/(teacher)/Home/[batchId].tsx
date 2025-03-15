@@ -1,7 +1,7 @@
 import { useGetBatch } from "@/src/hooks/api/useCourses";
 import { Batch } from "@/src/services/api/courseAPI";
 import { useLocalSearchParams, useNavigation } from "expo-router";
-import { useLayoutEffect, useState } from "react";
+import { useLayoutEffect, useState, useEffect } from "react";
 import {
   Modal,
   RefreshControl,
@@ -15,6 +15,8 @@ import CreateAnnouncement from "@/src/components/Announcements/CreateAnnouncemen
 import CreateDiscussion from "@/src/components/Discussions/CreateDiscussion";
 import CreateAssignment from "@/src/components/Assignments/CreateAssignment";
 import { Student } from "@/src/services/api/userAPI";
+import LocalSearchFilterComponent from "@/src/components/common/LocalSearchFilter";
+import { FlatList } from "react-native-gesture-handler";
 
 const BatchPage = () => {
   const { batchId } = useLocalSearchParams<{ batchId: string }>();
@@ -31,6 +33,8 @@ const BatchPage = () => {
 
   // State to keep track of selected class reps (by their ID)
   const [selectedClassReps, setSelectedClassReps] = useState<string[]>([]);
+  // State for filtered students in the class rep picker
+  const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -43,6 +47,13 @@ const BatchPage = () => {
       headerTitle: batch?.code || "Batch Details",
     });
   }, [navigation, batch]);
+
+  // Update filtered students when batch.students changes
+  useEffect(() => {
+    if (batch?.students) {
+      setFilteredStudents(batch.students);
+    }
+  }, [batch?.students]);
 
   if (isLoading) {
     return (
@@ -224,7 +235,7 @@ const BatchPage = () => {
       {/* Class Reps Assignment Modal */}
       <Modal
         visible={showClassRepsModal}
-        animationType="slide"
+        animationType="fade"
         transparent={true}
         onRequestClose={() => setShowClassRepsModal(false)}
       >
@@ -254,14 +265,25 @@ const BatchPage = () => {
             >
               Assign Class Reps
             </Text>
-            <ScrollView style={{ marginBottom: 20 }}>
-              {batch.students?.map((student) => {
-                const isSelected = selectedClassReps.includes(student._id);
+
+            {/* Search Filter Component */}
+            <LocalSearchFilterComponent
+              data={batch.students}
+              searchKeys={["name", "roll_no"]}
+              setFilteredData={(filtered) =>
+                setFilteredStudents(filtered as Student[])
+              }
+              placeholder="Search students..."
+            />
+
+            <FlatList
+              style={{ marginVertical: 20 }}
+              data={filteredStudents}
+              keyExtractor={(item) => item._id}
+              renderItem={({ item }) => {
+                const isSelected = selectedClassReps.includes(item._id);
                 return (
-                  <TouchableOpacity
-                    key={student._id}
-                    onPress={() => toggleStudent(student._id)}
-                  >
+                  <TouchableOpacity onPress={() => toggleStudent(item._id)}>
                     <View
                       style={{
                         flexDirection: "row",
@@ -272,12 +294,14 @@ const BatchPage = () => {
                         marginBottom: 5,
                       }}
                     >
-                      <Text>{student.name}</Text>
+                      <Text>
+                        {item.roll_no} - {item.name}
+                      </Text>
                     </View>
                   </TouchableOpacity>
                 );
-              })}
-            </ScrollView>
+              }}
+            />
             <View
               style={{ flexDirection: "row", justifyContent: "space-between" }}
             >
