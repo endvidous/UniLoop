@@ -219,7 +219,10 @@ const CreateAssignment = ({
           closed once final deadline is reached
         </Text>
         <TouchableOpacity
-          style={styles.dateInput}
+          style={[
+            styles.dateInput,
+            { opacity: !deadline ? 0.5 : 1 }, // Disable if no deadline is set
+          ]}
           onPress={() => {
             if (!deadline) {
               toast.error("Please set the main deadline first");
