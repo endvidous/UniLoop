@@ -1,4 +1,4 @@
-//FUNCTINS TO BE ADDED: Maybe update booking reason
+//FUNCTINS TO BE ADDED: getAllBookings
 import mongoose from "mongoose";
 import {
   Classroom,
@@ -205,24 +205,41 @@ export const getAllClassrooms = async (req, res) => {
       }
     });
 
-    // Transform each classroom so that only the availability for the specified weekday is returned
-    const transformedClassrooms = availableClassrooms.map((classroom) => {
+    const groupedClassrooms = availableClassrooms.reduce((acc, classroom) => {
       // Convert the Mongoose document to a plain object
-      const classroomObj = classroom.toObject();
-
-      //Delete classroom availability
+      const classroomObj = classroom.toObject({
+        getters: true,
+        virtuals: false,
+      });
+      // Delete classroom availability
       delete classroomObj.availability;
+      delete classroomObj.formattedAvailability;
 
       // Filter the raw availability array to only include the current day (or the provided filter day)
-      const formattedAvailability = classroom.formattedAvailability.filter(
-        (day) => day.weekday === dayOfWeek
-      );
+      // const formattedAvailability = classroom.formattedAvailability.filter(
+      //   (day) => day.weekday === dayOfWeek
+      // );
 
       // Overwrite the virtual field with the filtered data
-      return { ...classroomObj, formattedAvailability };
-    });
+      const transformedClassroom = { ...classroomObj };
+      // Group classrooms by block
+      if (!acc[classroom.block]) {
+        acc[classroom.block] = [];
+      }
+      acc[classroom.block].push(transformedClassroom);
 
-    res.status(200).json({ classrooms: transformedClassrooms });
+      return acc;
+    }, {});
+
+    // Convert the grouped object into an array of objects with block names as keys
+    const transformedClassrooms = Object.entries(groupedClassrooms).map(
+      ([block, classrooms]) => ({ block, classrooms })
+    );
+
+    res.status(200).json({
+      message: "Classrooms found successfully",
+      classrooms: transformedClassrooms,
+    });
   } catch (error) {
     res.status(500).json({
       message: "Error retrieving classrooms",
@@ -295,10 +312,9 @@ export const bookClassroom = async (req, res) => {
     const conflictingBooking = await ClassroomBooking.findOne({
       classroom: classroomId,
       date: bookingDate,
-      $or: [
-        { startTime: { $lt: endTime }, endTime: { $gt: startTime } },
-        { status: { $in: ["approved", "pending"] } },
-      ],
+      status: { $in: ["approved", "pending"] },
+      startTime: { $lt: endTime },
+      endTime: { $gt: startTime },
     }).session(session);
 
     if (conflictingBooking) {
@@ -337,7 +353,7 @@ export const bookClassroom = async (req, res) => {
     });
   }
 };
-
+// export const getAllBookings = async(req, res);
 // Approval Controller
 export const approveBooking = async (req, res) => {
   const session = await mongoose.startSession();
@@ -415,6 +431,7 @@ export const rejectBooking = async (req, res) => {
 
     // Update booking status
     booking.status = "rejected";
+    booking.rejectionReason = reason;
     booking.approvedBy = req.user._id;
     await booking.save({ session });
 

@@ -85,7 +85,6 @@ export const findTeacherDetails = async (teacherId) => {
       { $or: batchConditions },
       { _id: 1 }
     ).lean();
-
     return {
       departmentId: department?._id || null,
       courseIds: Array.from(courseSemesterMap.keys()).map(

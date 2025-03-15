@@ -5,6 +5,7 @@ import {
   courseService,
   Semester,
   SemesterService,
+  CreatePapersType,
 } from "@/src/services/api/courseAPI";
 import { queryKeys } from "@/src/services/api/queryKeys";
 
@@ -152,7 +153,7 @@ export const useSemesters = (courseId: string) => {
 export const useCreateSemesters = (
   courseId: string,
   sem_no: number,
-  papers: Semester["papers"]
+  papers: Array<CreatePapersType>
 ) => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -180,7 +181,7 @@ export const useUpdateSemester = () => {
       papers,
     }: {
       semesterId: string;
-      papers: Semester["papers"];
+      papers: { paper: string; teacher: string }[];
     }) => SemesterService.updateOneSemester(semesterId, papers),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({

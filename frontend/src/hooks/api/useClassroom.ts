@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { classroomService } from "@/src/services/api/classroomAPI";
 import { queryKeys } from "@/src/services/api/queryKeys";
+import axiosInstance from "@/src/services/api/axiosConfig";
 
 /*-----------------------------------
   Get all classrooms with filters
@@ -17,6 +18,15 @@ export const useClassrooms = (filters?: {
   });
 };
 
+// export const useBlocks = () => {
+//   return useQuery({
+//     queryKey: ["blocks"],
+//     queryFn: async () => {
+//       const response = await axiosInstance.get("/blocks");
+//       return response.data;
+//     },
+//   });
+// };
 /*------------------------------
  Get a single classroom by ID
 -------------------------------*/

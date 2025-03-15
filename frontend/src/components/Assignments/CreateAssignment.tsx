@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -27,7 +27,13 @@ import { useTheme } from "@/src/hooks/colors/useThemeColor";
 type FileWithKey = SelectedFile & { key: string };
 const MAX_ATTACHMENTS = 2;
 
-const CreateAssignment = ({ onDismiss }: { onDismiss: () => void }) => {
+const CreateAssignment = ({
+  onDismiss,
+  batchId,
+}: {
+  onDismiss: () => void;
+  batchId?: string;
+}) => {
   const { colors } = useTheme();
 
   const { control, handleSubmit, setValue, watch } =
@@ -35,11 +41,15 @@ const CreateAssignment = ({ onDismiss }: { onDismiss: () => void }) => {
       defaultValues: {
         title: "",
         description: "",
-        deadline: new Date(),
-        late_deadline: new Date(),
         posted_to: "",
       },
     });
+
+  useEffect(() => {
+    if (batchId) {
+      setValue("posted_to", batchId);
+    }
+  }, [batchId, setValue]);
 
   const deadline: Date | undefined = watch("deadline");
   const lateDeadline: Date | undefined = watch("late_deadline");
@@ -119,7 +129,12 @@ const CreateAssignment = ({ onDismiss }: { onDismiss: () => void }) => {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView
+      contentContainerStyle={[
+        styles.container,
+        { backgroundColor: colors.background },
+      ]}
+    >
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Create Assignment</Text>
         <TouchableOpacity onPress={onDismiss}>
@@ -191,7 +206,7 @@ const CreateAssignment = ({ onDismiss }: { onDismiss: () => void }) => {
 
       {/* Late Deadline Picker */}
       <View style={styles.inputGroup}>
-        <Text style={[styles.label, { marginBottom: 2 }]}>Late Deadline</Text>
+        <Text style={[styles.label, { marginBottom: 2 }]}>Final Deadline</Text>
         <Text
           style={{
             fontSize: 12,
@@ -200,14 +215,20 @@ const CreateAssignment = ({ onDismiss }: { onDismiss: () => void }) => {
             color: "#393737d8",
           }}
         >
-          Optional | Has to be prior to deadline
+          Optional | Submissions after deadline will be marked as late and
+          closed once final deadline is reached
         </Text>
         <TouchableOpacity
           style={styles.dateInput}
           onPress={() => {
+            if (!deadline) {
+              toast.error("Please set the main deadline first");
+              return;
+            }
             setSelectedField("late_deadline");
             setDateTimePickerVisibility(true);
           }}
+          disabled={!deadline}
         >
           <Text
             style={!lateDeadline ? styles.placeholderText : styles.dateText}
@@ -317,7 +338,7 @@ const CreateAssignment = ({ onDismiss }: { onDismiss: () => void }) => {
           setDateTimePickerVisibility(false);
           setSelectedField(null);
         }}
-        minimumDate={new Date()}
+        minimumDate={selectedField === "late_deadline" ? deadline : new Date()}
         maximumDate={new Date(new Date().setMonth(new Date().getMonth() + 6))}
       />
     </ScrollView>

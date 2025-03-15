@@ -82,7 +82,11 @@ export const createCourses = async (req, res) => {
     //To create the batches for the courses automatically
     if (academicTimelines.length > 0) {
       let batchesToInsert = [];
+      let semestersToInsert = [];
+
+      //Looping to make the batches and semester data
       createdCourses.forEach((course) => {
+        //For batches
         academicTimelines.forEach((timeline) => {
           const [startYearStr] = timeline.academicYear.split("-");
           const startYear = parseInt(startYearStr, 10);
@@ -94,8 +98,22 @@ export const createCourses = async (req, res) => {
             code: batchCode,
           });
         });
+
+        //For semesters
+        const semNos = course.type === "UG" ? 6 : 4;
+        for (let i = 1; i <= semNos; i++) {
+          semestersToInsert.push({
+            course: course._id,
+            number: i,
+          });
+        }
       });
 
+      //Save each semester individually for pre-save hooks to execute
+      const semesterSavePromises = semestersToInsert.map((semData) => {
+        const semester = new Semesters(semData);
+        return semester.save();
+      });
       // Save each batch individually so pre-save hooks are executed
       const batchSavePromises = batchesToInsert.map((batchData) => {
         const batch = new Batches(batchData);
@@ -103,15 +121,21 @@ export const createCourses = async (req, res) => {
       });
 
       const createdBatches = await Promise.all(batchSavePromises);
+      const createdSemesters = await Promise.all(semesterSavePromises);
 
       res.status(201).json({
-        message: "Courses and batches created successfully",
-        data: { courses: createdCourses, batches: createdBatches },
+        message: "Courses and batches and semesters created successfully",
+        data: {
+          courses: createdCourses,
+          batches: createdBatches,
+          semesters: createdSemesters,
+        },
       });
     } else {
       // If no academic timelines exist, only return the courses
       res.status(201).json({
-        message: "Courses created successfully. No batches were generated.",
+        message:
+          "Courses created successfully. No batches or semesters were generated.",
         data: createdCourses,
       });
     }
@@ -165,25 +189,56 @@ export const editCourse = async (req, res) => {
 // Delete Course Function
 export const deleteCourse = async (req, res) => {
   const { courseId } = req.params; // Expecting a single course ID from the URL
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
   try {
     // Validate input
     if (!courseId) {
+      await session.abortTransaction();
       return res.status(400).json({ message: "Course ID is required" });
     }
 
-    // Delete the course
-    const deletedCourse = await Courses.findByIdAndDelete(courseId);
-
-    if (!deletedCourse) {
+    // Find the course
+    const course = await Courses.findById(courseId).session(session);
+    if (!course) {
+      await session.abortTransaction();
       return res.status(404).json({ message: "Course not found" });
     }
 
-    res
-      .status(200)
-      .json({ message: "Course deleted successfully", deletedCourse });
+    // Find and delete all related semesters
+    const semesters = await Semesters.find({ course: courseId }).session(
+      session
+    );
+    const semesterIds = semesters.map((semester) => semester._id);
+    await Semesters.deleteMany({ _id: { $in: semesterIds } }).session(session);
+
+    // Find and delete all related batches
+    const batches = await Batches.find({ course: courseId }).session(session);
+    const batchIds = batches.map((batch) => batch._id);
+    await Batches.deleteMany({ _id: { $in: batchIds } }).session(session);
+
+    // Delete all students related to those batches
+    const studentIds = batches.reduce(
+      (acc, batch) => acc.concat(batch.students),
+      []
+    );
+    await User.deleteMany({ _id: { $in: studentIds } }).session(session);
+
+    // Delete the course
+    await Courses.findByIdAndDelete(courseId).session(session);
+
+    await session.commitTransaction();
+
+    res.status(200).json({
+      message:
+        "Course, related semesters, batches, and students deleted successfully",
+    });
   } catch (err) {
+    await session.abortTransaction();
     res.status(500).json({ message: `Error deleting course: ${err.message}` });
+  } finally {
+    session.endSession();
   }
 };
 
@@ -203,7 +258,7 @@ export const getOneBatch = async (req, res) => {
     const batch = await Batches.findById(batchId)
       .populate("course", "name code type") // populate course with selected fields
       .populate("students", "name email roll_no") // populate students with essential user details
-      .populate("classRepresentatives", "name email roll_no") // populate class reps similarly
+      .populate("classReps", "name email roll_no") // populate class reps similarly
       .populate("mentors", "name email"); // populate mentors
 
     if (!batch) {

@@ -176,7 +176,7 @@ const CourseIndexScreen = () => {
           </Text>
         }
       />
-      <Link href="/Home/courses/courseUpload" asChild>
+      <Link href="/Home/courses/CourseUpload" asChild>
         <TouchableOpacity style={styles.button}>
           <Icon name="add" size={40} color="white" />
         </TouchableOpacity>

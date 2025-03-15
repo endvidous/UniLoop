@@ -115,14 +115,14 @@ export const studentService = {
   getOneStudent: async (
     studentId: string
   ): Promise<{ message: string; data: Student }> => {
-    const response = await axiosInstance.get(`/admin/students/${studentId}`);
+    const response = await axiosInstance.get(`/admin/users/students/${studentId}`);
     return response.data;
   },
 
   getBatchStudents: async (
     batchId: string
   ): Promise<{ message: string; count: number; data: Student[] }> => {
-    const response = await axiosInstance.get(`/admin/${batchId}/students`);
+    const response = await axiosInstance.get(`/admin/users/${batchId}/students`);
     return response.data;
   },
 
@@ -131,7 +131,7 @@ export const studentService = {
     batchId: string,
     students: StudentCreateData[]
   ): Promise<{ message: string; data: string[] }> => {
-    const response = await axiosInstance.post(`/admin/${batchId}/students`, {
+    const response = await axiosInstance.post(`/admin/users/${batchId}/students`, {
       students,
     });
     return response.data;
@@ -143,7 +143,7 @@ export const studentService = {
     updates: StudentUpdateData
   ): Promise<{ message: string; data: Student }> => {
     const response = await axiosInstance.patch(
-      `/admin/${batchId}/students/${studentId}`,
+      `/admin/users/${batchId}/students/${studentId}`,
       updates
     );
     return response.data;
@@ -154,7 +154,7 @@ export const studentService = {
     studentId: string
   ): Promise<{ message: string; data: Student }> => {
     const response = await axiosInstance.delete(
-      `/admin/${batchId}/students/${studentId}`
+      `/admin/users/${batchId}/students/${studentId}`
     );
     return response.data;
   },

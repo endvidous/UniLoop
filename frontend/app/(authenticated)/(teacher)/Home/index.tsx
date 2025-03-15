@@ -48,7 +48,6 @@ const BatchCard = ({ batch }: { batch: Batch }) => {
 };
 
 const TeacherHomePage = () => {
-  const { user } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
   const {
     data: associations,

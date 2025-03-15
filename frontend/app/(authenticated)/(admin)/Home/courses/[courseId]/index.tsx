@@ -36,38 +36,15 @@ const CourseDetailScreen = () => {
     },
   ];
 
-  console.log("CourseId", courseId);
-
-  const navigateToUploadPage = (section: string) => {
-    let uploadPath = "";
-
-    switch (section) {
-      case "batches":
-        uploadPath=`/Home/courses/${courseId}/batches/batchesUpload`; 
-        break;
-      case "semesters":
-        uploadPath=`/Home/courses/${courseId}/semesters/semesterUpload`; 
-        break;
-      default:
-        console.error("Invalid section for upload");
-        return;
-    }
-
-    router.push({
-      pathname: uploadPath as RelativePathString,
-      params: { courseId, courseName: name },
-    });
-  };
-
   const navigateToIndexPage = (section: string) => {
     let indexPath = "";
 
     switch (section) {
       case "batches":
-        indexPath=`/Home/courses/${courseId}/batches`; 
+        indexPath = `/Home/courses/${courseId}/batches`;
         break;
       case "semesters":
-        indexPath=`/Home/courses/${courseId}/semesters`; 
+        indexPath = `/Home/courses/${courseId}/semesters`;
         break;
       default:
         console.error("Invalid section for index");
@@ -86,51 +63,24 @@ const CourseDetailScreen = () => {
       style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.contentContainer}
     >
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>{name}</Text>
-        <Text style={[styles.subtitle, { color: colors.text }]}>
-          Course Management
-        </Text>
-      </View>
-
       {sections.map((section) => (
-        <View key={section.id} style={styles.sectionContainer}>
-          <View
-            style={[styles.sectionHeader, { backgroundColor: section.color }]}
-          >
-            <Icon name={section.icon} size={24} color="white" />
-            <Text style={styles.sectionTitle}>{section.title}</Text>
-          </View>
-
-          <View
-            style={[
-              styles.sectionBody,
-              { backgroundColor: colors.secondaryBackground },
-            ]}
-          >
-            <Text style={[styles.sectionDescription, { color: colors.text }]}>
-              {section.description}
+        <TouchableOpacity
+          key={section.id}
+          style={[
+            styles.card,
+            styles.shadow,
+            { shadowColor: colors.shadowcolor },
+            { backgroundColor: colors.background },
+          ]}
+          onPress={() => navigateToIndexPage(section.id)}
+        >
+          <View style={styles.cardContent}>
+            <Icon name={section.icon} size={30} color={section.color} />
+            <Text style={[styles.cardTitle, { color: colors.text }]}>
+              {section.title}
             </Text>
-
-            <View style={styles.buttonRow}>
-              <TouchableOpacity
-                style={[styles.button, { backgroundColor: section.color }]}
-                onPress={() => navigateToIndexPage(section.id)}
-              >
-                <Icon name="list-outline" size={20} color="white" />
-                <Text style={styles.buttonText}>View {section.title}</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.button, { backgroundColor: section.color }]}
-                onPress={() => navigateToUploadPage(section.id)}
-              >
-                <Icon name="cloud-upload-outline" size={20} color="white" />
-                <Text style={styles.buttonText}>Upload</Text>
-              </TouchableOpacity>
-            </View>
           </View>
-        </View>
+        </TouchableOpacity>
       ))}
     </ScrollView>
   );
@@ -142,6 +92,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: 20,
+    alignItems: "center",
   },
   header: {
     marginBottom: 20,
@@ -156,60 +107,37 @@ const styles = StyleSheet.create({
     fontSize: 16,
     opacity: 0.8,
   },
-  sectionContainer: {
+  card: {
+    borderRadius: 12,
+    padding: 20,
+    width: "90%",
     marginBottom: 20,
-    borderRadius: 10,
-    overflow: "hidden",
-    elevation: 2,
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 5,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  sectionHeader: {
-    padding: 15,
+  cardContent: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
   },
-  sectionTitle: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "bold",
+  cardTitle: {
+    fontSize: 24,
     marginLeft: 10,
   },
-  sectionBody: {
-    padding: 15,
-  },
-  sectionDescription: {
-    fontSize: 14,
-    marginBottom: 15,
-  },
-  buttonRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  button: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 12,
-    borderRadius: 8,
-    flex: 0.48,
-  },
-  buttonText: {
-    color: "white",
-    fontWeight: "bold",
-    marginLeft: 8,
-  },
-  backButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#007BFF",
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 10,
-  },
-  backButtonText: {
-    color: "white",
-    fontWeight: "bold",
-    marginLeft: 8,
+  shadow: {
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
   },
 });
 

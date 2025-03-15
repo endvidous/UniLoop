@@ -4,7 +4,7 @@ import { useCreateDiscussion } from "@/src/hooks/api/useDiscussions";
 import { toast } from "@backpackapp-io/react-native-toast";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
   Alert,
@@ -27,6 +27,9 @@ type FormData = {
 
 type CreateDiscussionProps = {
   onDismiss: () => void;
+  batchId?: string;
+  departmentId?: string;
+  courseId?: string;
 };
 
 const modelMapping = {
@@ -35,12 +38,30 @@ const modelMapping = {
   Course: "Courses",
 };
 
-const CreateDiscussion = ({ onDismiss }: CreateDiscussionProps) => {
+const CreateDiscussion = ({
+  onDismiss,
+  batchId,
+  departmentId,
+  courseId,
+}: CreateDiscussionProps) => {
   const { control, handleSubmit, setValue, watch } = useForm<FormData>({
     defaultValues: {
       visibilityType: "General",
     },
   });
+
+  useEffect(() => {
+    if (departmentId) {
+      setValue("visibilityType", "Department");
+      setValue("postedToId", departmentId);
+    } else if (courseId) {
+      setValue("visibilityType", "Course");
+      setValue("postedToId", courseId);
+    } else if (batchId) {
+      setValue("visibilityType", "Batch");
+      setValue("postedToId", batchId);
+    }
+  }, [batchId, departmentId, courseId, setValue]);
   const { user } = useAuth();
   const { data: associations } = useUserAssociations();
   const { mutateAsync: createDiscussion } = useCreateDiscussion();

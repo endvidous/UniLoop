@@ -11,6 +11,7 @@ export type Teacher = {
   _id: string;
   name?: string;
   email?: string;
+  mentor_of?: string;
 };
 
 export type Department = {

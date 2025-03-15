@@ -19,28 +19,28 @@ import {
   editSemester,
   deleteSemester,
 } from "../../controllers/admin/courseController.js";
-
+import { isAdmin, isAdminOrTeacher } from "../../middleware/authMiddleware.js";
 const router = express.Router();
 
 /* ---------------------- COURSE ROUTES ---------------------- */
-router.get("/", getCourses);
-router.get("/:courseId", getOneCourse);
-router.post("/", createCourses);
-router.patch("/:courseId", editCourse);
-router.delete("/:courseId", deleteCourse);
+router.get("/", isAdmin, getCourses);
+router.get("/:courseId", isAdmin, getOneCourse);
+router.post("/", isAdmin, createCourses);
+router.patch("/:courseId", isAdmin, editCourse);
+router.delete("/:courseId", isAdmin, deleteCourse);
 
 /* ---------------------- BATCH ROUTES ---------------------- */
-router.get("/:courseId/batches", getBatches);
-router.post("/:courseId/batches", createBatches);
-router.get("/batches/:batchId", getOneBatch);
-router.patch("/batches/:batchId", editBatch);
-router.delete("/batches/:batchId", deleteBatch);
+router.get("/:courseId/batches", isAdmin, getBatches);
+router.post("/:courseId/batches", isAdmin, createBatches);
+router.get("/batches/:batchId", isAdminOrTeacher, getOneBatch);
+router.patch("/batches/:batchId", isAdmin, editBatch);
+router.delete("/batches/:batchId", isAdmin, deleteBatch);
 
 /* ---------------------- SEMESTER ROUTES ---------------------- */
-router.get("/:courseId/semesters", getSemesters);
-router.post("/:courseId/semesters/:sem_no", createSemester);
-router.get("/semesters/:semesterId", getOneSemester);
-router.patch("/semesters/:semesterId", editSemester);
-router.delete("/semesters/:semesterId", deleteSemester);
+router.get("/:courseId/semesters", isAdmin, getSemesters);
+router.post("/:courseId/semesters/:sem_no", isAdmin, createSemester);
+router.get("/semesters/:semesterId", isAdmin, getOneSemester);
+router.patch("/semesters/:semesterId", isAdmin, editSemester);
+router.delete("/semesters/:semesterId", isAdmin, deleteSemester);
 
 export default router;

@@ -1,19 +1,13 @@
-import { useAuth } from "@/src/context/AuthContext";
 import { HeaderBackButton } from "@react-navigation/elements";
-import { Stack, useNavigation } from "expo-router";
+import { Stack, useNavigation, usePathname } from "expo-router";
 
 export default function AnnouncementsLayout() {
   const navigation = useNavigation();
-  const { user } = useAuth();
+  const route = usePathname();
   return (
     <Stack
-      screenOptions={({ route }) => ({
-        headerTitle: ((base) =>
-          base === "index"
-            ? `Hey, ${user?.name}. The batches you teach`
-            : base.replace(/^./, (c) => c.toUpperCase()))(
-          route.name?.split("/")?.[0] || ""
-        ),
+      screenOptions={() => ({
+        headerShown: route !== "/Home",
         headerLeft: (props) =>
           navigation.canGoBack() ? (
             <HeaderBackButton

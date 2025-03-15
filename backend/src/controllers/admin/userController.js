@@ -210,12 +210,10 @@ export const assignMentor = async (req, res) => {
 
     // Check the number of mentors
     if (batch.mentors.length >= 6) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "Cannot have more than two mentors. Remove a mentor to add new ones",
-        });
+      return res.status(400).json({
+        message:
+          "Cannot have more than two mentors. Remove a mentor to add new ones",
+      });
     }
 
     // Update the teacher document: add the batchId to the mentor_of field.
@@ -342,7 +340,7 @@ export const getBatchStudents = async (req, res) => {
     }
 
     if (!batch.students || batch.students.length === 0) {
-      return res.status(404).json({
+      return res.status(200).json({
         message: "No students found in this batch",
         data: [],
       });
@@ -381,9 +379,9 @@ export const createStudents = async (req, res) => {
             roll_no: student.roll_no,
           });
           return newStudent._id;
-        } catch {
+        } catch (error) {
           throw new Error(
-            `Error creating student ${student.name}: ${student.email}`
+            `Error creating student ${student.name}: ${student.email}: ${error.message}`
           );
         }
       })

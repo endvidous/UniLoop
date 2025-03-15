@@ -49,6 +49,15 @@ const TabLayout = () => {
         }}
       />
       <Tabs.Screen
+        name="ClassFinder"
+        options={{
+          title: "Classroom Finder",
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons size={28} name="location-pin" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="Settings"
         options={{
           title: "Settings",
