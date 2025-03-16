@@ -3,8 +3,7 @@ import { useStore } from "@/src/context/store";
 import { useRouter } from "expo-router";
 import { appStorage } from "@/src/services/storage/secureStorage";
 
-const IP = process.env.EXPO_PUBLIC_API_URL;
-const BASE_URL = `http://${IP}:5000/api`; // your backend URL
+const BASE_URL = `${process.env.EXPO_PUBLIC_API_URL}`; // your backend URL
 
 const axiosInstance = axios.create({
   baseURL: BASE_URL,

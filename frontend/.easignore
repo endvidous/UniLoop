@@ -1,17 +1,25 @@
 # Ignore node_modules
+
 node_modules
 
 # Ignore build output
+
 build
 dist
+android
+.expo
+.vscode
 
 # Ignore logs
-*.log
+
+\*.log
 
 # Ignore temporary files
-*.tmp
-*.temp
+
+_.tmp
+_.temp
 
 # Ignore environment variables
+
 .env
-.env.*
+.env.\*
