@@ -10,6 +10,7 @@ type MeetingUser = {
   roll_no?: string;
   mentor_of?: string;
 };
+
 export type Meeting = {
   _id: string;
   requestedBy: MeetingUser;
@@ -48,7 +49,8 @@ const meetingsAPI = {
 
   getOneMeeting: async (meetingId: string) => {
     try {
-      const response = await axiosInstance.get(`/${API_URL}/${meetingId}`);
+      console.log(meetingId)
+      const response = await axiosInstance.get(`${API_URL}/${meetingId}`);
       return response.data;
     } catch (error: any) {
       const errorMessage =

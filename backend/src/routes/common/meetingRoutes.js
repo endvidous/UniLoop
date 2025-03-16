@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  getOneMeeting,
   createMeetingRequest,
   getMeetingRequests,
   updateMeetingRequest,
@@ -12,6 +13,7 @@ const router = express.Router();
 
 router.get("/", getMeetingRequests);
 router.post("/", createMeetingRequest);
+router.get("/:meetingId",getOneMeeting)
 router.patch("/:meetingId/approve-meeting", approveMeeting);
 router.patch("/:meetingId/reject-meeting", rejectMeeting);
 router.patch("/:meetingId", updateMeetingRequest);

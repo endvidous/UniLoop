@@ -6,14 +6,21 @@ import {
   ActivityIndicator,
   ScrollView,
   RefreshControl,
+  TouchableOpacity,
+  Modal,
 } from "react-native";
 import { useMeetings } from "@/src/hooks/api/useMeetings";
 import { useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "@/src/hooks/colors/useThemeColor";
 import MeetingCard from "./MeetingCard";
+import CreateMeetingPage from "./CreateMeetingPage";
 import { useAuth } from "@/src/context/AuthContext";
 import { Meeting } from "@/src/services/api/meetingsAPI";
 const MeetingsList = () => {
   const [refreshing, setRefreshing] = useState(false);
+  const { colors } = useTheme();
+  const [showModal, setShowModal] = useState(false);
 
   //Destructuring data received
   const { data, isLoading, error, isError, refetch } = useMeetings();
@@ -25,6 +32,11 @@ const MeetingsList = () => {
     setRefreshing(true);
     await refetch();
     setRefreshing(false);
+  };
+
+  const handleMeetingCreated = () => {
+    setShowModal(false);
+    refetch();
   };
 
   if (isLoading) {
@@ -86,6 +98,23 @@ const MeetingsList = () => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       />
+
+      <TouchableOpacity
+        style={[styles.fab, { shadowColor: colors.shadowcolor }]}
+        onPress={() => setShowModal(true)}
+        accessibilityLabel="Create a meeting"
+        accessibilityRole="button"
+      >
+        <Ionicons name="add" size={30} color="white" />
+      </TouchableOpacity>
+
+      <Modal
+        visible={showModal}
+        animationType="slide"
+        onRequestClose={() => setShowModal(false)}
+      >
+        <CreateMeetingPage onDismiss={handleMeetingCreated} />
+      </Modal>
     </View>
   );
 };
@@ -106,6 +135,20 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 16,
     marginTop: 10,
+  },
+  fab: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    backgroundColor: "#007BFF",
+    borderRadius: 50,
+    width: 60,
+    height: 60,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 2,
   },
 });
 

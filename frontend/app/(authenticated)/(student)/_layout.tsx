@@ -49,6 +49,15 @@ const TabLayout = () => {
         }}
       />
       <Tabs.Screen
+        name="Meetings"
+        options={{
+          title: "Meetings",
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons size={28} name="assignment" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="ClassFinder"
         options={{
           title: "Classroom Finder",

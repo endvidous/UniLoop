@@ -26,7 +26,11 @@ interface MeetingFormData {
   venue?: string; // Only for teachers
 }
 
-const CreateMeetingPage = () => {
+interface CreateMeetingPageProps {
+  onDismiss: () => void;
+}
+
+const CreateMeetingPage: React.FC<CreateMeetingPageProps> = ({ onDismiss }) => {
   const { user } = useAuth();
   const { data: associations } = useUserAssociations();
 
@@ -86,15 +90,15 @@ const CreateMeetingPage = () => {
 
     console.log("Submitting meeting:", payload);
     // Submit the payload to your backend API
-    // createMeeting(payload, {
-    //   onSuccess: () => {
-    //     toast.success("Assignment created successfully");
-    //   },
-    //   onError: (error) => {
-    //     console.error("Error creating assignment:", error.message);
-    //     toast.error("Error: " + error.message);
-    //   },
-    // });
+    createMeeting(payload, {
+      onSuccess: () => {
+        toast.success("Meeting created successfully");
+      },
+      onError: (error) => {
+        console.error("Error creating Meeting:", error.message);
+        toast.error("Error: " + error.message);
+      },
+    });
   };
 
   return (
@@ -233,11 +237,12 @@ const CreateMeetingPage = () => {
                   <Text
                     style={value ? styles.dateText : styles.placeholderText}
                   >
-                    {value ? new Date(value).toLocaleString() : "Select Timing"}
+                    {value ? new Date(value).toLocaleString("en-GB") : "Select Timing"}
                   </Text>
                 </TouchableOpacity>
                 <DateTimePickerModal
                   isVisible={isDateTimePickerVisible}
+                  minimumDate={new Date()}
                   mode="datetime"
                   onConfirm={(date) => {
                     onChange(date);
@@ -266,6 +271,7 @@ const CreateMeetingPage = () => {
       )}
 
       <Button title="Create Meeting" onPress={handleSubmit(onSubmit)} />
+      <Button title="Dismiss" onPress={onDismiss} />
     </View>
   );
 };

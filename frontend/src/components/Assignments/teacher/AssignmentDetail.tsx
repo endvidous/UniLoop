@@ -95,7 +95,7 @@ const TeacherAssignmentDetailView = ({ id }: { id: string }) => {
   }
 
   return (
-    <ScrollView
+    <View
       style={styles.container}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={OnRefresh} />
@@ -106,7 +106,7 @@ const TeacherAssignmentDetailView = ({ id }: { id: string }) => {
         <Text>{assignment.description}</Text>
       </View>
       
-    </ScrollView>
+    </View>
   );
 };
 

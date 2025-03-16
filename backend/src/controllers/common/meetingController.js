@@ -4,7 +4,7 @@ import { User } from "../../models/userModels.js";
 import { Reminder } from "../../models/remindersModels.js";
 
 // Get Single Meeting
-export const getMeeting = async (req, res) => {
+export const getOneMeeting = async (req, res) => {
   const { meetingId } = req.params;
   try {
     const meeting = await Meetings.findOne({
@@ -195,12 +195,12 @@ export const approveMeeting = async (req, res) => {
         .json({ message: "Meeting not found or unauthorized" });
     }
 
-    // Authorization: Only staff can approve
-    if (!req.user.isTeacher() && !req.user.isAdmin()) {
-      return res
-        .status(403)
-        .json({ message: "Only staff can approve meetings" });
-    }
+    // // Authorization: Only staff can approve
+    // if (!req.user.isTeacher() && !req.user.isAdmin()) {
+    //   return res
+    //     .status(403)
+    //     .json({ message: "Only staff can approve meetings" });
+    // }
 
     // Validation: Require timing/venue for student requests
     if (meeting.requestedBy.role === "student") {

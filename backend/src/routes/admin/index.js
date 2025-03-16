@@ -11,6 +11,6 @@ const router = express.Router();
 router.use("/academic-timeline", isAdmin, academicRoutes);
 router.use("/departments", isAdmin, departmentRoutes);
 router.use("/courses", courseRoutes);
-router.use("/users", isAdmin, userRoutes);
+router.use("/users", userRoutes);
 
 export default router;
