@@ -40,7 +40,7 @@ export const reminderService = {
     priority?: number;
     completed?: boolean;
     remind_at?: Date;
-  }): Promise<{ message: string; data: Reminder[] }> => {
+  }): Promise<{ message: string; reminders: Reminder[] }> => {
     const response = await axiosInstance.get(`/reminders`, { params: filters });
     return response.data;
   },

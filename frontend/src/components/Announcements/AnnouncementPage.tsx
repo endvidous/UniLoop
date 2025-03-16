@@ -20,6 +20,7 @@ import { useRouter } from "expo-router";
 import { useAuth } from "@/src/context/AuthContext";
 import type { RelativePathString } from "expo-router";
 import { useTheme } from "@/src/hooks/colors/useThemeColor";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 
 const AnnouncementsPage = () => {
   const { user } = useAuth();
@@ -120,7 +121,11 @@ const AnnouncementsPage = () => {
           accessibilityLabel="Create new announcement"
           accessibilityRole="button"
         >
-          <Ionicons name="add" size={30} color="white" />
+          <MaterialCommunityIcons
+            name="account-voice"
+            size={30}
+            color="white"
+          />
         </TouchableOpacity>
       )}
 

@@ -51,6 +51,25 @@ const TabLayout = () => {
         }}
       />
       <Tabs.Screen
+        name="Reminders"
+        options={{
+          //href: "/(authenticated)/(admin)/Reminders/index",
+          title: "Reminders",
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons size={28} name="alarm" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="Classroom"
+        options={{
+          title: "Classroom",
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons size={28} name="home" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="Settings"
         options={{
           title: "Settings",
