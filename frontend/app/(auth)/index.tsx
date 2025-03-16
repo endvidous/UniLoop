@@ -4,52 +4,48 @@ import {
   TextInput,
   TouchableOpacity,
   Text,
-  Alert,
 } from "react-native";
 import { UniloopText } from "@/src/assets/svgs/splashSvgs";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
-import { authService } from "@/src/services/api/auth";
-import { useStore } from "@/src/context/store";
-import axios from "axios";
+import { AxiosError } from "axios";
+import { useAuth } from "@/src/context/AuthContext";
+import { Ionicons } from "@expo/vector-icons";
+import { toast, ToastPosition } from "@backpackapp-io/react-native-toast";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { setUser, setToken } = useStore();
+  const { signIn } = useAuth();
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  interface LoginFormState {
+    email: string;
+    password: string;
+    emailError: string | null;
+    passwordError: string | null;
+    passwordVisible: boolean;
+  }
 
-  const handleLogin = async () => {
+  const [passwordVisible, setPasswordVisible] =
+    useState<LoginFormState["passwordVisible"]>(false);
+
+  const handleLogin = async (): Promise<void> => {
     try {
-      const response = await authService.login(email, password);
-      const { token, ...user } = response;
-
-      setUser(user); // Save user in Zustand
-      setToken(token); // Save token in Zustand
-      Alert.alert("Login Successful!", `Welcome, ${user.name}`);
-
-      const role = user.role as "admin" | "teacher" | "student";
-      router.replace(`/(authenticated)/(${role})`);
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const message = error.response?.data?.message;
-
-        // Reset errors
-        setEmailError(null);
-        setPasswordError(null);
-        // Set error based on backend message
-        if (message === "Invalid credentials") {
-          setEmailError("Invalid email or user does not exist.");
-        } else if (message === "Wrong password") {
-          setPasswordError("Incorrect password. Please try again.");
-        } else {
-          Alert.alert("Error", "An unexpected error occurred.");
-        }
-      } else {
-        console.error("An unknown error occurred:", error);
-      }
+      const signInPromise = signIn(email.trim(), password);
+      toast.promise(
+        signInPromise,
+        {
+          loading: "Logging in...",
+          success: () => "Welcome ",
+          error: (err: Error) => err.toString(),
+        },
+        { position: ToastPosition.BOTTOM }
+      );
+      await signInPromise;
+    } catch (error: AxiosError | any) {
+      //Do Nothing as of now
     }
   };
 
@@ -78,15 +74,29 @@ export default function LoginPage() {
 
           {/* Password Input */}
           <Text style={styles.label}>Password</Text>
-          <TextInput
-            style={styles.input}
-            secureTextEntry
-            placeholderTextColor="#999"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.nativeEvent.text);
-            }}
-          />
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={styles.passwordInput}
+              secureTextEntry={!passwordVisible}
+              placeholder="Enter your password"
+              placeholderTextColor="#999"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.nativeEvent.text);
+              }}
+            />
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => setPasswordVisible(!passwordVisible)}
+            >
+              <Ionicons
+                name={passwordVisible ? "eye-off" : "eye"}
+                size={24}
+                color="black"
+              />
+            </TouchableOpacity>
+          </View>
+
           {/* Error message */}
           {passwordError && <Text style={styles.error}>{passwordError}</Text>}
 
@@ -129,7 +139,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   topLogo: {
-    marginTop: 40,
+    marginTop: 100,
   },
   svg: {
     position: "absolute",
@@ -139,7 +149,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 20,
     padding: 20,
-    marginTop: 40,
+    marginTop: 85,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -167,6 +177,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     marginBottom: 15,
     fontSize: 16,
+  },
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 10,
+    height: 50,
+    paddingHorizontal: 15,
+    marginBottom: 15,
+  },
+  passwordInput: {
+    flex: 1,
+    paddingRight: 10,
+    fontSize: 16,
+  },
+  iconButton: {
+    paddingHorizontal: 5,
   },
   resetButton: {
     alignSelf: "flex-start",

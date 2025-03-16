@@ -1,28 +1,85 @@
-import { Tabs } from "expo-router";
-import { useAuth } from "@/src/context/AuthContext";
+import { RelativePathString, Tabs } from "expo-router";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { MaterialIcons } from "@expo/vector-icons";
+import { useTheme } from "@/src/hooks/colors/useThemeColor";
 
-const AdminLayout = () => {
-  const { user } = useAuth();
+const TabLayout = () => {
+  const { colors } = useTheme();
   return (
     <Tabs
       screenOptions={{
-        headerTitle: user?.role,
-        headerBackButtonDisplayMode: "default",
+        tabBarActiveTintColor: colors.background,
+        tabBarActiveBackgroundColor: colors.icon,
+        tabBarHideOnKeyboard: true,
+        tabBarInactiveTintColor: colors.text,
+        tabBarStyle: {
+          backgroundColor: colors.background,
+        },
+        headerStyle: {
+          backgroundColor: colors.background,
+        },
+        headerTintColor: colors.text,
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="Home"
         options={{
           title: "Home",
           tabBarIcon: ({ color }) => (
-            <FontAwesome size={28} name="home" color={color} />
+            <MaterialIcons size={28} name="home" color={color} />
+          ),
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
+        name="Announcements"
+        options={{
+          href: "/(authenticated)/(admin)/Announcements",
+          title: "Announcements",
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons size={28} name="announcement" color={color} />
           ),
         }}
       />
-      <Tabs.Screen name="home" options={{ href: null }} />
+      <Tabs.Screen
+        name="Discussions"
+        options={{
+          title: "Discussions",
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons size={28} name="chat" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="Reminders"
+        options={{
+          //href: "/(authenticated)/(admin)/Reminders/index",
+          title: "Reminders",
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons size={28} name="alarm" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="Classroom"
+        options={{
+          title: "Classroom",
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons size={28} name="home" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="Settings"
+        options={{
+          title: "Settings",
+          tabBarIcon: ({ color }) => (
+            <FontAwesome size={28} name="cog" color={color} />
+          ),
+        }}
+      />
     </Tabs>
   );
 };
 
-export default AdminLayout;
+export default TabLayout;

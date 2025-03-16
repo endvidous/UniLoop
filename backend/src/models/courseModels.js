@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { User } from "./userModels.js";
 const Schema = mongoose.Schema;
 
 // Department Schema
@@ -6,6 +7,7 @@ const departmentSchema = new Schema({
   name: {
     type: String,
     required: true,
+    unique: true,
   },
   teachers: [
     {
@@ -14,6 +16,7 @@ const departmentSchema = new Schema({
     },
   ],
 });
+departmentSchema.index({ name: 1, teachers: 1 });
 
 //Paper schema
 const paperSchema = new Schema({
@@ -69,6 +72,10 @@ const courseSchema = new Schema({
     type: String,
     required: true,
   },
+  code: {
+    type: String,
+    required: true,
+  },
   type: {
     type: String,
     enum: ["UG", "PG"],
@@ -91,6 +98,9 @@ const batchSchema = new Schema({
     ref: "Courses",
     required: true,
   },
+  code: {
+    type: String,
+  },
   startYear: {
     type: Number,
     required: true,
@@ -105,12 +115,63 @@ const batchSchema = new Schema({
       ref: "User",
     },
   ],
+  classReps: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      validate: {
+        validator: async function (userId) {
+          const user = await User.findById(userId);
+          return user?.isStudent() && this.students.includes(userId);
+        },
+        message: "Class rep must be a student in this batch",
+      },
+    },
+  ],
+  mentors: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      validate: {
+        validator: async function (teacherId) {
+          // 1. Find departments containing this teacher
+          const teacherDepartments = await Departments.find({
+            teachers: teacherId,
+          });
+          if (teacherDepartments.length === 0) return false;
+
+          // 2. Get batch's course with semesters and papers
+          const batch = await Batches.findById(this._id).populate({
+            path: "course",
+            populate: {
+              path: "semesters",
+              populate: {
+                path: "papers.paper",
+                select: "department",
+              },
+            },
+          });
+
+          // 3. Check if any paper in course belongs to teacher's departments
+          return batch.course.semesters.some((semester) =>
+            semester.papers.some((p) =>
+              teacherDepartments.some((dept) =>
+                p.paper.department.equals(dept._id)
+              )
+            )
+          );
+        },
+        message: "The teacher is not related to this department",
+      },
+    },
+  ],
   status: {
     type: String,
     enum: ["active", "completed"],
     default: "active",
   },
 });
+
 batchSchema.index({ course: 1, startYear: 1 }); // Common query pattern
 batchSchema.index({ currentSemester: 1 }); // For semester-based queries
 batchSchema.index({ status: 1 }); // For active/completed filtering
@@ -179,6 +240,28 @@ batchSchema.pre("save", async function (next) {
     next();
   } catch (err) {
     next(err);
+  }
+});
+batchSchema.pre("save", async function (next) {
+  // Only generate a code if it’s not already set.
+  if (!this.code) {
+    try {
+      // Fetch the related course's code.
+      const course = await mongoose
+        .model("Courses")
+        .findById(this.course)
+        .select("code");
+      if (!course) {
+        return next(new Error("Referenced course not found"));
+      }
+      // Generate the batch code based on course code and startYear.
+      this.code = `${course.code}-${this.startYear}`;
+      next();
+    } catch (err) {
+      next(err);
+    }
+  } else {
+    next();
   }
 });
 

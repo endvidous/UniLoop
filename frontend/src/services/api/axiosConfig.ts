@@ -3,7 +3,8 @@ import { useStore } from "@/src/context/store";
 import { useRouter } from "expo-router";
 import { appStorage } from "@/src/services/storage/secureStorage";
 
-const BASE_URL = "http://192.168.0.201:5000/api"; // your backend URL
+const IP = process.env.EXPO_PUBLIC_API_URL;
+const BASE_URL = `http://${IP}:5000/api`; // your backend URL
 
 const axiosInstance = axios.create({
   baseURL: BASE_URL,
@@ -31,6 +32,10 @@ axiosInstance.interceptors.request.use(
 // Response interceptor
 axiosInstance.interceptors.response.use(
   (response) => {
+    const newToken = response.headers["authorization"];
+    if (newToken) {
+      useStore.getState().setToken(newToken.split(" ")[1]);
+    }
     return response;
   },
   (error) => {

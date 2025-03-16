@@ -1,7 +1,8 @@
 import { createContext, useContext, useCallback, useEffect } from "react";
 import { useStore } from "./store";
-import { User } from "../services/utils/interfaces";
+import { User } from "../utils/interfaces";
 import { authService } from "@/src/services/api/auth";
+import { unregisterPushNotifications } from "../services/notifications";
 
 const enum ROLES {
   ADMIN = "admin",
@@ -28,34 +29,20 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const user = useStore((state) => state.user);
-  const token = useStore((state) => state.token);
-  const isLoading = useStore((state) => state.isLoading);
-  const setUser = useStore((state) => state.setUser);
-  const setToken = useStore((state) => state.setToken);
-  const setLoading = useStore((state) => state.setLoading);
-  const initializeState = useStore((state) => state.initializeState);
-  const clearAuth = useStore((state) => state.clearAuth);
-
-  useEffect(() => {
-    // Initialize Zustand state when the component is mounted
-    initializeState();
-  }, [initializeState]);
+  const { user, token, isLoading, setUser, setToken, setLoading, clearAuth } =
+    useStore();
 
   const signIn = useCallback(
     async (email: string, password: string) => {
       try {
-        setLoading(true);
         const response = await authService.login(email, password);
         const { token, user } = response;
         // Update Zustand store and appStorage
         setToken(token);
         setUser(user);
-
+      } catch (error: any) {
         setLoading(false);
-      } catch (error) {
-        console.error("Error signing in:", error);
-        setLoading(false);
+        throw new Error(error?.response?.data?.message || "Login failed");
       }
     },
     [setToken, setUser, setLoading]
@@ -64,15 +51,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = useCallback(async () => {
     try {
       setLoading(true);
-      // await authService.logout();
       // Clear Zustand state and appStorage
+      if (user) {
+        try {
+          await unregisterPushNotifications(user.id);
+        } catch (error: any) {
+          console.log("Error in notifications: " + error.message);
+        }
+      } else {
+        throw new Error("User ID is undefined");
+      }
       clearAuth();
       setLoading(false);
     } catch (error) {
       console.error("Error signing out:", error);
       setLoading(false);
     }
-  }, [setLoading]);
+  }, [setLoading, user]);
 
   return (
     <AuthContext.Provider

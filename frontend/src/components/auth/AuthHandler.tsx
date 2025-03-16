@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useRouter, useSegments } from "expo-router";
+import { RelativePathString, useRouter, useSegments } from "expo-router";
 import { useAuth } from "@/src/context/AuthContext";
 
 export function AuthHandler() {
@@ -13,8 +13,9 @@ export function AuthHandler() {
     const inProtectedGroup = segments[0] === "(authenticated)";
 
     if (token && user && inAuthGroup) {
-      const role = user?.role as "admin" | "teacher" | "student";
-      router.replace(`/(authenticated)/(${role})`);
+      router.replace(
+        `/(authenticated)/(${user.role})/Home` as RelativePathString
+      );
     } else if (!token && inProtectedGroup) {
       router.replace("/(auth)");
     }

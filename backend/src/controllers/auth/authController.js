@@ -1,3 +1,4 @@
+//functions left: editPassword
 import { User } from "../../models/userModels.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -8,8 +9,8 @@ const generateToken = (id) => {
 
 //Login function
 export const login = async (req, res) => {
+  const { email, password } = req.body;
   try {
-    const { email, password } = req.body;
     const user = await User.findOne({ email });
 
     if (!user) return res.status(400).json({ message: "Invalid credentials" });
@@ -17,11 +18,20 @@ export const login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: "Wrong password" });
 
-    res.json({
+    const userResponse = {
       id: user._id,
       name: user.name,
       email: user.email,
       role: user.role,
+    };
+    if (user.classrep_of) {
+      userResponse.classrep_of = user.classrep_of;
+    }
+    if (user.mentor_of) {
+      userResponse.mentor_of = user.mentor_of;
+    }
+    res.json({
+      user: userResponse,
       token: generateToken(user._id),
     });
   } catch (err) {
@@ -30,43 +40,137 @@ export const login = async (req, res) => {
   }
 };
 
+// Logout function
+export const logout = async (req, res) => {
+  try {
+    res.status(200).json({ success: true, message: "User logged out" });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: `Error logging out: ${error.message}`,
+    });
+  }
+};
+
 // Validate User Function
 export const validateUser = async (req, res) => {
   try {
-    const token = req.headers.authorization?.split(" ")[1]; // Extract Bearer token
+    const authHeader = req.headers.authorization;
 
-    if (!token) {
-      return res.status(401).json({ message: "Token not provided" });
+    // Validate authorization header format
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Invalid authentication header" });
     }
 
+    const token = authHeader.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id).select("-password"); // Fetch user without password
 
+    // Validate token payload structure
+    if (!decoded?.id || !decoded?.exp) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Invalid token structure" });
+    }
+
+    const user = await User.findById(decoded.id).select("-password -__v");
+
+    // Check user existence and status
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res
+        .status(401)
+        .json({ success: false, error: "Account does not exist" });
     }
-    // Check if the token is about to expire (e.g., within the next 5 minutes)
-    const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
-    const tokenExpirationTime = decoded.exp; // Expiration time from the token
 
-    // If the token is about to expire in the next 5 minutes (300 seconds)
-    if (tokenExpirationTime - currentTime < 300) {
-      const newToken = generateToken(user._id); // Generate a new token
-      res.json({
-        success: true,
-        user,
-        token: newToken, // Return the new token
-      });
-    } else {
-      res.json({
-        success: true,
-        user,
-      });
+    const currentTime = Math.floor(Date.now() / 1000);
+    const tokenExpirationTime = decoded.exp;
+    const refreshThreshold = process.env.TOKEN_REFRESH_THRESHOLD || 300; // 5 minutes
+
+    const responsePayload = {
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+      token: null,
+    };
+
+    // Add additional fields if they exist
+    if (user.classrep_of) {
+      responsePayload.user.classrep_of = user.classrep_of;
     }
+    if (user.mentor_of) {
+      responsePayload.user.mentor_of = user.mentor_of;
+    }
+
+    // Refresh logic
+    if (tokenExpirationTime - currentTime < refreshThreshold) {
+      const newToken = generateToken(user._id);
+      responsePayload.token = newToken;
+
+      // Set new token in headers
+      res.setHeader("Authorization", `Bearer ${newToken}`);
+    }
+
+    // Add security headers
+    res.setHeader(
+      "Strict-Transport-Security",
+      "max-age=31536000; includeSubDomains"
+    );
+    res.setHeader("Content-Security-Policy", "default-src 'self'");
+
+    return res.json(responsePayload);
   } catch (err) {
-    if (err.name === "TokenExpiredError") {
-      return res.status(401).json({ message: "Token expired" });
+    // Centralized error logging
+    console.error(`Auth Error: ${err.message}`, {
+      timestamp: new Date().toISOString(),
+      endpoint: req.originalUrl,
+    });
+
+    const errorResponse = {
+      success: false,
+      error: "Authentication failed",
+      details:
+        err.name === "TokenExpiredError"
+          ? "Session expired"
+          : "Invalid credentials",
+    };
+
+    return res.status(401).json(errorResponse);
+  }
+};
+
+// Edit password
+export const editPassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user._id;
+
+    // Find the user by ID
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User  not found" });
     }
-    res.status(401).json({ message: "Invalid token" });
+
+    // Check if the current password is correct
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+
+    // Hash the new password
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+
+    // Save the updated user
+    await user.save();
+
+    return res.status(200).json({ message: "Password updated successfully" });
+  } catch (err) {
+    console.error(err.message);
+    return res.status(500).json({ message: "Server error" });
   }
 };
