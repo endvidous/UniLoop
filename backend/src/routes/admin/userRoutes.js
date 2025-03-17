@@ -17,8 +17,8 @@ const router = express.Router();
 
 //Teacher Operations
 router.get("/teachers/:teacherId", isAdmin, getOneTeacher);
-router.get("/:departmentId/teachers", isAdmin, getDepartmentTeachers);
-router.post("/:departmentId/teachers", createTeachers);
+router.get("/:departmentId/teachers", getDepartmentTeachers);
+router.post("/:departmentId/teachers", isAdmin, createTeachers);
 router.patch("/:departmentId/teachers/:teacherId", isAdmin, updateTeacher);
 router.delete("/:departmentId/teachers/:teacherId", isAdmin, deleteTeacher);
 
