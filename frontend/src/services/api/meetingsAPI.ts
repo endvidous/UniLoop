@@ -24,12 +24,27 @@ export type Meeting = {
   updatedAt?: Date;
 };
 
-export type CreateMeetingData = {
+// Base meeting data that both students and teachers share
+export type BaseMeetingData = {
   requestedTo: string;
   purpose: string;
-  timing?: Date;
-  venue?: string;
+  id?: string; // For editing
 };
+
+// Student meeting request - no venue or timing
+export type StudentMeetingData = BaseMeetingData & {
+  status?: "pending"; // Students can only create pending meetings
+};
+
+// Teacher meeting data - includes venue and timing
+export type TeacherMeetingData = BaseMeetingData & {
+  timing: Date;
+  venue: string;
+  status?: "approved" | "rejected" | "completed"; // Teachers can set various statuses
+};
+
+// Union type for all possible meeting data
+export type CreateMeetingData = StudentMeetingData | TeacherMeetingData;
 
 const meetingsAPI = {
   getMeetings: async (): Promise<{
@@ -49,7 +64,7 @@ const meetingsAPI = {
 
   getOneMeeting: async (meetingId: string) => {
     try {
-      console.log(meetingId)
+      console.log(meetingId);
       const response = await axiosInstance.get(`${API_URL}/${meetingId}`);
       return response.data;
     } catch (error: any) {
@@ -62,7 +77,25 @@ const meetingsAPI = {
 
   createMeetingRequest: async (meetingData: CreateMeetingData) => {
     try {
-      const response = await axiosInstance.post(API_URL, meetingData);
+      // Determine if the requester is a student or teacher
+      const isStudent = !("timing" in meetingData) && !("venue" in meetingData);
+
+      // Prepare the payload based on the requester's role
+      const payload = isStudent
+        ? {
+            requestedTo: meetingData.requestedTo,
+            purpose: meetingData.purpose,
+            status: "pending", // Students can only create pending meetings
+          }
+        : {
+            requestedTo: meetingData.requestedTo,
+            purpose: meetingData.purpose,
+            timing: meetingData.timing,
+            venue: meetingData.venue,
+            status: meetingData.status || "approved", // Default to "approved" for teachers
+          };
+
+      const response = await axiosInstance.post(API_URL, payload);
       return response.data;
     } catch (error: any) {
       const errorMessage =
@@ -72,10 +105,15 @@ const meetingsAPI = {
     }
   },
 
-  approveMeeting: async (meetingId: string) => {
+  // For teachers to set venue and timing when approving a student request
+  approveMeeting: async (
+    meetingId: string,
+    approvalData: { venue: string; timing: Date }
+  ) => {
     try {
       const response = await axiosInstance.patch(
-        `${API_URL}/${meetingId}/approve-meeting`
+        `${API_URL}/${meetingId}/approve-meeting`,
+        approvalData
       );
       return response.data;
     } catch (error: any) {
@@ -86,10 +124,11 @@ const meetingsAPI = {
     }
   },
 
-  rejectMeeting: async (meetingId: string) => {
+  rejectMeeting: async (meetingId: string, rejectionReason?: string) => {
     try {
       const response = await axiosInstance.patch(
-        `${API_URL}/${meetingId}/reject-meeting`
+        `${API_URL}/${meetingId}/reject-meeting`,
+        { rejectionReason }
       );
       return response.data;
     } catch (error: any) {
@@ -100,7 +139,10 @@ const meetingsAPI = {
     }
   },
 
-  updateMeetingRequest: async (meetingId: string, meetingData: any) => {
+  updateMeetingRequest: async (
+    meetingId: string,
+    meetingData: CreateMeetingData
+  ) => {
     try {
       const response = await axiosInstance.patch(`${API_URL}/${meetingId}`, {
         data: meetingData,

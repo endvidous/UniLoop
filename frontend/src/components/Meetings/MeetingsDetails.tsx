@@ -183,7 +183,7 @@ const MeetingDetailComponent = ({ id }: MeetingDetailComponentProps) => {
                 render={({ field: { onChange, value } }) => (
                   <>
                     <TouchableOpacity
-                            style={styles.dateInput}
+                      style={styles.dateInput}
                       onPress={() => setIsDateTimePickerVisible(true)}
                     >
                       <Text
