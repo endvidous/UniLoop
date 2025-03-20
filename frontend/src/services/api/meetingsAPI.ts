@@ -1,7 +1,5 @@
 import axiosInstance from "./axiosConfig";
 
-const API_URL = "/meetings";
-
 type MeetingUser = {
   _id: string;
   name: string;
@@ -28,12 +26,12 @@ export type Meeting = {
 export type BaseMeetingData = {
   requestedTo: string;
   purpose: string;
-  status: string
+  status: string;
   id?: string; // For editing
 };
 
 // Student meeting request - no venue or timing
-export type StudentMeetingData = BaseMeetingData 
+export type StudentMeetingData = BaseMeetingData;
 
 // Teacher meeting data - includes venue and timing
 export type TeacherMeetingData = BaseMeetingData & {
@@ -51,7 +49,7 @@ const meetingsAPI = {
     meetings: Array<Meeting>;
   }> => {
     try {
-      const response = await axiosInstance.get(API_URL);
+      const response = await axiosInstance.get("/meetings");
       return response.data;
     } catch (error: any) {
       const errorMessage =
@@ -64,7 +62,7 @@ const meetingsAPI = {
   getOneMeeting: async (meetingId: string) => {
     try {
       console.log(meetingId);
-      const response = await axiosInstance.get(`${API_URL}/${meetingId}`);
+      const response = await axiosInstance.get(`/meetings/${meetingId}`);
       return response.data;
     } catch (error: any) {
       const errorMessage =
@@ -91,10 +89,10 @@ const meetingsAPI = {
             purpose: meetingData.purpose,
             timing: meetingData.timing,
             venue: meetingData.venue,
-            status: meetingData.status 
+            status: meetingData.status,
           };
 
-      const response = await axiosInstance.post(API_URL, payload);
+      const response = await axiosInstance.post("/meetings", payload);
       return response.data;
     } catch (error: any) {
       const errorMessage =
@@ -111,7 +109,7 @@ const meetingsAPI = {
   ) => {
     try {
       const response = await axiosInstance.patch(
-        `${API_URL}/${meetingId}/approve-meeting`,
+        `/meetings/${meetingId}/approve-meeting`,
         approvalData
       );
       return response.data;
@@ -126,7 +124,7 @@ const meetingsAPI = {
   rejectMeeting: async (meetingId: string, rejectionReason?: string) => {
     try {
       const response = await axiosInstance.patch(
-        `${API_URL}/${meetingId}/reject-meeting`,
+        `/meetings/${meetingId}/reject-meeting`,
         { rejectionReason }
       );
       return response.data;
@@ -143,24 +141,25 @@ const meetingsAPI = {
     meetingData: CreateMeetingData
   ) => {
     try {
-      console.log("Reached here")
-      console.log(meetingData)
-      const response = await axiosInstance.patch(`${API_URL}/${meetingId}`, {
-        data: meetingData,
-      });
+      console.log("Reached here");
+      console.log("Meeting data:", meetingData);
+      const response = await axiosInstance.patch(
+        `/meetings/${meetingId}`,
+        meetingData
+      );
       console.log(response.data);
       return response.data;
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.message || `Error editing meeting request`;
-      console.error(errorMessage, error);
+      console.error("Huh error here eh?", errorMessage, error);
       throw new Error(errorMessage);
     }
   },
 
   deleteMeeting: async (meetingId: string) => {
     try {
-      const response = await axiosInstance.delete(`${API_URL}/${meetingId}`);
+      const response = await axiosInstance.delete(`/meetings/${meetingId}`);
       return response.data;
     } catch (error: any) {
       const errorMessage =

@@ -55,6 +55,7 @@ const MeetingDetailComponent = ({ id }: MeetingDetailComponentProps) => {
   useEffect(() => {
     if (meeting) {
       reset({
+        ...meeting,
         purpose: meeting.purpose,
         timing: new Date(meeting.timing),
         venue: meeting.venue,
@@ -120,6 +121,10 @@ const MeetingDetailComponent = ({ id }: MeetingDetailComponentProps) => {
 
   const handleUpdate = async (data: Meeting) => {
     try {
+      console.log("Data: ", {
+        ...data,
+        requestedTo: data.requestedTo._id,
+      });
       await updateMeeting.mutateAsync({
         id,
         data: {
@@ -127,11 +132,11 @@ const MeetingDetailComponent = ({ id }: MeetingDetailComponentProps) => {
           requestedTo: data.requestedTo._id,
         },
       });
-      console.log(data);
       toast.success("Meeting updated successfully.");
       setEditing(false);
       refetch();
-    } catch (err) {
+    } catch (err: any) {
+      console.log("Error: ", err.message);
       toast.error("Failed to update meeting.");
     }
   };
@@ -284,7 +289,7 @@ const MeetingDetailComponent = ({ id }: MeetingDetailComponentProps) => {
               <>
                 <TouchableOpacity
                   style={styles.saveButton}
-                  onPress={handleSubmit((data) => handleApprove(data))}
+                  onPress={handleSubmit((data) => handleUpdate(data))}
                 >
                   <Text style={styles.buttonText}>Save Changes</Text>
                 </TouchableOpacity>
