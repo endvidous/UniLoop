@@ -15,7 +15,7 @@ export type Meeting = {
   _id: string;
   requestedBy: MeetingUser;
   requestedTo: MeetingUser;
-  purpose?: string;
+  purpose: string;
   timing?: Date;
   venue?: string;
   rejectionReason?: string;
@@ -28,23 +28,22 @@ export type Meeting = {
 export type BaseMeetingData = {
   requestedTo: string;
   purpose: string;
+  status: string
   id?: string; // For editing
 };
 
 // Student meeting request - no venue or timing
-export type StudentMeetingData = BaseMeetingData & {
-  status?: "pending"; // Students can only create pending meetings
-};
+export type StudentMeetingData = BaseMeetingData 
 
 // Teacher meeting data - includes venue and timing
 export type TeacherMeetingData = BaseMeetingData & {
   timing: Date;
   venue: string;
-  status?: "approved" | "rejected" | "completed"; // Teachers can set various statuses
 };
 
 // Union type for all possible meeting data
 export type CreateMeetingData = StudentMeetingData | TeacherMeetingData;
+export type UpdateMeetingData = StudentMeetingData | TeacherMeetingData;
 
 const meetingsAPI = {
   getMeetings: async (): Promise<{
@@ -92,7 +91,7 @@ const meetingsAPI = {
             purpose: meetingData.purpose,
             timing: meetingData.timing,
             venue: meetingData.venue,
-            status: meetingData.status || "approved", // Default to "approved" for teachers
+            status: meetingData.status 
           };
 
       const response = await axiosInstance.post(API_URL, payload);
@@ -144,9 +143,12 @@ const meetingsAPI = {
     meetingData: CreateMeetingData
   ) => {
     try {
+      console.log("Reached here")
+      console.log(meetingData)
       const response = await axiosInstance.patch(`${API_URL}/${meetingId}`, {
         data: meetingData,
       });
+      console.log(response.data);
       return response.data;
     } catch (error: any) {
       const errorMessage =

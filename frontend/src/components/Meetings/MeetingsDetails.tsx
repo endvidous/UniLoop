@@ -33,6 +33,7 @@ const MeetingDetailComponent = ({ id }: MeetingDetailComponentProps) => {
   const { user } = useAuth();
   const { data: meeting, isLoading, error, refetch } = useOneMeeting(id);
   const [editing, setEditing] = useState(false);
+  const [approval, setApproval] = useState(false);
   const { colors } = useTheme();
   const navigation = useNavigation();
 
@@ -73,19 +74,55 @@ const MeetingDetailComponent = ({ id }: MeetingDetailComponentProps) => {
     }
   }, [meeting, reset]);
 
-  const handleApprove = async () => {
-    try {
-      await approveMeeting.mutateAsync(id);
-      toast.success("Meeting approved successfully.");
-      refetch();
-    } catch (err) {
-      toast.error("Failed to approve meeting.");
+  const handleApprove = async (formData: Partial<Meeting> | null = null) => {
+    // If formData is provided, we're in the confirmation step
+    if (formData) {
+      // Validate that venue and timing are set
+      if (!formData.venue || !formData.timing) {
+        toast.error("Please set both venue and timing before approving.");
+        return;
+      }
+
+      try {
+        await approveMeeting.mutateAsync({
+          id,
+          data: {
+            venue: formData.venue,
+            timing: formData.timing,
+          },
+        });
+
+        toast.success("Meeting approved successfully.");
+        setApproval(false);
+        setEditing(false);
+        refetch();
+      } catch (err) {
+        toast.error("Failed to approve meeting.");
+      }
+    }
+    // No formData means this is the first step - entering approval mode
+    else {
+      setApproval(true);
+      setEditing(true);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditing(false);
+    setApproval(false);
+    // Reset form to original values
+    if (meeting) {
+      reset({
+        purpose: meeting.purpose,
+        timing: new Date(meeting.timing),
+        venue: meeting.venue,
+      });
     }
   };
 
   const handleReject = async () => {
     try {
-      await rejectMeeting.mutateAsync(id);
+      await rejectMeeting.mutateAsync({ id, reason: meeting.reason });
       toast.success("Meeting rejected successfully.");
       refetch();
     } catch (err) {
@@ -95,7 +132,14 @@ const MeetingDetailComponent = ({ id }: MeetingDetailComponentProps) => {
 
   const handleUpdate = async (data: Meeting) => {
     try {
-      await updateMeeting.mutateAsync({ id, data });
+      await updateMeeting.mutateAsync({
+        id,
+        data: {
+          ...data,
+          requestedTo: data.requestedTo._id,
+        },
+      });
+      console.log(data);
       toast.success("Meeting updated successfully.");
       setEditing(false);
       refetch();
@@ -158,24 +202,26 @@ const MeetingDetailComponent = ({ id }: MeetingDetailComponentProps) => {
     >
       {editing ? (
         <>
-          <Controller
-            control={control}
-            name="purpose"
-            render={({ field: { onChange, value } }) => (
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Purpose</Text>
-                <TextInput
-                  style={styles.input}
-                  value={value}
-                  onChangeText={onChange}
-                  placeholder="Enter purpose"
-                />
-              </View>
-            )}
-          />
+          {!approval && (
+            <Controller
+              control={control}
+              name="purpose"
+              render={({ field: { onChange, value } }) => (
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Purpose</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={value}
+                    onChangeText={onChange}
+                    placeholder="Enter purpose"
+                  />
+                </View>
+              )}
+            />
+          )}
 
           {/* Make sure edit for this only renders and if they are a teacher */}
-          {isTeacher && (
+          {(isTeacher || approval) && (
             <>
               <Controller
                 control={control}
@@ -231,18 +277,37 @@ const MeetingDetailComponent = ({ id }: MeetingDetailComponentProps) => {
           )}
 
           <View style={styles.buttonGroup}>
-            <TouchableOpacity
-              style={styles.saveButton}
-              onPress={handleSubmit(handleUpdate)}
-            >
-              <Text style={styles.buttonText}>Save Changes</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={() => setEditing(false)}
-            >
-              <Text style={styles.buttonText}>Cancel</Text>
-            </TouchableOpacity>
+            {approval ? (
+              <>
+                <TouchableOpacity
+                  style={styles.approveButton}
+                  onPress={handleSubmit((data) => handleApprove(data))}
+                >
+                  <Text style={styles.buttonText}>Confirm Approval</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={handleCancelEdit}
+                >
+                  <Text style={styles.buttonText}>Cancel</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <TouchableOpacity
+                  style={styles.saveButton}
+                  onPress={handleSubmit((data) => handleApprove(data))}
+                >
+                  <Text style={styles.buttonText}>Save Changes</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={handleCancelEdit}
+                >
+                  <Text style={styles.buttonText}>Cancel</Text>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         </>
       ) : (
@@ -300,11 +365,11 @@ const MeetingDetailComponent = ({ id }: MeetingDetailComponentProps) => {
           )}
 
           {/* The person who was requested can approve or reject a meeting regardless of student or teacher */}
-          {!isRequester && (
+          {!isRequester && !editing && meeting.status !== "approved" && (
             <View style={styles.buttonGroup}>
               <TouchableOpacity
                 style={styles.approveButton}
-                onPress={handleApprove}
+                onPress={() => handleApprove()}
               >
                 <Text style={styles.buttonText}>Approve Meeting</Text>
               </TouchableOpacity>

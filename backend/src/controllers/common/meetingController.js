@@ -118,6 +118,7 @@ export const updateMeetingRequest = async (req, res) => {
   const { meetingId } = req.params;
 
   try {
+    console.log("Update meetins dat",req.body) //Does this exist for you?
     const meeting = await Meetings.findOne({
       _id: meetingId,
       $or: [{ requestedBy: req.user._id }, { requestedTo: req.user._id }],
