@@ -68,6 +68,12 @@ export const createMeetingRequest = async (req, res) => {
           .status(403)
           .json({ message: "Students can only request teachers" });
       }
+      // Students should not provide timing and venue
+      if (timing || venue) {
+        return res
+          .status(400)
+          .json({ message: "Students cannot specify timing or venue" });
+      }
     } else if (req.user.isTeacher() || req.user.isAdmin()) {
       if (!recipient.isStudent()) {
         return res
@@ -84,7 +90,7 @@ export const createMeetingRequest = async (req, res) => {
       requestedBy,
       requestedTo,
       purpose,
-      timing,
+      ...(req.user.isTeacher() || req.user.isAdmin() ? { timing, venue } : {}), //Include timing and venue only if teacher or admin.
     });
 
     if (existingMeeting) {
@@ -97,7 +103,7 @@ export const createMeetingRequest = async (req, res) => {
       requestedBy,
       requestedTo,
       purpose,
-      ...(req.user.isTeacher() || req.user.isAdmin() ? { timing, venue } : {}),
+      ...(req.user.isTeacher() || req.user.isAdmin() ? { timing, venue } : {}), //Include timing and venue only if teacher or admin.
       status: "pending",
     });
 
@@ -112,6 +118,7 @@ export const updateMeetingRequest = async (req, res) => {
   const { meetingId } = req.params;
 
   try {
+    console.log("Update meetins dat",req.body) //Does this exist for you?
     const meeting = await Meetings.findOne({
       _id: meetingId,
       $or: [{ requestedBy: req.user._id }, { requestedTo: req.user._id }],

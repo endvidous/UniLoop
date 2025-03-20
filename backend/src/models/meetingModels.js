@@ -36,15 +36,11 @@ const meetingSchema = new Schema(
     },
     timing: {
       type: Date,
-      required: function () {
-        return this.requesterIsStaff();
-      },
+
     },
     venue: {
       type: String,
-      required: function () {
-        return this.requesterIsStaff();
-      },
+
     },
     rejectionReason: String,
     status: {

@@ -23,7 +23,6 @@ const BatchPage = () => {
   const navigation = useNavigation();
   const { data: response, error, isLoading, refetch } = useGetBatch(batchId);
   const batch = response?.data as Batch & { students: Student[] };
-  console.log(batch);
   const [refreshing, setRefreshing] = useState(false);
 
   const [showAssignmentModal, setShowAssignmentModal] = useState(false);

@@ -13,6 +13,10 @@ const enum ROLES {
 interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  changePassword: (
+    currentPassword: string,
+    newPassword: string
+  ) => Promise<void>;
   user: User | null;
   token: string | null;
   isLoading: boolean;
@@ -69,11 +73,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [setLoading, user]);
 
+  const changePassword = useCallback(
+    async (currentPassword: string, newPassword: string) => {
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
+      try {
+        setLoading(true);
+        await authService.changePassword({ currentPassword, newPassword });
+
+        // Optionally force logout after password change
+        await signOut();
+      } catch (error: any) {
+        throw new Error(
+          error?.response?.data?.message || "Password change failed"
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [user, setLoading, signOut]
+  );
+
   return (
     <AuthContext.Provider
       value={{
         signIn,
         signOut,
+        changePassword,
         user,
         token,
         isLoading,
