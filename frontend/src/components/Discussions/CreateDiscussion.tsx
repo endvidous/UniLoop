@@ -281,6 +281,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     paddingBottom: 10,
     borderBottomWidth: 1,
+    borderBottomColor: "#ddd",
   },
   headerTitle: {
     fontSize: 20,
