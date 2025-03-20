@@ -34,4 +34,22 @@ export const authService = {
       throw error;
     }
   },
+
+  changePassword: async ({
+    currentPassword,
+    newPassword,
+  }: {
+    currentPassword: string;
+    newPassword: string;
+  }) => {
+    try {
+      const response = await axiosInstance.patch("/auth/edit-password", {
+        currentPassword,
+        newPassword,
+      });
+      return response.data;
+    } catch (error: any) {
+      throw Error(error);
+    }
+  },
 };
