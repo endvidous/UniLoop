@@ -11,16 +11,17 @@ import {
   TextInput,
   FlatList,
 } from "react-native";
+import { Feather, MaterialIcons } from "@expo/vector-icons";
+import { RelativePathString, useRouter } from "expo-router";
+//custom hooks
 import { useTheme } from "@/src/hooks/colors/useThemeColor";
 import {
   useReminders,
   useToggleReminderCompletion,
 } from "@/src/hooks/api/useReminders";
 import ReminderCard from "@/src/components/Reminders/ReminderCard";
-import { Feather, MaterialIcons } from "@expo/vector-icons";
 import { Reminder as APIReminder } from "@/src/services/api/reminderAPI";
 import UploadReminder from "./UploadReminder";
-import { RelativePathString, useRouter } from "expo-router";
 import { useAuth } from "@/src/context/AuthContext";
 
 interface Reminder extends APIReminder {

@@ -96,6 +96,7 @@ const DrawerLayout = () => {
   // Find the index of the screen name in the path segments
   const screenNames = [
     "Home",
+    "Reminders",
     "Announcements",
     "Discussions",
     "Assignments",
@@ -129,6 +130,15 @@ const DrawerLayout = () => {
             title: "Home",
             drawerIcon: ({ color }) => (
               <MaterialIcons size={28} name="home" color={color} />
+            ),
+          }}
+        />
+        <Drawer.Screen
+          name="Reminders"
+          options={{
+            title: "Reminders",
+            drawerIcon: ({ color }) => (
+              <MaterialIcons size={28} name="alarm" color={color} />
             ),
           }}
         />
