@@ -39,10 +39,6 @@ const MeetingDetailComponent = ({ id }: MeetingDetailComponentProps) => {
 
   const [isDateTimePickerVisible, setIsDateTimePickerVisible] = useState(false);
 
-  console.log(meeting);
-  console.log(id);
-  console.log(error);
-
   const { control, handleSubmit, reset } = useForm<Meeting>({
     defaultValues: {
       purpose: "",
@@ -55,14 +51,6 @@ const MeetingDetailComponent = ({ id }: MeetingDetailComponentProps) => {
   const rejectMeeting = useRejectMeeting();
   const updateMeeting = useUpdateMeeting();
   const deleteMeeting = useDeleteMeeting();
-
-  useEffect(() => {
-    navigation.setOptions({
-      headerShown: true, // Show the header
-      headerTitle: "Meeting Details", // Set the header title
-      headerBackTitle: "Back",
-    });
-  }, [navigation]);
 
   useEffect(() => {
     if (meeting) {
