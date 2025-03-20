@@ -118,6 +118,22 @@ const AnnouncementDetailComponent = ({ id }: { id: string }) => {
 
   const onSubmit = async (formData: FormValues) => {
     try {
+      // Identify attachments to delete:
+      const attachmentsToDelete = data.attachments.filter(
+        (original: any) =>
+          !attachments.some((temp) => temp.key === original.key)
+      );
+
+      // Optionally, call deleteFile for each attachment that was removed:
+      for (const att of attachmentsToDelete) {
+        try {
+          await deleteFile(att.key);
+        } catch (err) {
+          // Optionally log or handle the error, but don't block the update
+          console.error("Failed to delete attachment:", att.key, err);
+        }
+      }
+
       await updateMutation.mutateAsync({
         id,
         data: {
@@ -391,8 +407,8 @@ const AnnouncementDetailComponent = ({ id }: { id: string }) => {
           {/* Render attachments with delete (edit) functionality */}
           <AttachmentViewer
             attachments={attachments}
+            setAttachments={setAttachments}
             editable
-            onDeleteAttachment={handleDeleteAttachment}
           />
 
           <View style={styles.buttonGroup}>
@@ -404,7 +420,11 @@ const AnnouncementDetailComponent = ({ id }: { id: string }) => {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.cancelButton}
-              onPress={() => setEditing(false)}
+              onPress={() => {
+                // Revert temporary attachments to original
+                setAttachments(data.attachments || []);
+                setEditing(false);
+              }}
             >
               <Text style={styles.buttonText}>Cancel</Text>
             </TouchableOpacity>

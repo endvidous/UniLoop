@@ -9,6 +9,7 @@ import { findStudentDetails } from "../../services/userService.js";
 import { bucketConfig, s3Client } from "../../config/awsS3.js";
 import { DeleteObjectsCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import archiver from "archiver";
+import { PassThrough } from "stream";
 
 /*------------------------------Submission and attachment file Controllers------------------------------*/
 
@@ -57,45 +58,50 @@ export const downloadSubmissionsZip = async (req, res) => {
       .lean();
 
     // Set response headers for a zip download
-    res.set({
-      "Content-Type": "application/zip",
-      "Content-Disposition": `attachment; filename="submissions_${assignmentId}.zip"`,
-    });
+    res.setHeader("Content-Type", "application/zip");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="submissions_${assignmentId}.zip"`
+    );
 
-    // Initialize archiver
-    const archive = archiver("zip", {
-      zlib: { level: 9 },
-    });
+    // Create a PassThrough stream
+    const zipStream = new PassThrough();
+    const archive = archiver("zip", { zlib: { level: 9 } });
 
-    // Pipe archive data to the response
-    archive.pipe(res);
+    // Pipe the archive data to the PassThrough stream
+    archive.pipe(zipStream);
+    zipStream.pipe(res);
 
-    // Process each submission: fetch the file from S3 and add it to the archive
-    for (const sub of submissions) {
-      if (sub.submission && sub.submission.key) {
-        // Generate a file name, e.g., including the student's name if available
-        const studentName =
-          sub.student?.name?.replace(/[^a-z0-9_]/gi, "").substring(0, 50) ||
-          "unknown";
-        const studentRollNo = sub.submission.roll_no || "unknown";
-        const zipEntryName = `${studentRollNo}_${studentName}`;
+    // Fetch and append files concurrently
+    await Promise.all(
+      submissions.map(async (sub) => {
+        if (sub.submission?.key) {
+          const studentName =
+            sub.student?.name?.replace(/[^a-z0-9_]/gi, "").substring(0, 50) ||
+            "unknown";
+          const studentRollNo = sub.student?.roll_no || "unknown";
+          const fileExtension = sub.submission.type.split("/")[1];
+          const zipEntryName = `${studentRollNo}_${studentName}.${fileExtension}`;
 
-        // Create S3 GetObjectCommand and retrieve the file stream
-        const params = {
-          Bucket: bucketConfig.bucketName,
-          Key: sub.submission.key,
-        };
-        const command = new GetObjectCommand(params);
-        const s3Response = await s3Client.send(command);
-        const fileStream = s3Response.Body;
+          try {
+            const params = {
+              Bucket: bucketConfig.bucketName,
+              Key: sub.submission.key,
+            };
+            const command = new GetObjectCommand(params);
+            const s3Response = await s3Client.send(command);
+            const fileStream = s3Response.Body;
 
-        // Append the file stream to the archive with the specified file name
-        archive.append(fileStream, { name: zipEntryName });
-      }
-    }
+            archive.append(fileStream, { name: zipEntryName });
+          } catch (err) {
+            console.error("Failed to retrieve file from S3:", err);
+          }
+        }
+      })
+    );
 
-    // Finalize the archive (this will send the zipped data as the response)
-    await archive.finalize();
+    // Finalize the archive
+    archive.finalize();
   } catch (error) {
     console.error("Error generating zip file:", error);
     res.status(500).json({
@@ -319,6 +325,7 @@ export const createAssignment = async (req, res) => {
       data: savedAssignment,
     });
   } catch (error) {
+    console.log(error);
     await session.abortTransaction();
     res.status(400).json({
       success: false,
@@ -482,6 +489,33 @@ export const submitAssignment = async (req, res) => {
       });
     }
 
+    // Check if the submission is empty or considered a deletion request
+    if (
+      !submission ||
+      !submission.key ||
+      !submission.name ||
+      !submission.type ||
+      Object.values(submission).every(
+        (v) => v === null || v === undefined || v === ""
+      )
+    ) {
+      // // Delete the existing submission
+      // if (submissionDoc.submission?.key) {
+      //   await deleteFilesFromS3([submissionDoc.submission.key]);
+      // }
+      submissionDoc.submission = undefined;
+      submissionDoc.status = SUBMISSION_STATUS.NOT_SUBMITTED;
+
+      await submissionDoc.save();
+
+      return res.status(200).json({
+        success: true,
+        message: "Submission deleted successfully",
+        data: submissionDoc,
+      });
+    }
+
+    // Existing submission update logic
     if (!submission.key || !submission.name || !submission.type) {
       return res.status(400).json({
         success: false,
@@ -504,6 +538,7 @@ export const submitAssignment = async (req, res) => {
       data: submissionDoc,
     });
   } catch (error) {
+    console.log(error.message);
     res.status(400).json({
       success: false,
       message: "Failed to submit assignment",
@@ -511,7 +546,6 @@ export const submitAssignment = async (req, res) => {
     });
   }
 };
-
 export const deleteAssignmentSubmission = async (req, res) => {
   const userId = req.user._id;
   const { assignmentId } = req.params;

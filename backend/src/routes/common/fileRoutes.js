@@ -18,7 +18,7 @@ const basicLimiter = rateLimit({
 router.use(basicLimiter);
 
 router.post("/upload-url", generateUploadURL);
-router.get("/download-url", generateDownloadURL);
+router.post("/download-url", generateDownloadURL);
 router.get("/", listFiles);
 router.delete("/", deleteFile);
 router.delete("/", validateFileKeys, bulkDeleteFiles);

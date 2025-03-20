@@ -37,6 +37,7 @@ const assignmentSchema = new Schema(
       type: Date,
       validate: {
         validator: function (value) {
+          if (!value) return true;
           return value > this.deadline && value > Date.now();
         },
         message:
