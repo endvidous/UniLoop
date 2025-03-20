@@ -23,7 +23,7 @@ router.get("/:assignmentId", isStudentOrTeacher, getAssignment);
 
 //Only teachers can access create, update and delete for an assignment
 router.post("/", isTeacher, createAssignment);
-router.put("/:assignmentId", isTeacher, updateAssignment);
+router.patch("/:assignmentId", isTeacher, updateAssignment);
 router.delete("/:assignmentId", isTeacher, deleteAssignment);
 router.get(
   "/:assignmentId/submissions/download",
@@ -32,9 +32,9 @@ router.get(
 ); // Download route for teachers zip
 
 // Submission-specific routes
-router.post("/:assignmentId/submissions", isStudent, submitAssignment);
+router.patch("/:assignmentId/submission", isStudent, submitAssignment);
 router.delete(
-  "/:assignmentId/submissions",
+  "/:assignmentId/submission",
   isStudent,
   deleteAssignmentSubmission
 );
