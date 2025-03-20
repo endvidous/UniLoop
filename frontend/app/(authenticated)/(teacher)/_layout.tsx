@@ -4,9 +4,15 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useTheme } from "@/src/hooks/colors/useThemeColor";
 import { Divider } from "react-native-paper";
-import { Text, View } from "react-native";
+import { Text, View, TouchableOpacity } from "react-native";
 import { DrawerContentScrollView, DrawerItem } from "@react-navigation/drawer";
-import { usePathname, useSegments } from "expo-router";
+import {
+  usePathname,
+  useSegments,
+  useRouter,
+  RelativePathString,
+} from "expo-router";
+import { useAuth } from "@/src/context/AuthContext";
 
 // Custom Drawer Content Component
 const CustomDrawerContent = (props: any) => {
@@ -84,16 +90,11 @@ const CustomDrawerContent = (props: any) => {
 
 const DrawerLayout = () => {
   const { colors } = useTheme();
-  const pathname = useSegments();
+  const segments = useSegments();
+  const router = useRouter();
+  const { user } = useAuth();
 
-  // Extract the relative path within this layout
-  const pathSegments = pathname.filter(Boolean);
-
-  // Determine if we're on a detail page by checking if there's anything after the screen name
-  // For example: /authenticated/teacher/Announcements/123 would be a detail page
-  // But /authenticated/teacher/Announcements would be a main page
-
-  // Find the index of the screen name in the path segments
+  // Define screen names that can be accessed from drawer
   const screenNames = [
     "Home",
     "Announcements",
@@ -104,24 +105,64 @@ const DrawerLayout = () => {
     "Settings",
   ];
 
-  // Get the index of the last segment that matches a screen name
-  const lastScreenIndex = pathSegments.findIndex((segment) =>
+  // Find the current screen name in segments
+  const currentScreen = segments.find((segment) =>
     screenNames.includes(segment)
   );
 
-  // If there are segments after the screen name, it's a detail page
-  const isDetailPage =
-    lastScreenIndex !== -1 && lastScreenIndex < pathSegments.length - 1;
+  // Check if we're on a detail page by looking for dynamic segments
+  // This checks if the path has more segments after a known screen name
+  const isDetailPage = (() => {
+    const screenIndex = segments.findIndex((segment) =>
+      screenNames.includes(segment)
+    );
+    return screenIndex !== -1 && screenIndex < segments.length - 1;
+  })();
+
+  // Get the parent screen name for the back button navigation
+  const parentScreenName = currentScreen || "Home";
 
   return (
-    <GestureHandlerRootView>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <Drawer
         drawerContent={(props) => <CustomDrawerContent {...props} />}
-        screenOptions={{
+        screenOptions={({ navigation }) => ({
           drawerActiveTintColor: colors.tabIconSelected,
           drawerInactiveTintColor: colors.tabIconDefault,
-          headerShown: !isDetailPage, // Only show drawer header on main section pages
-        }}
+          headerShown: true,
+          headerLeft: ({ tintColor }) => {
+            if (isDetailPage) {
+              // Show back button on detail pages
+              return (
+                <TouchableOpacity
+                  onPress={() => {
+                    // Navigate back to the parent screen
+                    router.push(
+                      `/(${user?.role})/${parentScreenName}` as RelativePathString
+                    );
+                  }}
+                  style={{ marginLeft: 15 }}
+                >
+                  <MaterialIcons
+                    name="arrow-back"
+                    size={24}
+                    color={tintColor}
+                  />
+                </TouchableOpacity>
+              );
+            } else {
+              // On index pages, show the hamburger menu
+              return (
+                <TouchableOpacity
+                  onPress={() => navigation.openDrawer()}
+                  style={{ marginLeft: 15 }}
+                >
+                  <MaterialIcons name="menu" size={24} color={tintColor} />
+                </TouchableOpacity>
+              );
+            }
+          },
+        })}
       >
         <Drawer.Screen
           name="Home"
