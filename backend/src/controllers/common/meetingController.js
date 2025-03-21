@@ -118,7 +118,6 @@ export const updateMeetingRequest = async (req, res) => {
   const { meetingId } = req.params;
 
   try {
-    console.log("Update meetins dat",req.body) //Does this exist for you?
     const meeting = await Meetings.findOne({
       _id: meetingId,
       $or: [{ requestedBy: req.user._id }, { requestedTo: req.user._id }],
@@ -301,7 +300,7 @@ export const deleteMeetingRequest = async (req, res) => {
         .json({ message: "Meeting not found or unauthorized" });
     }
 
-    await meeting.remove();
+    await Meetings.deleteOne({ _id: meetingId });
     res.status(200).json({ message: "Meeting deleted" });
   } catch (error) {
     res.status(500).json({ message: error.message });

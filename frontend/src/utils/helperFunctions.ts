@@ -20,3 +20,21 @@ export const capFL = (str: string): string => {
   if (!str) return "";
   return str.charAt(0).toUpperCase() + str.slice(1);
 };
+
+//Date format helper
+export const formatDate = (date: Date) => {
+  if (!(date instanceof Date) || isNaN(date.getTime())) {
+    return "Invalid Date"; // Handle invalid date inputs
+  }
+
+  const options: Intl.DateTimeFormatOptions = {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  };
+
+  return date.toLocaleString("en-GB", options);
+};

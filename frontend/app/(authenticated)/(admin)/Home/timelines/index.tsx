@@ -10,7 +10,7 @@ import {
   RefreshControl,
   TextInput,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import CreateTimelineModal from "@/src/components/admin/TimelineComponents/CreateTimelineModal";
 import TimelineCard from "@/src/components/admin/TimelineComponents/TimelineCard";
 import {
@@ -23,7 +23,14 @@ import { useTheme } from "@/src/hooks/colors/useThemeColor";
 
 const TimelinePage = () => {
   const [showModal, setShowModal] = React.useState(false);
-  const [editingTimeline, setEditingTimeline] = React.useState(null); // State for the timeline being edited
+  interface Timeline {
+    _id: string;
+    academicYear: string;
+    oddSemester: { start: string; end: string };
+    evenSemester: { start: string; end: string };
+  }
+  
+  const [editingTimeline, setEditingTimeline] = React.useState<Timeline | null>(null); // State for the timeline being edited
   const [academicYear, setAcademicYear] = React.useState("");
   const [oddSemStart, setOddSemStart] = React.useState("");
   const [oddSemEnd, setOddSemEnd] = React.useState("");
@@ -78,12 +85,12 @@ const TimelinePage = () => {
     const updatedData = {
       academicYear,
       oddSemester: {
-        start: oddSemStart,
-        end: oddSemEnd,
+        start: new Date(oddSemStart),
+        end: new Date(oddSemEnd),
       },
       evenSemester: {
-        start: evenSemStart,
-        end: evenSemEnd,
+        start: new Date(evenSemStart),
+        end: new Date(evenSemEnd),
       },
     };
 
@@ -227,11 +234,8 @@ const TimelinePage = () => {
           </View>
 
           <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.button, styles.cancelButton]}
-              onPress={() => setEditingTimeline(null)} // Close the edit card
-            >
-              <Text style={styles.buttonText}>Cancel</Text>
+            <TouchableOpacity onPress={() => setEditingTimeline(null)}>
+              <MaterialIcons name="close" size={24} color="#000" />
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.button, styles.confirmButton]}
@@ -249,7 +253,7 @@ const TimelinePage = () => {
         accessibilityLabel="Create new timeline"
         accessibilityRole="button"
       >
-        <Ionicons name="add" size={30} color="white" />
+        <Ionicons name="calendar" size={30} color="white" />
       </TouchableOpacity>
 
       <CreateTimelineModal
@@ -328,7 +332,8 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "flex-end",
+    padding: 10,
   },
   button: {
     paddingVertical: 10,

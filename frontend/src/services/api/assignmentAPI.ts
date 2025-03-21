@@ -1,5 +1,6 @@
 import { Attachment } from "@/src/components/common/AttachmentViewer";
 import axiosInstance from "./axiosConfig";
+import * as FileSystem from "expo-file-system";
 
 export interface CreateAssignmentData {
   posted_to: string;
@@ -142,8 +143,8 @@ export const assignmentsService = {
     assignmentId: string,
     submission: { key: string; name: string; type: string }
   ) => {
-    const response = await axiosInstance.post(
-      `/assignments/${assignmentId}/submit`,
+    const response = await axiosInstance.patch(
+      `/assignments/${assignmentId}/submission`,
       { submission }
     );
     return response.data;
@@ -155,5 +156,26 @@ export const assignmentsService = {
       `/assignments/${assignmentId}/submission`
     );
     return response.data;
+  },
+
+  downloadBulkAssignment: async (assignmentId: string): Promise<string> => {
+    const fileUri = `${FileSystem.documentDirectory}submissions_${assignmentId}.zip`;
+
+    const downloadResumable = FileSystem.createDownloadResumable(
+      `${process.env.EXPO_PUBLIC_API_URL}/assignments/${assignmentId}/submissions/download`,
+      fileUri,
+      {}
+    );
+    console.log("File uri: ", fileUri);
+    try {
+      const result = await downloadResumable.downloadAsync();
+      if (!result) {
+        throw new Error("Download failed: No result returned");
+      }
+      return result.uri;
+    } catch (error) {
+      console.error("Download error:", error);
+      throw new Error("Failed to download file");
+    }
   },
 };

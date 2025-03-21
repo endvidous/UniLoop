@@ -273,6 +273,7 @@ const CreateDiscussion = ({
 const styles = StyleSheet.create({
   container: {
     padding: 20,
+    flex: 1,
   },
   header: {
     flexDirection: "row",
@@ -281,6 +282,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     paddingBottom: 10,
     borderBottomWidth: 1,
+    borderBottomColor: "#ddd",
   },
   headerTitle: {
     fontSize: 20,

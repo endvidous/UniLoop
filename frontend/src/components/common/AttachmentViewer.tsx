@@ -1,36 +1,42 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   Linking,
   StyleSheet,
-  Alert,
+  ActivityIndicator,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { useDownloadUrl } from "@/src/hooks/api/useFiles";
+import { useDownloadUrl, useFileUpload } from "@/src/hooks/api/useFiles";
 import { toast } from "@backpackapp-io/react-native-toast";
+import { pickPdfDocument, SelectedFile } from "@/src/utils/filePicker";
 
 export type Attachment = {
   key: string;
   name: string;
-  type: "pdf" | "image" | "document" | "other";
+  type: string;
 };
 
 type AttachmentViewerProps = {
   attachments: Attachment[];
+  setAttachments?: React.Dispatch<React.SetStateAction<Attachment[]>>;
   editable?: boolean;
-  onDeleteAttachment?: (attachment: Attachment) => void;
+  limit?: number;
 };
 
 const AttachmentViewer = ({
   attachments,
+  setAttachments,
   editable = false,
-  onDeleteAttachment,
+  limit = 2,
 }: AttachmentViewerProps) => {
   const { mutateAsync: getDownloadUrl } = useDownloadUrl();
+  const { mutateAsync: uploadFile } = useFileUpload();
 
-  const handleDownload = async (key: string, name: string) => {
+  const [loading, setLoading] = useState(false);
+
+  const handleDownload = async (key: string) => {
     try {
       const downloadUrl = await getDownloadUrl(key);
       if (!downloadUrl) {
@@ -42,6 +48,34 @@ const AttachmentViewer = ({
     }
   };
 
+  const handleDelete = (attachment: Attachment) => {
+    if (!setAttachments) return;
+    setAttachments((prev) => prev.filter((a) => a.key !== attachment.key));
+  };
+
+  const handleAddAttachment = async (
+    picker: () => Promise<SelectedFile | null>
+  ) => {
+    if (!setAttachments) return;
+    if (attachments.length >= limit) {
+      toast.error(`Maximum ${limit} attachments allowed`);
+      return;
+    }
+
+    const file = await picker();
+    if (!file) return;
+
+    setLoading(true);
+    try {
+      const key = await uploadFile(file);
+      setAttachments((prev) => [...prev, { ...file, key }]);
+    } catch (error) {
+      toast.error("Upload failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <View style={styles.attachmentsContainer}>
       <Text style={styles.sectionTitle}>Attachments</Text>
@@ -49,7 +83,7 @@ const AttachmentViewer = ({
         <View key={attachment.key} style={styles.attachmentRow}>
           <TouchableOpacity
             style={styles.attachmentContent}
-            onPress={() => handleDownload(attachment.key, attachment.name)}
+            onPress={() => handleDownload(attachment.key)}
           >
             <MaterialIcons
               name={getIconForType(attachment.type)}
@@ -58,9 +92,9 @@ const AttachmentViewer = ({
             />
             <Text style={styles.attachmentName}>{attachment.name}</Text>
           </TouchableOpacity>
-          {editable && onDeleteAttachment && (
+          {editable && setAttachments && (
             <TouchableOpacity
-              onPress={() => onDeleteAttachment(attachment)}
+              onPress={() => handleDelete(attachment)}
               style={styles.deleteButton}
             >
               <MaterialIcons name="close" size={24} color="#ff4444" />
@@ -71,6 +105,24 @@ const AttachmentViewer = ({
       {attachments.length === 0 && (
         <Text style={styles.noAttach}>No attachments found</Text>
       )}
+      {editable &&
+        setAttachments &&
+        attachments.length < limit &&
+        (loading ? (
+          <ActivityIndicator
+            size="small"
+            color="#3b82f6"
+            style={styles.addButton}
+          />
+        ) : (
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => handleAddAttachment(pickPdfDocument)}
+          >
+            <MaterialIcons name="add" size={24} color="#3b82f6" />
+            <Text style={styles.addButtonText}>Add Attachment</Text>
+          </TouchableOpacity>
+        ))}
     </View>
   );
 };
@@ -116,7 +168,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   attachmentName: {
-    marginLeft: 12,
+    marginLeft: 8,
+    paddingRight: 8,
     color: "#3b82f6",
     fontSize: 14,
   },
@@ -127,6 +180,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "400",
     color: "#1e296f",
+    textAlign: "center",
+  },
+  addButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 12,
+    padding: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#3b82f6",
+  },
+  addButtonText: {
+    marginLeft: 4,
+    fontSize: 14,
+    color: "#3b82f6",
   },
 });
 

@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  Button,
   StyleSheet,
   TextInput,
   TouchableOpacity,
+  Pressable,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { useForm, Controller } from "react-hook-form";
@@ -59,6 +59,9 @@ const CreateMeetingPage: React.FC<CreateMeetingPageProps> = ({
   const [associationId, setAssociationId] = useState<string | null>(
     isEditing ? meetingData?.associationId : null
   );
+
+  // State for button press effect
+  const [isSubmitPressed, setIsSubmitPressed] = useState(false);
 
   // Set up react-hook-form for meeting submission data
   const {
@@ -253,6 +256,11 @@ const CreateMeetingPage: React.FC<CreateMeetingPageProps> = ({
 
   return (
     <View style={styles.container}>
+      {/* Close button at top right */}
+      <TouchableOpacity style={styles.closeButton} onPress={onDismiss}>
+        <Text style={styles.closeButtonText}>✕</Text>
+      </TouchableOpacity>
+
       <Text style={styles.title}>
         {isEditing
           ? isTeacherApprovingRequest
@@ -288,41 +296,47 @@ const CreateMeetingPage: React.FC<CreateMeetingPageProps> = ({
           {isTeacher && (
             <>
               <Text style={styles.label}>Select a Batch</Text>
-              <Picker
-                selectedValue={associationId}
-                onValueChange={(itemValue) => setAssociationId(itemValue)}
-                style={styles.picker}
-                enabled={!isEditing || isTeacherApprovingRequest}
-              >
-                <Picker.Item label="Select a batch" value={null} />
-                {batches.map((batch) => (
-                  <Picker.Item
-                    key={batch._id}
-                    label={batch.code}
-                    value={batch._id}
-                  />
-                ))}
-              </Picker>
+              <View style={styles.pickerContainer}>
+                <Picker
+                  selectedValue={associationId}
+                  onValueChange={(itemValue) => setAssociationId(itemValue)}
+                  style={styles.picker}
+                  enabled={!isEditing || isTeacherApprovingRequest}
+                  itemStyle={styles.pickerItem}
+                >
+                  <Picker.Item label="Select a batch" value={null} />
+                  {batches.map((batch) => (
+                    <Picker.Item
+                      key={batch._id}
+                      label={batch.code}
+                      value={batch._id}
+                    />
+                  ))}
+                </Picker>
+              </View>
             </>
           )}
 
           {isStudent && (
             <>
               <Text style={styles.label}>Select a Department</Text>
-              <Picker
-                selectedValue={associationId}
-                onValueChange={(itemValue) => setAssociationId(itemValue)}
-                style={styles.picker}
-              >
-                <Picker.Item label="Select a department" value={null} />
-                {departments.map((dept) => (
-                  <Picker.Item
-                    key={dept._id}
-                    label={dept.name}
-                    value={dept._id}
-                  />
-                ))}
-              </Picker>
+              <View style={styles.pickerContainer}>
+                <Picker
+                  selectedValue={associationId}
+                  onValueChange={(itemValue) => setAssociationId(itemValue)}
+                  style={styles.picker}
+                  itemStyle={styles.pickerItem}
+                >
+                  <Picker.Item label="Select a department" value={null} />
+                  {departments.map((dept) => (
+                    <Picker.Item
+                      key={dept._id}
+                      label={dept.name}
+                      value={dept._id}
+                    />
+                  ))}
+                </Picker>
+              </View>
             </>
           )}
         </>
@@ -345,20 +359,23 @@ const CreateMeetingPage: React.FC<CreateMeetingPageProps> = ({
                   name="requestedTo"
                   rules={{ required: "Please select a student" }}
                   render={({ field: { onChange, value } }) => (
-                    <Picker
-                      selectedValue={value}
-                      onValueChange={(itemValue) => onChange(itemValue)}
-                      style={styles.picker}
-                    >
-                      <Picker.Item label="Select a student" value="" />
-                      {students.map((student: any) => (
-                        <Picker.Item
-                          key={student._id}
-                          label={student.name}
-                          value={student._id}
-                        />
-                      ))}
-                    </Picker>
+                    <View style={styles.pickerContainer}>
+                      <Picker
+                        selectedValue={value}
+                        onValueChange={(itemValue) => onChange(itemValue)}
+                        style={styles.picker}
+                        itemStyle={styles.pickerItem}
+                      >
+                        <Picker.Item label="Select a student" value="" />
+                        {students.map((student: any) => (
+                          <Picker.Item
+                            key={student._id}
+                            label={student.name}
+                            value={student._id}
+                          />
+                        ))}
+                      </Picker>
+                    </View>
                   )}
                 />
               )}
@@ -383,20 +400,23 @@ const CreateMeetingPage: React.FC<CreateMeetingPageProps> = ({
                   name="requestedTo"
                   rules={{ required: "Please select a teacher" }}
                   render={({ field: { onChange, value } }) => (
-                    <Picker
-                      selectedValue={value}
-                      onValueChange={(itemValue) => onChange(itemValue)}
-                      style={styles.picker}
-                    >
-                      <Picker.Item label="Select a teacher" value="" />
-                      {teachers.map((teacher: any) => (
-                        <Picker.Item
-                          key={teacher._id}
-                          label={teacher.name}
-                          value={teacher._id}
-                        />
-                      ))}
-                    </Picker>
+                    <View style={styles.pickerContainer}>
+                      <Picker
+                        selectedValue={value}
+                        onValueChange={(itemValue) => onChange(itemValue)}
+                        style={styles.picker}
+                        itemStyle={styles.pickerItem}
+                      >
+                        <Picker.Item label="Select a teacher" value="" />
+                        {teachers.map((teacher: any) => (
+                          <Picker.Item
+                            key={teacher._id}
+                            label={teacher.name}
+                            value={teacher._id}
+                          />
+                        ))}
+                      </Picker>
+                    </View>
                   )}
                 />
               )}
@@ -510,19 +530,27 @@ const CreateMeetingPage: React.FC<CreateMeetingPageProps> = ({
         </>
       )}
 
-      <Button
-        title={
-          isEditing
+      <Pressable
+        style={({ pressed }) => [
+          styles.submitButton,
+          pressed || isSubmitPressed
+            ? styles.submitButtonPressed
+            : styles.submitButtonNormal,
+        ]}
+        onPressIn={() => setIsSubmitPressed(true)}
+        onPressOut={() => setIsSubmitPressed(false)}
+        onPress={handleSubmit(onSubmit)}
+      >
+        <Text style={styles.submitButtonText}>
+          {isEditing
             ? isTeacherApprovingRequest
               ? "Approve Meeting"
               : "Update Meeting"
             : isStudent
             ? "Request Meeting"
-            : "Create Meeting"
-        }
-        onPress={handleSubmit(onSubmit)}
-      />
-      <Button title="Cancel" onPress={onDismiss} />
+            : "Create Meeting"}
+        </Text>
+      </Pressable>
     </View>
   );
 };
@@ -532,29 +560,49 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     backgroundColor: "#fff",
+    position: "relative",
   },
   title: {
-    fontSize: 24,
-    marginBottom: 16,
-    textAlign: "center",
+    fontSize: 20,
+    fontWeight: "bold",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ddd",
   },
   label: {
     fontSize: 16,
     marginBottom: 8,
+    fontWeight: "500",
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    marginBottom: 16,
+    backgroundColor: "#f8f8f8",
+    overflow: "hidden",
   },
   picker: {
     height: 50,
     width: "100%",
-    marginBottom: 16,
+  },
+  pickerItem: {
+    height: 44,
+    fontSize: 16,
   },
   input: {
-    height: 40,
+    height: 48,
     borderColor: "#ccc",
     borderWidth: 1,
-    borderRadius: 4,
-    paddingHorizontal: 8,
+    borderRadius: 8,
+    paddingHorizontal: 12,
     marginBottom: 16,
     justifyContent: "center",
+    backgroundColor: "#f8f8f8",
   },
   placeholderText: {
     color: "#888",
@@ -564,6 +612,9 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: "red",
+    marginTop: -12,
+    marginBottom: 12,
+    fontSize: 12,
   },
   statusText: {
     fontSize: 16,
@@ -594,6 +645,39 @@ const styles = StyleSheet.create({
   },
   detailValue: {
     flex: 1,
+  },
+  closeButton: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    width: 34,
+    height: 34,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 10,
+  },
+  closeButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#555",
+  },
+  submitButton: {
+    height: 50,
+    borderRadius: 25,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 10,
+  },
+  submitButtonNormal: {
+    backgroundColor: "#e0e0e0",
+  },
+  submitButtonPressed: {
+    backgroundColor: "#007BFF",
+  },
+  submitButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
   },
 });
 
