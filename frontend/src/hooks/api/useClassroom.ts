@@ -8,7 +8,7 @@ import axiosInstance from "@/src/services/api/axiosConfig";
 ------------------------------------*/
 export const useClassrooms = (filters?: {
   block?: string;
-  date?: string;
+  date?: string | Date;
   time?: string;
   includeOccupied?: boolean;
 }) => {
@@ -18,15 +18,6 @@ export const useClassrooms = (filters?: {
   });
 };
 
-// export const useBlocks = () => {
-//   return useQuery({
-//     queryKey: ["blocks"],
-//     queryFn: async () => {
-//       const response = await axiosInstance.get("/blocks");
-//       return response.data;
-//     },
-//   });
-// };
 /*------------------------------
  Get a single classroom by ID
 -------------------------------*/

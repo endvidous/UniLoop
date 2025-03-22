@@ -45,7 +45,6 @@ const RemindersPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPriority, setSelectedPriority] = useState<number | null>(null);
 
-  console.log("Data reminders", data);
   const navigateToUploadPage = () => {
     setShowModal(true);
   };
@@ -76,8 +75,6 @@ const RemindersPage = () => {
       const completed = data.reminders.filter(
         (reminder: Reminder) => reminder.completed
       );
-      console.log(active);
-      console.log(completed);
       setActiveReminders(active);
       setCompletedReminders(completed);
     }

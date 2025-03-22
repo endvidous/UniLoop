@@ -32,7 +32,7 @@ export const classroomService = {
   ------------------------------------------------------*/
   getClassrooms: async (filters?: {
     block?: string;
-    date?: string;
+    date?: string | Date;
     time?: string;
     includeOccupied?: boolean;
   }) => {
