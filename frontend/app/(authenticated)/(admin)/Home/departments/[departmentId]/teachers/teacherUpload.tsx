@@ -208,7 +208,6 @@ const TeacherUpload = () => {
       role: row.role || "teacher", // Default role to "teacher" if not provided
       password: row.password || "defaultPassword", // Default password if not provided
     }));
-    console.log("Validated data: ", validatedData);
     reset({ teachers: validatedData });
     setShowUploadSection(false);
     setIsEditingCSV(true);

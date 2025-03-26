@@ -61,7 +61,6 @@ const meetingsAPI = {
 
   getOneMeeting: async (meetingId: string) => {
     try {
-      console.log(meetingId);
       const response = await axiosInstance.get(`/meetings/${meetingId}`);
       return response.data;
     } catch (error: any) {
@@ -141,13 +140,10 @@ const meetingsAPI = {
     meetingData: CreateMeetingData
   ) => {
     try {
-      console.log("Reached here");
-      console.log("Meeting data:", meetingData);
       const response = await axiosInstance.patch(
         `/meetings/${meetingId}`,
         meetingData
       );
-      console.log(response.data);
       return response.data;
     } catch (error: any) {
       const errorMessage =

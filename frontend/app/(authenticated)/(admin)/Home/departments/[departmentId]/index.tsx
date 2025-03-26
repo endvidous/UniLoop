@@ -35,7 +35,6 @@ const DepartmentScreen = () => {
               `/Home/departments/[departmentId]/papers` as RelativePathString,
             params: { name: name, departmentId: departmentId },
           });
-          console.log("Department id after navigation", departmentId);
         }}
       >
         <View style={styles.cardContent}>

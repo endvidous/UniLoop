@@ -424,7 +424,6 @@ const IndexPage = () => {
                     <TouchableOpacity
                       style={[styles.removeButton, { backgroundColor: "red" }]}
                       onPress={() => {
-                        console.log("Mentor id", mentor);
                         handleRemoveMentor(mentor._id);
                       }}
                     >

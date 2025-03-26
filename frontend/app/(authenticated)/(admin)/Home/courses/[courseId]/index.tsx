@@ -51,7 +51,6 @@ const CourseDetailScreen = () => {
         return;
     }
 
-    console.log("Navigating to", indexPath);
     router.push({
       pathname: indexPath as RelativePathString,
       params: { courseId, courseName: name },

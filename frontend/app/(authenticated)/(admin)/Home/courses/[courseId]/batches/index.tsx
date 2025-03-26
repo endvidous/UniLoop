@@ -27,10 +27,6 @@ const BatchesScreen = () => {
     refetch,
     } = useBatches(courseId as string);
     
-    console.log("Batches data:", batches?.data);
-    console.log("Is fetching:", isFetching);
-    console.log("Is error:", isError);
-
   if (isFetching) {
     return (
       <View style={styles.loadingContainer}>
@@ -52,7 +48,6 @@ const BatchesScreen = () => {
     );
   }
 
-  console.log("Params: ", courseId, courseName);
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Text style={[styles.title, { color: colors.text }]}>{courseName}</Text>
@@ -62,7 +57,6 @@ const BatchesScreen = () => {
         data={batches?.data}
         keyExtractor={(item) => item._id}
         renderItem={({ item }) => (
-          console.log("batchID: ", item._id),
           (
             <TouchableOpacity
               style={[

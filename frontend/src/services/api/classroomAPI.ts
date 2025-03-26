@@ -58,7 +58,6 @@ export const classroomService = {
     Required data: classroom ID, date, start time, end time, purpose
   ------------------------------------------------------*/
   bookClassroom: async (data: BookingData) => {
-    console.log("reached here");
     const response = await axiosInstance.post("/classrooms/bookings", data);
     return response.data;
   },

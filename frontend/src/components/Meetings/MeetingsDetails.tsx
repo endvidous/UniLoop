@@ -140,10 +140,6 @@ const MeetingDetailComponent = ({ id }: MeetingDetailComponentProps) => {
 
   const handleUpdate = async (data: Meeting) => {
     try {
-      console.log("Data: ", {
-        ...data,
-        requestedTo: data.requestedTo._id,
-      });
       await updateMeeting.mutateAsync({
         id,
         data: {
@@ -155,7 +151,6 @@ const MeetingDetailComponent = ({ id }: MeetingDetailComponentProps) => {
       setEditing(false);
       refetch();
     } catch (err: any) {
-      console.log("Error: ", err.message);
       toast.error("Failed to update meeting.");
     }
   };

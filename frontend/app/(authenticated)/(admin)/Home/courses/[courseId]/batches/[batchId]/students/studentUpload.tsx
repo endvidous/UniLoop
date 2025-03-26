@@ -37,7 +37,6 @@ const StudentUpload = () => {
   const { batchId } = useLocalSearchParams<{ batchId: string }>();
   const colors = useTheme();
 
-  console.log("Batch Id: ", batchId);
   const {
     control,
     handleSubmit,

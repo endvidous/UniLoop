@@ -170,7 +170,6 @@ const UpdateReminderModal = ({
       toast.success("Reminder updated successfully");
       onClose();
     } catch (error) {
-      console.log(error);
       toast.error("Failed to update reminder");
     } finally {
       setIsSubmitting(false);
@@ -184,7 +183,6 @@ const UpdateReminderModal = ({
       toast.success("Reminder deleted successfully");
       onClose();
     } catch (error) {
-      console.log(error);
       toast.error("Failed to delete reminder");
     } finally {
       setIsSubmitting(false);

@@ -53,7 +53,6 @@ const BatchPage = () => {
 
   // Update filtered students when batch.students changes
   useEffect(() => {
-    console.log(batch);
     if (batch?.students) {
       setFilteredStudents(batch.students);
     }
@@ -114,22 +113,17 @@ const BatchPage = () => {
   const { mutate: assignClassRep } = useAssignClassRep();
 
   const handleConfirmClassReps = () => {
-    console.log("Assigned Class Reps:", selectedClassReps);
     selectedClassReps.forEach((studentId) => {
       assignClassRep(
         { studentId, batchId },
         {
           onSuccess: (data) => {
-            console.log(
-              `Successfully assigned class rep for student: ${studentId}`,
-              data
+            toast.success(
+              `Successfully assigned class rep for student: ${studentId}`
             );
           },
           onError: (error) => {
-            console.error(
-              `Error assigning class rep for student: ${studentId}`,
-              error
-            );
+            toast.error(`Error assigning class rep for student: ${studentId}`);
           },
         }
       );

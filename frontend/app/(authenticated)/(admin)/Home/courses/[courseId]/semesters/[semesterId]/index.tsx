@@ -241,7 +241,6 @@ const SemesterPage = () => {
   useEffect(() => {
     if (semesterData && !isFetching) {
       // Transform the API response to match the PaperTeacherMapping format
-      console.log(semesterData.data);
       const transformedMappings = semesterData.data.papers.map(
         (paperAssignment: any) => ({
           paperId: paperAssignment.paper._id,

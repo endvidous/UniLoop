@@ -21,10 +21,6 @@ export const pickCSVDocument = async () => {
       alert("Please select a CSV file");
       return;
     }
-    console.log("File uri:", result.assets[0].uri);
-    console.log("File name:", result.assets[0].name);
-    console.log("File size:", result.assets[0].size);
-    console.log("File type:", result.assets[0].mimeType);
 
     // File details are in result.assets[0]
     return {
