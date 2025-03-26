@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
   TextInput,
+  ScrollView,
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { useTheme } from "@/src/hooks/colors/useThemeColor";
@@ -158,69 +159,79 @@ const IndexPage = () => {
       </Text>
 
       {/* Students Table */}
-      <FlatList
-        data={sortedStudents}
-        keyExtractor={(item) => item._id}
-        renderItem={({ item }) => (
-          <View
-            style={[
-              styles.tableRow,
-              { backgroundColor: colors.secondaryBackground },
-            ]}
-          >
-            <Text style={[styles.tableCell, { color: colors.text }]}>
-              {item.name}
-            </Text>
-            <Text style={[styles.tableCell, { color: colors.text }]}>
-              {item.email}
-            </Text>
-            <Text style={[styles.tableCell, { color: colors.text }]}>
-              {item.roll_no}
-            </Text>
-            <View style={styles.actionsContainer}>
-              <TouchableOpacity
-                style={[
-                  styles.actionButton,
-                  { backgroundColor: colors.secondaryBackground },
-                ]}
-                onPress={() => setSelectedStudent(item)}
-              >
-                <Text style={styles.actionButtonText}>Edit</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.actionButton,
-                  { backgroundColor: colors.secondaryBackground },
-                ]}
-                onPress={() => handleDeleteStudent(item._id)}
-              >
-                <Text style={styles.actionButtonText}>Delete</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-        ListHeaderComponent={() => (
+      <ScrollView horizontal>
+        <View>
+          {/* Table Header */}
           <View
             style={[
               styles.tableHeader,
               { backgroundColor: colors.secondaryBackground },
             ]}
           >
-            <Text style={styles.headerText}>Name</Text>
-            <Text style={styles.headerText}>Email</Text>
-            <Text style={styles.headerText}>Roll No</Text>
-            <Text style={styles.headerText}>Actions</Text>
+            <Text style={[styles.headerText, { width: 150 }]}>Name</Text>
+            <Text style={[styles.headerText, { width: 200 }]}>Email</Text>
+            <Text style={[styles.headerText, { width: 100 }]}>Roll No</Text>
+            {/* <Text style={[styles.headerText, { width: 150 }]}>Actions</Text> */}
           </View>
-        )}
-        ListFooterComponent={<View style={styles.bottomPadding} />} // Add bottom padding
-        ListEmptyComponent={
-          <Text style={[styles.emptyText, { color: colors.text }]}>
-            No students available.
-          </Text>
-        }
-      />
 
-      {/* Edit Student Modal (Placeholder) */}
+          {/* Table Rows */}
+          <FlatList
+            data={sortedStudents}
+            keyExtractor={(item) => item._id}
+            renderItem={({ item }) => (
+              <View
+                style={[
+                  styles.tableRow,
+                  { backgroundColor: colors.secondaryBackground },
+                ]}
+              >
+                <Text
+                  style={[styles.tableCell, { width: 150, color: colors.text }]}
+                >
+                  {item.name}
+                </Text>
+                <Text
+                  style={[styles.tableCell, { width: 200, color: colors.text }]}
+                >
+                  {item.email}
+                </Text>
+                <Text
+                  style={[styles.tableCell, { width: 100, color: colors.text }]}
+                >
+                  {item.roll_no}
+                </Text>
+                <View style={[styles.actionsContainer, { width: 150 }]}>
+                  <TouchableOpacity
+                    style={[
+                      styles.actionButton,
+                      { backgroundColor: "green" },
+                    ]}
+                    onPress={() => setSelectedStudent(item)}
+                  >
+                    <Text style={styles.actionButtonText}>Edit</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.actionButton,
+                      { backgroundColor: "red" },
+                    ]}
+                    onPress={() => handleDeleteStudent(item._id)}
+                  >
+                    <Text style={styles.actionButtonText}>Delete</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+            ListEmptyComponent={
+              <Text style={[styles.emptyText, { color: colors.text }]}>
+                No students available.
+              </Text>
+            }
+          />
+        </View>
+      </ScrollView>
+
+      {/* Edit Student Modal */}
       {selectedStudent && (
         <View style={styles.modalContainer}>
           <Text style={[styles.modalTitle, { color: colors.text }]}>
@@ -299,6 +310,8 @@ const IndexPage = () => {
           </TouchableOpacity>
         </View>
       )}
+
+      {/* Add Student Button */}
       <Link
         href={`/Home/courses/${courseId}/batches/${batchId}/students/studentUpload`}
         asChild
@@ -339,33 +352,28 @@ const styles = StyleSheet.create({
   },
   tableHeader: {
     flexDirection: "row",
-    justifyContent: "space-between",
     padding: 10,
     borderRadius: 8,
     marginBottom: 10,
   },
   headerText: {
-    color: "white",
+    color: "black",
     fontWeight: "bold",
-    flex: 1,
     textAlign: "center",
   },
   tableRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
     padding: 10,
     borderRadius: 8,
     marginBottom: 10,
     elevation: 2,
   },
   tableCell: {
-    flex: 1,
     textAlign: "center",
   },
   actionsContainer: {
     flexDirection: "row",
     justifyContent: "space-around",
-    flex: 1,
   },
   actionButton: {
     padding: 8,
@@ -447,9 +455,6 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "bold",
-  },
-  bottomPadding: {
-    height: 80, 
   },
 });
 

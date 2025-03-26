@@ -87,9 +87,9 @@ const MappingTable = ({
             { backgroundColor: colors.secondaryBackground },
           ]}
         >
-          <Text style={[styles.departmentTitle, { color: colors.text }]}>
+          {/* <Text style={[styles.departmentTitle, { color: colors.text }]}>
             {departmentName}
-          </Text>
+          </Text> */}
 
           {/* Table Header */}
           <View style={[styles.tableRow, styles.tableHeader]}>
@@ -108,8 +108,8 @@ const MappingTable = ({
               style={[
                 styles.tableRow,
                 {
-                  backgroundColor:
-                    index % 2 === 0 ? "rgba(0,0,0,0.03)" : "transparent",
+                  backgroundColor: colors.secondaryBackground
+                    // index % 2 === 0 ? "rgba(0,0,0,0.03)" : "transparent",
                 },
               ]}
             >

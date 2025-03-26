@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -26,7 +26,7 @@ interface Paper {
   _id: string;
   name: string;
   code: string;
-  semester: number; // Add semester property
+  semester: number;
 }
 
 interface Teacher {
@@ -49,6 +49,16 @@ interface PaperTeacherMapping {
   departmentId: string;
   departmentName: string;
 }
+
+// Selection color array
+const SELECTION_COLORS = [
+  "#FF6B6B", // Red
+  "#4ECDC4", // Teal
+  "#FFD166", // Yellow
+  "#45B7D5", // Blue
+  "#A78BFA", // Purple
+  "#F4A261", // Orange
+];
 
 // Components
 const DepartmentSelector = ({
@@ -102,12 +112,14 @@ const PapersList = ({
   onSelectPaper,
   colors,
   assignedPaperIds,
+  selectionColor,
 }: {
   papers: Paper[];
   selectedPaper: string;
   onSelectPaper: (paper: Paper) => void;
   colors: { text: string; secondaryBackground: string; primary: string };
   assignedPaperIds: string[];
+  selectionColor: string;
 }) => {
   if (!papers || papers.length === 0) {
     return (
@@ -125,30 +137,24 @@ const PapersList = ({
       <ScrollView style={styles.listScroll}>
         {papers.map((paper) => {
           const isAssigned = assignedPaperIds.includes(paper._id);
+          const isSelected = selectedPaper === paper._id;
+
           return (
             <TouchableOpacity
               key={paper._id}
               style={[
                 styles.listItem,
                 {
-                  backgroundColor:
-                    selectedPaper === paper._id
-                      ? colors.primary
-                      : colors.secondaryBackground,
+                  backgroundColor: colors.secondaryBackground,
                   opacity: isAssigned ? 0.5 : 1,
+                  borderWidth: isSelected ? 3 : 0,
+                  borderColor: isSelected ? selectionColor : "transparent",
                 },
               ]}
               onPress={() => !isAssigned && onSelectPaper(paper)}
               disabled={isAssigned}
             >
-              <Text
-                style={[
-                  styles.listItemText,
-                  {
-                    color: selectedPaper === paper._id ? "white" : colors.text,
-                  },
-                ]}
-              >
+              <Text style={[styles.listItemText, { color: colors.text }]}>
                 {paper.code}: {paper.name}
               </Text>
               {isAssigned && (
@@ -169,6 +175,7 @@ const TeachersList = ({
   selectedTeacher,
   onSelectTeacher,
   colors,
+  selectionColor,
 }: {
   teachers: Teacher[];
   selectedTeacher: string;
@@ -179,6 +186,7 @@ const TeachersList = ({
     primary: string;
     textSecondary: string;
   };
+  selectionColor: string;
 }) => {
   if (!teachers || teachers.length === 0) {
     return (
@@ -194,46 +202,36 @@ const TeachersList = ({
     <View style={styles.listContainer}>
       <Text style={[styles.label, { color: colors.text }]}>Select Teacher</Text>
       <ScrollView style={styles.listScroll}>
-        {teachers.map((teacher) => (
-          <TouchableOpacity
-            key={teacher._id}
-            style={[
-              styles.listItem,
-              {
-                backgroundColor:
-                  selectedTeacher === teacher._id
-                    ? colors.primary
-                    : colors.secondaryBackground,
-              },
-            ]}
-            onPress={() => onSelectTeacher(teacher)}
-          >
-            <Text
+        {teachers.map((teacher) => {
+          const isSelected = selectedTeacher === teacher._id;
+
+          return (
+            <TouchableOpacity
+              key={teacher._id}
               style={[
-                styles.listItemText,
+                styles.listItem,
                 {
-                  color:
-                    selectedTeacher === teacher._id ? "white" : colors.text,
+                  backgroundColor: colors.secondaryBackground,
+                  borderWidth: isSelected ? 3 : 0,
+                  borderColor: isSelected ? selectionColor : "transparent",
                 },
               ]}
+              onPress={() => onSelectTeacher(teacher)}
             >
-              {teacher.name}
-            </Text>
-            <Text
-              style={[
-                styles.listItemSubtext,
-                {
-                  color:
-                    selectedTeacher === teacher._id
-                      ? "rgba(255,255,255,0.8)"
-                      : colors.textSecondary,
-                },
-              ]}
-            >
-              {teacher.email}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              <Text style={[styles.listItemText, { color: colors.text }]}>
+                {teacher.name}
+              </Text>
+              <Text
+                style={[
+                  styles.listItemSubtext,
+                  { color: colors.textSecondary },
+                ]}
+              >
+                {teacher.email}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
     </View>
   );
@@ -255,6 +253,9 @@ const AddPaperPage = () => {
   const [selectedPaperId, setSelectedPaperId] = useState("");
   const [selectedTeacherId, setSelectedTeacherId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentSelectionColor, setCurrentSelectionColor] = useState(
+    SELECTION_COLORS[0]
+  );
 
   // Get semester number from params (convert to number)
   const currentSemester = parseInt(semesterNumber as string, 10) || 1;
@@ -296,12 +297,19 @@ const AddPaperPage = () => {
   // Initialize the mutation hook
   const { mutate: updateSemesterMutation } = useUpdateSemester();
 
+  // Generate a new random color for the next selection pair
+  const getNewRandomColor = () => {
+    const randomIndex = Math.floor(Math.random() * SELECTION_COLORS.length);
+    return SELECTION_COLORS[randomIndex];
+  };
+
   // Reset selections when department changes
   useEffect(() => {
     setSelectedPaper(null);
     setSelectedTeacher(null);
     setSelectedPaperId("");
     setSelectedTeacherId("");
+    setCurrentSelectionColor(getNewRandomColor());
   }, [selectedDepartment]);
 
   // Department selection handler
@@ -362,11 +370,12 @@ const AddPaperPage = () => {
 
     setPaperTeacherMappings([...paperTeacherMappings, newMapping]);
 
-    // Reset selections
+    // Reset selections and generate a new color for the next pair
     setSelectedPaper(null);
     setSelectedTeacher(null);
     setSelectedPaperId("");
     setSelectedTeacherId("");
+    setCurrentSelectionColor(getNewRandomColor());
 
     // Provide feedback to user that mapping was added
     Alert.alert(
@@ -392,9 +401,8 @@ const AddPaperPage = () => {
       paper: mapping.paperId,
       teacher: mapping.teacherId,
     }));
-    console.log("Formatted data: ", formattedPapers);
+
     // Use the update semester mutation
-    console.log(semesterId);
     updateSemesterMutation(
       {
         semesterId: semesterId as string,
@@ -499,6 +507,7 @@ const AddPaperPage = () => {
                   onSelectPaper={handlePaperSelect}
                   colors={colors}
                   assignedPaperIds={assignedPaperIds}
+                  selectionColor={currentSelectionColor}
                 />
               )}
             </View>
@@ -522,11 +531,13 @@ const AddPaperPage = () => {
                   selectedTeacher={selectedTeacherId}
                   onSelectTeacher={handleTeacherSelect}
                   colors={colors}
+                  selectionColor={currentSelectionColor}
                 />
               )}
             </View>
           </View>
         )}
+
 
         {/* Add Mapping Button */}
         {selectedPaper && selectedTeacher && (
@@ -647,6 +658,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
   },
+  selectionColorContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 10,
+  },
+  colorIndicator: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    marginRight: 10,
+  },
   addButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -655,6 +678,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 20,
     backgroundColor: "gray",
+    borderColor: "black",
+    borderWidth: 1,
   },
   addButtonText: {
     color: "black",
@@ -680,7 +705,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#007BFF",
   },
   saveButtonText: {
-    color: "black",
+    color: "white",
     fontWeight: "bold",
     marginLeft: 8,
     fontSize: 16,

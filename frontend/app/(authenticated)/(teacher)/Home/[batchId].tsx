@@ -17,6 +17,7 @@ import CreateAssignment from "@/src/components/Assignments/CreateAssignment";
 import { Student } from "@/src/services/api/userAPI";
 import LocalSearchFilterComponent from "@/src/components/common/LocalSearchFilter";
 import { FlatList } from "react-native-gesture-handler";
+import CreateMeetingPage from "@/src/components/Meetings/CreateMeetingPage";
 
 const BatchPage = () => {
   const { batchId } = useLocalSearchParams<{ batchId: string }>();
@@ -27,6 +28,7 @@ const BatchPage = () => {
 
   const [showAssignmentModal, setShowAssignmentModal] = useState(false);
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
+  const [showMeetingModal, setMeetingModal] = useState(false);
   const [showDiscussionModal, setShowDiscussionModal] = useState(false);
   const [showClassRepsModal, setShowClassRepsModal] = useState(false);
 
@@ -138,7 +140,7 @@ const BatchPage = () => {
           alignItems: "center",
           marginBottom: 10,
         }}
-        onPress={() => setShowAnnouncementModal(true)}
+        onPress={() => setMeetingModal(true)}
       >
         <Text style={{ color: "white", fontWeight: "bold" }}>
           Create a Meeting
@@ -203,6 +205,16 @@ const BatchPage = () => {
           onDismiss={() => setShowAssignmentModal(false)}
           batchId={batchId}
         />
+      </Modal>
+
+      {/* Meeting modal */}
+      <Modal
+        visible={showMeetingModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setMeetingModal(false)}
+      >
+        <CreateMeetingPage onDismiss={() => setMeetingModal(false)} />
       </Modal>
 
       {/* Announcement modal */}

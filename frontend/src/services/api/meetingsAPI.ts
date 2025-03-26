@@ -26,7 +26,7 @@ export type Meeting = {
 export type BaseMeetingData = {
   requestedTo: string;
   purpose: string;
-  status: string;
+  status?: string;
   id?: string; // For editing
 };
 

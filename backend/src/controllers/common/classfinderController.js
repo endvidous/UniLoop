@@ -10,7 +10,11 @@ import { Batches } from "../../models/courseModels.js";
 /*------------------------------Middleware------------------------------*/
 export const canCreateClassroomBookings = async (req, res, next) => {
   try {
-    if (req.user.isAdmin() || req.user.isTeacher()) return next();
+    if (req.user.isAdmin() || req.user.isTeacher()) {
+      res
+        .status(403)
+        .json({ message: "Only students are allowed to book classrooms" });
+    }
 
     if (req.user.isStudent() && req.user.classrep_of) {
       // Verify class rep has a valid batch
@@ -329,6 +333,7 @@ export const bookClassroom = async (req, res) => {
     const newBooking = new ClassroomBooking({
       classroom: classroomId,
       requestedBy: req.user._id,
+      requestedByBatch: req.user.classrep_of,
       date: bookingDate,
       startTime,
       endTime,

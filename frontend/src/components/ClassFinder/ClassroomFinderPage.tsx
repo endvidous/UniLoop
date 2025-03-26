@@ -14,6 +14,8 @@ import {
 import { useClassrooms } from "@/src/hooks/api/useClassroom";
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from "react";
 import DateTimePicker from "react-native-modal-datetime-picker";
+import { useNavigation } from "@react-navigation/native";
+import BookingModal from "@/src/components/ClassFinder/classrep/BookingModal";
 
 // Constants outside the component as they do not change
 const DISPLAY_TIME_SLOTS = [
@@ -235,17 +237,29 @@ const FilterSection = memo(
 );
 
 // Updated RoomGrid component with readonly array type
-const RoomGrid = memo(({ data }: { data: readonly Classroom[] }) => {
-  return (
-    <View style={styles.roomGridContainer}>
-      {data.map((item) => (
-        <TouchableOpacity key={item._id} style={styles.roomCard}>
-          <Text style={styles.roomText}>{item.room_num}</Text>
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
-});
+const RoomGrid = memo(
+  ({
+    data,
+    onSelect,
+  }: {
+    data: readonly Classroom[];
+    onSelect: (classroom: Classroom) => void;
+  }) => {
+    return (
+      <View style={styles.roomGridContainer}>
+        {data.map((item) => (
+          <TouchableOpacity
+            key={item._id}
+            style={styles.roomCard}
+            onPress={() => onSelect(item)}
+          >
+            <Text style={styles.roomText}>{item.room_num}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
+  }
+);
 
 // Get API time slot corresponding to a display time slot
 const getApiTimeSlot = (displaySlot: string) => {
@@ -368,14 +382,43 @@ const ClassRoomFinderPage = () => {
       section,
     }: {
       section: SectionListData<Classroom, { title: string }>;
-    }) => <RoomGrid data={section.data} />,
+    }) => (
+      <RoomGrid
+        data={section.data}
+        onSelect={(classroom) => {
+          setSelectedClassroom({
+            classroomId: classroom._id,
+            classroom: classroom.room_num,
+            block: classroom.block,
+          });
+          setBookingModalVisible(true);
+        }}
+      />
+    ),
     []
   );
 
-  const keyExtractor = useCallback((item: Classroom) => item._id, []);
+  const [bookingModalVisible, setBookingModalVisible] = useState(false);
+  const [selectedClassroom, setSelectedClassroom] = useState<{
+    classroomId: string;
+    classroom: string;
+    block: string;
+  } | null>(null);
 
+  const keyExtractor = useCallback((item: Classroom) => item._id, []);
+  const navigation = useNavigation();
   return (
     <View style={styles.container}>
+      {/* Add header button for bookings */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Classroom Finder</Text>
+        <TouchableOpacity
+          style={styles.bookingsButton}
+          onPress={() => navigation.navigate("bookings" as never)}
+        >
+          <Text style={styles.bookingsButtonText}>My Bookings</Text>
+        </TouchableOpacity>
+      </View>
       {/* Memoized Filters section */}
       <FilterSection
         filters={filters}
@@ -417,6 +460,19 @@ const ClassRoomFinderPage = () => {
           renderSectionFooter={renderSectionFooter}
         />
       )}
+      <BookingModal
+        visible={bookingModalVisible}
+        onClose={() => setBookingModalVisible(false)}
+        bookingData={{
+          classroomId: selectedClassroom?.classroomId || "",
+          classroom: selectedClassroom?.classroom || "",
+          block: selectedClassroom?.block || "",
+          date: filters.date
+            ? new Date(filters.date).toISOString()
+            : new Date().toISOString(),
+          time: selectedTime || "",
+        }}
+      />
     </View>
   );
 };
@@ -443,6 +499,26 @@ const styles = StyleSheet.create({
   dateText: { fontSize: 16, color: "#333" },
   timeSlotWrapper: {
     height: 60, // Fixed height for the scrollview container
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+  },
+  bookingsButton: {
+    backgroundColor: "#3498db",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 5,
+  },
+  bookingsButtonText: {
+    color: "white",
+    fontWeight: "bold",
   },
   timeSlotContainer: {
     paddingVertical: 10,

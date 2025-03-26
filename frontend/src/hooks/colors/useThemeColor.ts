@@ -9,7 +9,7 @@ export const LightTheme = {
   textSecondary: "#687076",
   primary: "007BFF",
   background: "#ffffff",
-  secondaryBackground: "#d0cfcf",
+  secondaryBackground: "#dadee1",
   tint: tintColorLight,
   icon: "#687076",
   tabIconDefault: "#687076",

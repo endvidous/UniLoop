@@ -14,7 +14,7 @@ const DepartmentScreen = () => {
   const { colors } = useTheme();
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.secondaryBackground }]}>
       <Text style={[styles.header, { color: colors.text }]}>
         {name} Department
       </Text>

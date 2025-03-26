@@ -136,7 +136,7 @@ const SubmissionsList: React.FC<SubmissionsListProps> = ({
   return (
     <View style={[styles.card, styles.cardContainer]}>
       <Text style={styles.cardTitle}>Student Submissions</Text>
-      {submissions.length > 0 && (
+      {submissions.length > 0 && hasSubmissions && (
         <TouchableOpacity
           onPress={handleBulkDownload}
           style={styles.bulkDownloadButton}

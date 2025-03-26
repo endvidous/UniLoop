@@ -18,6 +18,7 @@ import { useBatchStudents, useCreateStudents } from "@/src/hooks/api/useUser";
 import { Student, StudentCreateData } from "@/src/services/api/userAPI";
 import CsvUploaderComponent from "@/src/components/common/CsvEntry";
 import ManualEntryComponent from "@/src/components/common/ManualEntry";
+import { useTheme } from "@/src/hooks/colors/useThemeColor";
 
 // Extend Student interface to include an internal form ID and omit the role field
 interface StudentFormItem extends Omit<Student, "_id" | "role"> {
@@ -34,6 +35,7 @@ interface StudentFormData {
 
 const StudentUpload = () => {
   const { batchId } = useLocalSearchParams<{ batchId: string }>();
+  const colors = useTheme();
 
   console.log("Batch Id: ", batchId);
   const {
@@ -275,34 +277,30 @@ const StudentUpload = () => {
       field: "name",
       label: "Name",
       placeholder: "Enter student name",
-      required: true,
     },
     {
       name: "students",
       field: "email",
       label: "Email",
       placeholder: "Enter student email",
-      required: true,
     },
     {
       name: "students",
       field: "rollnumber",
       label: "Roll No",
       placeholder: "Enter roll number",
-      required: false,
     },
     {
       name: "students",
       field: "password",
       label: "Password",
       placeholder: "Enter password (min 6 characters)",
-      required: true,
     },
   ];
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, {backgroundColor: colors.colors.secondaryBackground}]}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
     >

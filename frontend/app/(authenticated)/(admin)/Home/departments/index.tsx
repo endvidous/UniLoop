@@ -127,7 +127,7 @@ const HomeScreen = () => {
     if (showConfirmCard === item._id) {
       return (
         <View
-          style={[styles.confirmCard, { backgroundColor: colors.background }]}
+          style={[styles.confirmCard, { backgroundColor: colors.secondaryBackground }]}
         >
           <Text style={[styles.confirmText, { color: colors.text }]}>
             Are you sure you want to delete {item.name} ? It will delete all the
