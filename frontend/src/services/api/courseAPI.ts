@@ -16,7 +16,7 @@ export type Batch = {
   startYear: string;
   students: Student[] | string[];
   classReps: Student[] | string[];
-  mentors_of: Teacher[] | string[];
+  mentors: Teacher[] | string[];
 };
 
 export type Semester = {

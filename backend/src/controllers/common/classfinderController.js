@@ -279,7 +279,6 @@ export const bookClassroom = async (req, res) => {
 
   try {
     const { classroomId, date, startTime, endTime, purpose } = req.body;
-
     // Validate classroom existence and availability
     const classroom = await Classroom.findById(classroomId).session(session);
     if (!classroom) {
@@ -364,37 +363,47 @@ export const getAllBookings = async (req, res) => {
   try {
     let query = {};
 
-    // For a student (or class rep) – show only their own bookings.
-    if (req.user.isStudent() && !req.user.isAdmin() && !req.user.isTeacher()) {
-      query.requestedBy = req.user._id;
+    // Add user validation
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
     }
-    // For teachers, show bookings made by class reps of batches they mentor.
-    else if (req.user.isTeacher()) {
-      // Find batches where the teacher is assigned as a mentor.
+
+    // Student access
+    if (req.user.role === "student" && !req.user.isAdmin) {
+      query = { requestedBy: req.user._id };
+    }
+    // Teacher access
+    else if (req.user.role === "teacher") {
       const teacherBatches = await Batches.find({
         mentors: req.user._id,
-      }).select("_id");
-      const batchIds = teacherBatches.map((batch) => batch._id);
+      }).lean();
 
-      // Query for bookings belonging to those batches.
-      query = { requestedByBatch: { $in: batchIds } };
+      if (!teacherBatches.length) {
+        return res.status(403).json({ message: "No assigned batches" });
+      }
+
+      query = {
+        requestedByBatch: {
+          $in: teacherBatches.map((b) => b._id),
+        },
+      };
     }
-    // For admin, query remains empty to fetch all bookings.
 
     const bookings = await ClassroomBooking.find(query)
-      .populate("classroom", "name block")
+      .populate("classroom", "room_num block")
       .populate("requestedBy", "name email")
-      .populate("requestedByBatch", "code startYear");
+      .populate("requestedByBatch", "code startYear")
+      .lean();
 
-    res.status(200).json({ bookings });
+    res.status(200).json(bookings); // Return array directly
   } catch (error) {
+    console.error("Booking error:", error);
     res.status(500).json({
-      message: "Error retrieving bookings",
+      message: "Failed to retrieve bookings",
       error: error.message,
     });
   }
 };
-
 // Approval Controller
 export const approveBooking = async (req, res) => {
   const session = await mongoose.startSession();
@@ -446,6 +455,7 @@ export const rejectBooking = async (req, res) => {
   session.startTransaction();
 
   try {
+    console.log("Reached here");
     // Authorization check
     if (!req.user.isAdmin() && !req.user.isTeacher()) {
       await session.abortTransaction();
@@ -463,22 +473,23 @@ export const rejectBooking = async (req, res) => {
       return res.status(404).json({ message: "Booking not found" });
     }
 
-    const { reason } = req.body; // Get the rejection reason from the request body
-    if (!reason) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({ message: "Rejection reason is required" });
-    }
+    // const { reason } = req.body; // Get the rejection reason from the request body
+    // if (!reason) {
+    //   await session.abortTransaction();
+    //   session.endSession();
+    //   return res.status(400).json({ message: "Rejection reason is required" });
+    // }
 
     // Update booking status
     booking.status = "rejected";
-    booking.rejectionReason = reason;
+    // booking.rejectionReason = reason;
     booking.approvedBy = req.user._id;
     await booking.save({ session });
 
     await session.commitTransaction();
     session.endSession();
 
+    console.log("rejected?");
     res.status(200).json({
       message: "Booking rejected",
       booking,

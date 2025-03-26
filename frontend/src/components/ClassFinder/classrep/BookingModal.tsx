@@ -13,7 +13,7 @@ interface BookingModalProps {
   visible: boolean;
   onClose: () => void;
   bookingData: {
-    classroomId: string,
+    classroomId: string;
     classroom: string;
     date: string;
     time: string;
@@ -37,7 +37,7 @@ const BookingModal = ({ visible, onClose, bookingData }: BookingModalProps) => {
     const [endHour, endMinute] = endTimeStr.split(":").map(Number);
 
     const bookingPayload = {
-      classroom: bookingData.classroomId,
+      classroomId: bookingData.classroomId,
       date: bookingData.date,
       startTime: startHour * 60 + startMinute, // Convert to minutes since midnight
       endTime: endHour * 60 + endMinute, // Convert to minutes since midnight
@@ -55,12 +55,18 @@ const BookingModal = ({ visible, onClose, bookingData }: BookingModalProps) => {
     });
   };
 
+  const closeModal = () => {
+    setPurpose("");
+    onClose();
+  };
+
   return (
     <Modal
       visible={visible}
       transparent={true}
-      animationType="slide"
-      onRequestClose={onClose}
+      animationType="fade"
+      onRequestClose={closeModal}
+      onDismiss={closeModal}
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
@@ -101,7 +107,7 @@ const BookingModal = ({ visible, onClose, bookingData }: BookingModalProps) => {
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={[styles.button, styles.cancelButton]}
-              onPress={onClose}
+              onPress={closeModal}
               disabled={isPending}
             >
               <Text style={styles.buttonText}>Cancel</Text>

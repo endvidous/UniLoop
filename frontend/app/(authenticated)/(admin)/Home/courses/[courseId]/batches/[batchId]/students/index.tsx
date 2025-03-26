@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
+  SafeAreaView,
   View,
   Text,
   TouchableOpacity,
@@ -10,14 +11,21 @@ import {
   TextInput,
   ScrollView,
 } from "react-native";
+import { Picker } from "@react-native-picker/picker";
 import Icon from "react-native-vector-icons/Ionicons";
 import { useTheme } from "@/src/hooks/colors/useThemeColor";
 import {
   useBatchStudents,
   useUpdateStudent,
   useDeleteStudent,
+  useAssignMentor,
+  useDepartmentTeachers,
+  useRemoveMentor,
 } from "@/src/hooks/api/useUser";
 import { useLocalSearchParams, Link } from "expo-router";
+import { useUserAssociations } from "@/src/hooks/api/useAssociations";
+import { useGetBatch } from "@/src/hooks/api/useCourses";
+import { Teacher } from "@/src/services/api/userAPI";
 
 interface Student {
   _id: string;
@@ -34,76 +42,84 @@ const IndexPage = () => {
   }>();
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
+  // New state for mentor modal and view
+  const [showMentorModal, setShowMentorModal] = useState(false);
+  const [showMentorsModal, setShowMentorsModal] = useState(false);
+  const [selectedDepartment, setSelectedDepartment] = useState("");
+  const [selectedTeacher, setSelectedTeacher] = useState("");
+
   // Fetch students for the batch
   const {
-    data: students,
+    data: studentsData,
     isFetching,
     isError,
     refetch,
   } = useBatchStudents(batchId as string);
+  const { data: batchData } = useGetBatch(batchId);
 
-  // Sort students by roll_no
-  const sortedStudents = React.useMemo(() => {
-    if (!students?.data) return [];
-
-    return [...students.data].sort((a, b) => {
-      const rollA = a.roll_no || ""; // Handle missing roll_no
-      const rollB = b.roll_no || ""; // Handle missing roll_no
+  // Sort students (by roll_no)
+  const sortedStudents = useMemo(() => {
+    if (!studentsData?.data) return [];
+    return [...studentsData.data].sort((a, b) => {
+      const rollA = a.roll_no || "";
+      const rollB = b.roll_no || "";
       return rollA.localeCompare(rollB, undefined, { numeric: true });
     });
-  }, [students?.data]);
+  }, [studentsData?.data]);
 
-  // Update student mutation
+  // Mutations
   const { mutate: updateStudent } = useUpdateStudent();
-
-  // Delete student mutation
   const { mutate: deleteStudent } = useDeleteStudent();
+  const { mutate: assignMentor } = useAssignMentor();
+  const { mutate: removeMentor } = useRemoveMentor();
+  const { data: associations } = useUserAssociations();
+  const departments = associations?.departments;
+  const { data: teachers } = useDepartmentTeachers(selectedDepartment);
 
-  // Check if a roll number is a duplicate
+  //mentors
+  const mentors = (batchData?.data.mentors as Teacher[]) || [];
+
   const isRollNumberDuplicate = (
     roll_no: string,
     studentId: string
   ): boolean => {
-    if (!students?.data) return false;
-
-    return students.data.some(
+    if (!studentsData?.data) return false;
+    return studentsData.data.some(
       (student) => student._id !== studentId && student.roll_no === roll_no
     );
   };
 
-  // Handle updating a student
   const handleUpdateStudent = (
     studentId: string,
     updates: Partial<Student>
   ) => {
-    // Check if the roll number is being updated and if it's a duplicate
     if (updates.roll_no && isRollNumberDuplicate(updates.roll_no, studentId)) {
       Alert.alert(
-        "Error",
-        `A student is already assigned with the roll number: ${updates.roll_no}`
+        "Duplicate Roll Number",
+        `A student is already assigned with roll no: ${updates.roll_no}`
       );
       return;
     }
-
-    // If no duplicate, proceed with the update
     updateStudent(
       { batchId: batchId as string, studentId, updates },
       {
         onSuccess: () => {
           Alert.alert("Success", "Student updated successfully!");
-          setSelectedStudent(null); // Close the edit modal
+          setSelectedStudent(null);
         },
-        onError: (error) => {
-          Alert.alert("Error", error.message || "Failed to update student.");
+        onError: (error: any) => {
+          Alert.alert(
+            "Update Failed",
+            error.message || "Failed to update student."
+          );
         },
       }
     );
   };
 
-  // Handle deleting a student
   const handleDeleteStudent = (studentId: string) => {
     Alert.alert(
-      "Delete Student",
+      "Confirm Deletion",
       "Are you sure you want to delete this student?",
       [
         { text: "Cancel", style: "cancel" },
@@ -117,10 +133,68 @@ const IndexPage = () => {
                 onSuccess: () => {
                   Alert.alert("Success", "Student deleted successfully!");
                 },
-                onError: (error) => {
+                onError: (error: any) => {
                   Alert.alert(
-                    "Error",
+                    "Deletion Failed",
                     error.message || "Failed to delete student."
+                  );
+                },
+              }
+            );
+          },
+        },
+      ]
+    );
+  };
+
+  const handleAssignMentor = () => {
+    if (!selectedTeacher) {
+      Alert.alert(
+        "Missing Selection",
+        "Please select a teacher to assign as mentor."
+      );
+      return;
+    }
+    assignMentor(
+      { teacherId: selectedTeacher, batchId },
+      {
+        onSuccess: () => {
+          Alert.alert("Success", "Mentor assigned successfully!");
+          // Reset selections and close modal
+          setSelectedDepartment("");
+          setSelectedTeacher("");
+          setShowMentorModal(false);
+        },
+        onError: (error: any) => {
+          Alert.alert(
+            "Assignment Failed",
+            error.message || "Failed to assign mentor."
+          );
+        },
+      }
+    );
+  };
+
+  const handleRemoveMentor = (mentorId: string) => {
+    Alert.alert(
+      "Confirm Removal",
+      "Are you sure you want to remove this mentor?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Remove",
+          style: "destructive",
+          onPress: () => {
+            removeMentor(
+              { teacherId: mentorId, batchId },
+              {
+                onSuccess: () => {
+                  Alert.alert("Success", "Mentor removed successfully!");
+                },
+                onError: (error: any) => {
+                  Alert.alert(
+                    "Removal Failed",
+                    error.message || "Failed to remove mentor."
                   );
                 },
               }
@@ -133,181 +207,317 @@ const IndexPage = () => {
 
   if (isFetching) {
     return (
-      <View style={styles.loadingContainer}>
+      <SafeAreaView style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007BFF" />
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (isError) {
     return (
-      <View style={styles.errorContainer}>
+      <SafeAreaView style={styles.errorContainer}>
         <Text style={styles.errorText}>
           Error loading students. Please try again.
         </Text>
         <TouchableOpacity onPress={() => refetch()}>
           <Text style={styles.retryText}>Retry</Text>
         </TouchableOpacity>
-      </View>
+      </SafeAreaView>
     );
   }
 
+  // Render each student as a slim, centered card
+  const renderStudentCard = ({ item }: { item: Student }) => (
+    <View
+      style={[styles.card, { backgroundColor: colors.secondaryBackground }]}
+    >
+      <View style={styles.cardContent}>
+        <Text
+          style={[styles.cardTitle, { color: colors.text }]}
+          numberOfLines={1}
+        >
+          {item.name}
+        </Text>
+        <Text
+          style={[styles.cardText, { color: colors.text }]}
+          numberOfLines={1}
+        >
+          {item.email}
+        </Text>
+        <Text
+          style={[styles.cardText, { color: colors.text }]}
+          numberOfLines={1}
+        >
+          Roll No: {item.roll_no || "N/A"}
+        </Text>
+      </View>
+      <View style={styles.cardActions}>
+        <TouchableOpacity
+          style={[styles.cardButton, { backgroundColor: "green" }]}
+          onPress={() => setSelectedStudent(item)}
+        >
+          <Text style={styles.cardButtonText}>Edit</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.cardButton, { backgroundColor: "red" }]}
+          onPress={() => handleDeleteStudent(item._id)}
+        >
+          <Text style={styles.cardButtonText}>Delete</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Text style={[styles.title, { color: colors.text }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
+      {/* Action Buttons */}
+      <View style={styles.actionButtonsContainer}>
+        <TouchableOpacity
+          style={[styles.actionButton, { backgroundColor: "#5aa7ff" }]}
+          onPress={() => setShowMentorModal(true)}
+        >
+          <Text style={[styles.actionButtonText, { color: colors.text }]}>
+            Assign Mentor
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.actionButton, { backgroundColor: "#4CAF50" }]}
+          onPress={() => setShowMentorsModal(true)}
+        >
+          <Text style={[styles.actionButtonText, { color: colors.text }]}>
+            View Mentors
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      <Text style={[styles.pageTitle, { color: colors.text }]}>
         Student Management
       </Text>
-
-      {/* Students Table */}
-      <ScrollView horizontal>
-        <View>
-          {/* Table Header */}
-          <View
-            style={[
-              styles.tableHeader,
-              { backgroundColor: colors.secondaryBackground },
-            ]}
-          >
-            <Text style={[styles.headerText, { width: 150 }]}>Name</Text>
-            <Text style={[styles.headerText, { width: 200 }]}>Email</Text>
-            <Text style={[styles.headerText, { width: 100 }]}>Roll No</Text>
-            {/* <Text style={[styles.headerText, { width: 150 }]}>Actions</Text> */}
-          </View>
-
-          {/* Table Rows */}
-          <FlatList
-            data={sortedStudents}
-            keyExtractor={(item) => item._id}
-            renderItem={({ item }) => (
-              <View
-                style={[
-                  styles.tableRow,
-                  { backgroundColor: colors.secondaryBackground },
-                ]}
-              >
-                <Text
-                  style={[styles.tableCell, { width: 150, color: colors.text }]}
-                >
-                  {item.name}
-                </Text>
-                <Text
-                  style={[styles.tableCell, { width: 200, color: colors.text }]}
-                >
-                  {item.email}
-                </Text>
-                <Text
-                  style={[styles.tableCell, { width: 100, color: colors.text }]}
-                >
-                  {item.roll_no}
-                </Text>
-                <View style={[styles.actionsContainer, { width: 150 }]}>
-                  <TouchableOpacity
-                    style={[
-                      styles.actionButton,
-                      { backgroundColor: "green" },
-                    ]}
-                    onPress={() => setSelectedStudent(item)}
-                  >
-                    <Text style={styles.actionButtonText}>Edit</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.actionButton,
-                      { backgroundColor: "red" },
-                    ]}
-                    onPress={() => handleDeleteStudent(item._id)}
-                  >
-                    <Text style={styles.actionButtonText}>Delete</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
-            ListEmptyComponent={
-              <Text style={[styles.emptyText, { color: colors.text }]}>
-                No students available.
-              </Text>
-            }
-          />
-        </View>
-      </ScrollView>
+      <FlatList
+        data={sortedStudents}
+        keyExtractor={(item) => item._id}
+        renderItem={renderStudentCard}
+        contentContainerStyle={styles.cardsContainer}
+      />
 
       {/* Edit Student Modal */}
       {selectedStudent && (
-        <View style={styles.modalContainer}>
-          <Text style={[styles.modalTitle, { color: colors.text }]}>
-            Edit Student
-          </Text>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: colors.secondaryBackground,
-                color: colors.text,
-              },
-            ]}
-            placeholder="Name"
-            placeholderTextColor={colors.text}
-            value={selectedStudent.name}
-            onChangeText={(text) =>
-              setSelectedStudent({ ...selectedStudent, name: text })
-            }
-          />
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: colors.secondaryBackground,
-                color: colors.text,
-              },
-            ]}
-            placeholder="Email"
-            placeholderTextColor={colors.text}
-            value={selectedStudent.email}
-            onChangeText={(text) =>
-              setSelectedStudent({ ...selectedStudent, email: text })
-            }
-          />
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: colors.secondaryBackground,
-                color: colors.text,
-              },
-            ]}
-            placeholder="Roll No"
-            placeholderTextColor={colors.text}
-            value={selectedStudent.roll_no}
-            onChangeText={(text) =>
-              setSelectedStudent({ ...selectedStudent, roll_no: text })
-            }
-          />
-          <TouchableOpacity
-            style={[
-              styles.saveButton,
-              { backgroundColor: colors.secondaryBackground },
-            ]}
-            onPress={() => {
-              if (selectedStudent) {
-                handleUpdateStudent(selectedStudent._id, {
-                  name: selectedStudent.name,
-                  email: selectedStudent.email,
-                  roll_no: selectedStudent.roll_no,
-                });
+        <View style={styles.modalOverlay}>
+          <View
+            style={[styles.modalCard, { backgroundColor: colors.background }]}
+          >
+            <Text style={[styles.modalTitle, { color: colors.text }]}>
+              Edit Student
+            </Text>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: colors.secondaryBackground,
+                  color: colors.text,
+                },
+              ]}
+              placeholder="Name"
+              placeholderTextColor={colors.text}
+              value={selectedStudent.name}
+              onChangeText={(text) =>
+                setSelectedStudent({ ...selectedStudent, name: text })
               }
-            }}
-          >
-            <Text style={styles.saveButtonText}>Save</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
+            />
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: colors.secondaryBackground,
+                  color: colors.text,
+                },
+              ]}
+              placeholder="Email"
+              placeholderTextColor={colors.text}
+              value={selectedStudent.email}
+              onChangeText={(text) =>
+                setSelectedStudent({ ...selectedStudent, email: text })
+              }
+            />
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: colors.secondaryBackground,
+                  color: colors.text,
+                },
+              ]}
+              placeholder="Roll No"
+              placeholderTextColor={colors.text}
+              value={selectedStudent.roll_no}
+              onChangeText={(text) =>
+                setSelectedStudent({ ...selectedStudent, roll_no: text })
+              }
+            />
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: "green" }]}
+                onPress={() => {
+                  if (selectedStudent) {
+                    handleUpdateStudent(selectedStudent._id, {
+                      name: selectedStudent.name,
+                      email: selectedStudent.email,
+                      roll_no: selectedStudent.roll_no,
+                    });
+                  }
+                }}
+              >
+                <Text style={styles.modalButtonText}>Save</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: "gray" }]}
+                onPress={() => setSelectedStudent(null)}
+              >
+                <Text style={styles.modalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* Mentors Modal */}
+      {showMentorsModal && (
+        <View style={styles.modalOverlay}>
+          <View
             style={[
-              styles.cancelButton,
-              { backgroundColor: colors.secondaryBackground },
+              styles.modalCard,
+              {
+                backgroundColor: colors.background,
+                maxHeight: "70%",
+              },
             ]}
-            onPress={() => setSelectedStudent(null)}
           >
-            <Text style={styles.cancelButtonText}>Cancel</Text>
-          </TouchableOpacity>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>
+              Batch Mentors
+            </Text>
+            {mentors?.length === 0 ? (
+              <Text style={[styles.emptyText, { color: colors.text }]}>
+                No mentors assigned to this batch.
+              </Text>
+            ) : (
+              <ScrollView>
+                {mentors?.map((mentor) => (
+                  <View
+                    key={mentor.name}
+                    style={[
+                      styles.mentorCard,
+                      { backgroundColor: colors.secondaryBackground },
+                    ]}
+                  >
+                    <View style={styles.mentorInfo}>
+                      <Text style={[styles.mentorName, { color: colors.text }]}>
+                        {mentor.name}
+                      </Text>
+                      <Text
+                        style={[styles.mentorEmail, { color: colors.text }]}
+                      >
+                        {mentor.email}
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      style={[styles.removeButton, { backgroundColor: "red" }]}
+                      onPress={() => {
+                        console.log("Mentor id", mentor);
+                        handleRemoveMentor(mentor._id);
+                      }}
+                    >
+                      <Text style={styles.removeButtonText}>Remove</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </ScrollView>
+            )}
+            <TouchableOpacity
+              style={[
+                styles.modalButton,
+                { backgroundColor: "#2e66ff", marginTop: 10 },
+              ]}
+              onPress={() => setShowMentorsModal(false)}
+            >
+              <Text style={styles.modalButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {/* Mentor Assignment Modal */}
+      {showMentorModal && (
+        <View style={styles.modalOverlay}>
+          <View
+            style={[styles.modalCard, { backgroundColor: colors.background }]}
+          >
+            <Text style={[styles.modalTitle, { color: colors.text }]}>
+              Assign Mentor
+            </Text>
+            {/* Department Picker */}
+            <Text style={[styles.label, { color: colors.text }]}>
+              Select Department
+            </Text>
+            <Picker
+              selectedValue={selectedDepartment}
+              onValueChange={(itemValue) => {
+                setSelectedDepartment(itemValue);
+                setSelectedTeacher(""); // Reset teacher when department changes
+              }}
+              style={[
+                styles.picker,
+                { backgroundColor: colors.secondaryBackground },
+              ]}
+            >
+              <Picker.Item label="-- Select Department --" value="" />
+              {departments?.map((dept: any) => (
+                <Picker.Item
+                  key={dept.id || dept._id}
+                  label={dept.name}
+                  value={dept.id || dept._id}
+                />
+              ))}
+            </Picker>
+            {/* Teacher Picker */}
+            <Text style={[styles.label, { color: colors.text }]}>
+              Select Teacher
+            </Text>
+            <Picker
+              selectedValue={selectedTeacher}
+              onValueChange={(itemValue) => {
+                setSelectedTeacher(itemValue);
+              }}
+              style={[
+                styles.picker,
+                { backgroundColor: colors.secondaryBackground },
+              ]}
+            >
+              <Picker.Item label="-- Select Teacher --" value="" />
+              {teachers?.data?.map((teacher: any) => (
+                <Picker.Item
+                  key={teacher._id}
+                  label={teacher.name}
+                  value={teacher._id}
+                />
+              ))}
+            </Picker>
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: "green" }]}
+                onPress={handleAssignMentor}
+              >
+                <Text style={styles.modalButtonText}>Confirm</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: "#2e66ff" }]}
+                onPress={() => setShowMentorModal(false)}
+              >
+                <Text style={styles.modalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
       )}
 
@@ -316,79 +526,129 @@ const IndexPage = () => {
         href={`/Home/courses/${courseId}/batches/${batchId}/students/studentUpload`}
         asChild
       >
-        <TouchableOpacity style={styles.button}>
+        <TouchableOpacity style={styles.addButton}>
           <Icon name="add" size={40} color="white" />
         </TouchableOpacity>
       </Link>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  button: {
-    position: "absolute",
-    bottom: 20,
-    right: 20,
-    backgroundColor: "#007BFF",
-    borderRadius: 100,
-    width: 60,
-    height: 60,
+  actionButtonsContainer: {
+    flexDirection: "row",
     justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  tableHeader: {
-    flexDirection: "row",
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 10,
-  },
-  headerText: {
-    color: "black",
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  tableRow: {
-    flexDirection: "row",
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 10,
-    elevation: 2,
-  },
-  tableCell: {
-    textAlign: "center",
-  },
-  actionsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
+    marginVertical: 10,
   },
   actionButton: {
-    padding: 8,
-    borderRadius: 6,
-    marginHorizontal: 4,
+    width: "40%",
+    padding: 12,
+    borderRadius: 8,
+    marginHorizontal: 5,
+    alignItems: "center",
   },
   actionButtonText: {
-    color: "white",
+    fontWeight: "bold",
+  },
+  mentorCard: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 15,
+    marginVertical: 5,
+    borderRadius: 8,
+  },
+  mentorInfo: {
+    flex: 1,
+    marginRight: 10,
+  },
+  mentorName: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  mentorEmail: {
     fontSize: 14,
+    marginTop: 5,
+  },
+  mentorDepartment: {
+    fontSize: 12,
+    color: "gray",
+  },
+  removeButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 6,
+  },
+  removeButtonText: {
+    color: "white",
     fontWeight: "bold",
   },
   emptyText: {
     textAlign: "center",
+    marginVertical: 20,
     fontSize: 16,
-    marginTop: 20,
+  },
+  assignMentor: {
+    backgroundColor: "#5aa7ff",
+    width: "80%",
+    alignSelf: "center",
+    marginVertical: 10,
+    padding: 12,
+    borderRadius: 8,
+    borderColor: "gray",
+    elevation: 8,
+  },
+  pageTitle: {
+    fontSize: 26,
+    fontWeight: "bold",
+    marginVertical: 20,
+    textAlign: "center",
+  },
+  cardsContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 80,
+  },
+  card: {
+    width: "90%",
+    alignSelf: "center",
+    flexDirection: "row",
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    marginVertical: 8,
+    borderRadius: 8,
+    elevation: 3,
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  cardContent: {
+    flex: 1,
+    marginRight: 10,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 3,
+  },
+  cardText: {
+    fontSize: 14,
+    marginBottom: 2,
+  },
+  cardActions: {
+    flexDirection: "row",
+  },
+  cardButton: {
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 4,
+    marginLeft: 5,
+  },
+  cardButtonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 12,
   },
   loadingContainer: {
     flex: 1,
@@ -412,49 +672,68 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textDecorationLine: "underline",
   },
-  modalContainer: {
+  addButton: {
     position: "absolute",
-    top: "20%",
-    left: "5%",
-    right: "5%",
-    backgroundColor: "white",
+    bottom: 20,
+    right: 20,
+    backgroundColor: "#007BFF",
+    borderRadius: 50,
+    width: 60,
+    height: 60,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 5,
+  },
+  modalOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalCard: {
+    width: "85%",
+    borderRadius: 8,
     padding: 20,
-    borderRadius: 10,
     elevation: 5,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 20,
+    marginBottom: 15,
     textAlign: "center",
+  },
+  label: {
+    fontSize: 16,
+    marginVertical: 8,
+  },
+  picker: {
+    backgroundColor: "#f0f0f0",
+    borderRadius: 6,
+    marginBottom: 10,
   },
   input: {
     borderWidth: 1,
     borderColor: "#ccc",
-    borderRadius: 8,
+    borderRadius: 6,
     padding: 10,
     marginBottom: 10,
+    fontSize: 14,
   },
-  saveButton: {
-    padding: 15,
-    borderRadius: 8,
-    alignItems: "center",
-    marginBottom: 10,
+  modalActions: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginTop: 10,
   },
-  saveButtonText: {
+  modalButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 6,
+  },
+  modalButtonText: {
     color: "white",
-    fontSize: 16,
     fontWeight: "bold",
-  },
-  cancelButton: {
-    padding: 15,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  cancelButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "bold",
+    fontSize: 14,
+    textAlign: "center",
   },
 });
 

@@ -16,6 +16,8 @@ import { useState, useEffect, useRef, useCallback, useMemo, memo } from "react";
 import DateTimePicker from "react-native-modal-datetime-picker";
 import { useNavigation } from "@react-navigation/native";
 import BookingModal from "@/src/components/ClassFinder/classrep/BookingModal";
+import { RelativePathString, useRouter } from "expo-router";
+import { useAuth } from "@/src/context/AuthContext";
 
 // Constants outside the component as they do not change
 const DISPLAY_TIME_SLOTS = [
@@ -406,19 +408,28 @@ const ClassRoomFinderPage = () => {
   } | null>(null);
 
   const keyExtractor = useCallback((item: Classroom) => item._id, []);
-  const navigation = useNavigation();
+  const router = useRouter();
+  const { user } = useAuth();
+  const isClassrep = !!user?.classrep_of;
+  const isTeacher = user?.role === "teacher";
   return (
     <View style={styles.container}>
       {/* Add header button for bookings */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Classroom Finder</Text>
-        <TouchableOpacity
-          style={styles.bookingsButton}
-          onPress={() => navigation.navigate("bookings" as never)}
-        >
-          <Text style={styles.bookingsButtonText}>My Bookings</Text>
-        </TouchableOpacity>
-      </View>
+      {(isClassrep || isTeacher) && (
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Classroom Finder</Text>
+          <TouchableOpacity
+            style={styles.bookingsButton}
+            onPress={() =>
+              router.navigate(`/ClassFinder/bookings` as RelativePathString)
+            }
+          >
+            <Text style={styles.bookingsButtonText}>
+              {isClassrep ? `My Bookings` : `Approve bookings`}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
       {/* Memoized Filters section */}
       <FilterSection
         filters={filters}
@@ -461,7 +472,7 @@ const ClassRoomFinderPage = () => {
         />
       )}
       <BookingModal
-        visible={bookingModalVisible}
+        visible={bookingModalVisible && !!user?.classrep_of}
         onClose={() => setBookingModalVisible(false)}
         bookingData={{
           classroomId: selectedClassroom?.classroomId || "",

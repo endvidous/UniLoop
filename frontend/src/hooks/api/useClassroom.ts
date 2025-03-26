@@ -39,6 +39,7 @@ export const useBookClassroom = () => {
     mutationFn: classroomService.bookClassroom,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.classrooms.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.classrooms.list() });
     },
   });
 };
@@ -84,13 +85,8 @@ export const useRejectBooking = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      bookingId,
-      reason,
-    }: {
-      bookingId: string;
-      reason: string;
-    }) => classroomService.rejectBooking(bookingId, reason),
+    mutationFn: ({ bookingId }: { bookingId: string }) =>
+      classroomService.rejectBooking(bookingId),
 
     onSuccess: (_, { bookingId }) => {
       queryClient.invalidateQueries({
