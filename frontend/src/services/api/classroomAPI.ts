@@ -63,6 +63,14 @@ export const classroomService = {
   },
 
   /*------------------------------------------------------
+    Get all bookings
+  ------------------------------------------------------*/
+  getBookings: async () => {
+    const response = await axiosInstance.get("/classrooms/bookings");
+    return response.data;
+  },
+
+  /*------------------------------------------------------
     Approve a booking request
     Only teachers and admins can approve bookings
   ------------------------------------------------------*/

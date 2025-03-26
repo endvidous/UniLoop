@@ -44,6 +44,16 @@ export const useBookClassroom = () => {
 };
 
 /*------------------------------
+ Get all bookings
+-------------------------------*/
+export const useBookings = () => {
+  return useQuery({
+    queryKey: queryKeys.classrooms.bookings.all,
+    queryFn: () => classroomService.getBookings(),
+  });
+};
+
+/*------------------------------
  Approve a booking
 -------------------------------*/
 export const useApproveBooking = () => {

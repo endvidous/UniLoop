@@ -353,7 +353,43 @@ export const bookClassroom = async (req, res) => {
     });
   }
 };
-// export const getAllBookings = async(req, res);
+
+// Get all bookings
+export const getAllBookings = async (req, res) => {
+  try {
+    let query = {};
+
+    // For a student (or class rep) – show only their own bookings.
+    if (req.user.isStudent() && !req.user.isAdmin() && !req.user.isTeacher()) {
+      query.requestedBy = req.user._id;
+    }
+    // For teachers, show bookings made by class reps of batches they mentor.
+    else if (req.user.isTeacher()) {
+      // Find batches where the teacher is assigned as a mentor.
+      const teacherBatches = await Batches.find({
+        mentors: req.user._id,
+      }).select("_id");
+      const batchIds = teacherBatches.map((batch) => batch._id);
+
+      // Query for bookings belonging to those batches.
+      query = { requestedByBatch: { $in: batchIds } };
+    }
+    // For admin, query remains empty to fetch all bookings.
+
+    const bookings = await ClassroomBooking.find(query)
+      .populate("classroom", "name block")
+      .populate("requestedBy", "name email")
+      .populate("requestedByBatch", "code startYear");
+
+    res.status(200).json({ bookings });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error retrieving bookings",
+      error: error.message,
+    });
+  }
+};
+
 // Approval Controller
 export const approveBooking = async (req, res) => {
   const session = await mongoose.startSession();
