@@ -69,16 +69,16 @@ export const teacherService = {
     return response.data;
   },
 
-  assignMentor: async (batchId: string, teacherId: string) => {
-    const response = await axiosInstance.post(`users/assign-mentor`, {
+  assignMentor: async (teacherId: string, batchId: string) => {
+    const response = await axiosInstance.patch(`users/assign-mentor`, {
       teacherId,
       batchId,
     });
     return response.data;
   },
 
-  removeMentor: async (batchId: string, teacherId: string) => {
-    const response = await axiosInstance.post("users/remove-mentor", {
+  removeMentor: async (teacherId: string, batchId: string) => {
+    const response = await axiosInstance.patch("users/remove-mentor", {
       teacherId,
       batchId,
     });
@@ -115,14 +115,18 @@ export const studentService = {
   getOneStudent: async (
     studentId: string
   ): Promise<{ message: string; data: Student }> => {
-    const response = await axiosInstance.get(`/admin/users/students/${studentId}`);
+    const response = await axiosInstance.get(
+      `/admin/users/students/${studentId}`
+    );
     return response.data;
   },
 
   getBatchStudents: async (
     batchId: string
   ): Promise<{ message: string; count: number; data: Student[] }> => {
-    const response = await axiosInstance.get(`/admin/users/${batchId}/students`);
+    const response = await axiosInstance.get(
+      `/admin/users/${batchId}/students`
+    );
     return response.data;
   },
 
@@ -131,9 +135,12 @@ export const studentService = {
     batchId: string,
     students: StudentCreateData[]
   ): Promise<{ message: string; data: string[] }> => {
-    const response = await axiosInstance.post(`/admin/users/${batchId}/students`, {
-      students,
-    });
+    const response = await axiosInstance.post(
+      `/admin/users/${batchId}/students`,
+      {
+        students,
+      }
+    );
     return response.data;
   },
 
@@ -159,16 +166,16 @@ export const studentService = {
     return response.data;
   },
 
-  assignClassRep: async (batchId: string, studentId: string) => {
-    const response = await axiosInstance.post(`/users/assign-classrep`, {
+  assignClassRep: async (studentId: string, batchId: string) => {
+    const response = await axiosInstance.patch(`/users/assign-classrep`, {
       batchId,
       studentId,
     });
     return response.data;
   },
 
-  removeClassRep: async (batchId: string, studentId: string) => {
-    const response = await axiosInstance.post(`/users/remove-classrep`, {
+  removeClassRep: async (studentId: string, batchId: string) => {
+    const response = await axiosInstance.patch(`/users/remove-classrep`, {
       batchId,
       studentId,
     });
@@ -176,7 +183,7 @@ export const studentService = {
   },
 
   removeAllClassReps: async (batchId: string) => {
-    const response = await axiosInstance.delete(`/users/remove-all-classreps`, {
+    const response = await axiosInstance.patch(`/users/remove-all-classreps`, {
       data: batchId,
     });
     return response.data;

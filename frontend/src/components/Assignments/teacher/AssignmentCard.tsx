@@ -34,13 +34,21 @@ export const TeacherAssignmentCard = ({
       </View>
 
       <View style={styles.deadlineContainer}>
-        <Text style={styles.deadline}>
-          Due date: {new Date(assignment.deadline).toLocaleDateString()}
-        </Text>
-        {assignment?.late_deadline && (
-          <Text style={styles.lateDeadline}>
-            Late after:{" "}
-            {new Date(assignment.late_deadline).toLocaleDateString()}
+        {assignment?.late_deadline ? (
+          <>
+            <Text style={styles.deadline}>
+              Due date:{" "}
+              {new Date(assignment.late_deadline).toLocaleDateString("en-GB")}
+            </Text>
+            <Text style={styles.lateDeadline}>
+              Late after:{" "}
+              {new Date(assignment.deadline).toLocaleDateString("en-GB")}
+            </Text>
+          </>
+        ) : (
+          <Text style={styles.deadline}>
+            Due date:{" "}
+            {new Date(assignment.deadline).toLocaleDateString("en-GB")}
           </Text>
         )}
       </View>

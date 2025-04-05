@@ -17,17 +17,20 @@ import CreateAssignment from "@/src/components/Assignments/CreateAssignment";
 import { Student } from "@/src/services/api/userAPI";
 import LocalSearchFilterComponent from "@/src/components/common/LocalSearchFilter";
 import { FlatList } from "react-native-gesture-handler";
+import CreateMeetingPage from "@/src/components/Meetings/CreateMeetingPage";
+import { useAssignClassRep } from "@/src/hooks/api/useUser";
+import { toast } from "@backpackapp-io/react-native-toast";
 
 const BatchPage = () => {
   const { batchId } = useLocalSearchParams<{ batchId: string }>();
   const navigation = useNavigation();
   const { data: response, error, isLoading, refetch } = useGetBatch(batchId);
   const batch = response?.data as Batch & { students: Student[] };
-  console.log(batch);
   const [refreshing, setRefreshing] = useState(false);
 
   const [showAssignmentModal, setShowAssignmentModal] = useState(false);
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
+  const [showMeetingModal, setMeetingModal] = useState(false);
   const [showDiscussionModal, setShowDiscussionModal] = useState(false);
   const [showClassRepsModal, setShowClassRepsModal] = useState(false);
 
@@ -53,7 +56,12 @@ const BatchPage = () => {
     if (batch?.students) {
       setFilteredStudents(batch.students);
     }
-  }, [batch?.students]);
+    if (batch?.classReps && batch.classReps.length > 0) {
+      setSelectedClassReps(
+        batch.classReps.map((rep) => (typeof rep === "string" ? rep : rep._id))
+      );
+    }
+  }, [batch?.students, batch?.classReps]);
 
   if (isLoading) {
     return (
@@ -102,11 +110,25 @@ const BatchPage = () => {
     alert("All class reps removed.");
   };
 
-  // Confirm selection of class reps (e.g., call your API)
+  const { mutate: assignClassRep } = useAssignClassRep();
+
   const handleConfirmClassReps = () => {
-    // Optionally, call your API to assign class reps with selectedClassReps
-    console.log("Assigned Class Reps:", selectedClassReps);
-    alert("Class reps assigned successfully.");
+    selectedClassReps.forEach((studentId) => {
+      assignClassRep(
+        { studentId, batchId },
+        {
+          onSuccess: (data) => {
+            toast.success(
+              `Successfully assigned class rep for student: ${studentId}`
+            );
+          },
+          onError: (error) => {
+            toast.error(`Error assigning class rep for student: ${studentId}`);
+          },
+        }
+      );
+    });
+    toast.success("All classreps assigned");
     setShowClassRepsModal(false);
   };
 
@@ -139,7 +161,7 @@ const BatchPage = () => {
           alignItems: "center",
           marginBottom: 10,
         }}
-        onPress={() => setShowAnnouncementModal(true)}
+        onPress={() => setMeetingModal(true)}
       >
         <Text style={{ color: "white", fontWeight: "bold" }}>
           Create a Meeting
@@ -206,6 +228,16 @@ const BatchPage = () => {
         />
       </Modal>
 
+      {/* Meeting modal */}
+      <Modal
+        visible={showMeetingModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setMeetingModal(false)}
+      >
+        <CreateMeetingPage onDismiss={() => setMeetingModal(false)} />
+      </Modal>
+
       {/* Announcement modal */}
       <Modal
         visible={showAnnouncementModal}
@@ -270,9 +302,7 @@ const BatchPage = () => {
             <LocalSearchFilterComponent
               data={batch.students}
               searchKeys={["name", "roll_no"]}
-              setFilteredData={(filtered) =>
-                setFilteredStudents(filtered as Student[])
-              }
+              setFilteredData={setFilteredStudents}
               placeholder="Search students..."
             />
 

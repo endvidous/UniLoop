@@ -11,16 +11,17 @@ import {
   TextInput,
   FlatList,
 } from "react-native";
+import { Feather, MaterialIcons } from "@expo/vector-icons";
+import { RelativePathString, useRouter } from "expo-router";
+//custom hooks
 import { useTheme } from "@/src/hooks/colors/useThemeColor";
 import {
   useReminders,
   useToggleReminderCompletion,
 } from "@/src/hooks/api/useReminders";
 import ReminderCard from "@/src/components/Reminders/ReminderCard";
-import { Feather, MaterialIcons } from "@expo/vector-icons";
 import { Reminder as APIReminder } from "@/src/services/api/reminderAPI";
 import UploadReminder from "./UploadReminder";
-import { RelativePathString, useRouter } from "expo-router";
 import { useAuth } from "@/src/context/AuthContext";
 
 interface Reminder extends APIReminder {
@@ -44,7 +45,6 @@ const RemindersPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPriority, setSelectedPriority] = useState<number | null>(null);
 
-  console.log("Data reminders", data);
   const navigateToUploadPage = () => {
     setShowModal(true);
   };
@@ -75,8 +75,6 @@ const RemindersPage = () => {
       const completed = data.reminders.filter(
         (reminder: Reminder) => reminder.completed
       );
-      console.log(active);
-      console.log(completed);
       setActiveReminders(active);
       setCompletedReminders(completed);
     }

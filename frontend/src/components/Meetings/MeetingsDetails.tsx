@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
+  Modal,
 } from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
@@ -33,14 +34,15 @@ const MeetingDetailComponent = ({ id }: MeetingDetailComponentProps) => {
   const { user } = useAuth();
   const { data: meeting, isLoading, error, refetch } = useOneMeeting(id);
   const [editing, setEditing] = useState(false);
+  const [approval, setApproval] = useState(false);
   const { colors } = useTheme();
   const navigation = useNavigation();
 
-  const [isDateTimePickerVisible, setIsDateTimePickerVisible] = useState(false);
+  // State for reject reason modal
+  const [rejectModalVisible, setRejectModalVisible] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
 
-  console.log(meeting);
-  console.log(id);
-  console.log(error);
+  const [isDateTimePickerVisible, setIsDateTimePickerVisible] = useState(false);
 
   const { control, handleSubmit, reset } = useForm<Meeting>({
     defaultValues: {
@@ -56,14 +58,57 @@ const MeetingDetailComponent = ({ id }: MeetingDetailComponentProps) => {
   const deleteMeeting = useDeleteMeeting();
 
   useEffect(() => {
-    navigation.setOptions({
-      headerShown: true, // Show the header
-      headerTitle: "Meeting Details", // Set the header title
-      headerBackTitle: "Back",
-    });
-  }, [navigation]);
+    if (meeting) {
+      reset({
+        ...meeting,
+        purpose: meeting.purpose,
+        timing: new Date(meeting.timing),
+        venue: meeting.venue,
+      });
+      // Initialize reject reason if it exists
+      if (meeting.reason) {
+        setRejectReason(meeting.reason);
+      }
+    }
+  }, [meeting, reset]);
 
-  useEffect(() => {
+  const handleApprove = async (formData: Partial<Meeting> | null = null) => {
+    // If formData is provided, we're in the confirmation step
+    if (formData) {
+      // Validate that venue and timing are set
+      if (!formData.venue || !formData.timing) {
+        toast.error("Please set both venue and timing before approving.");
+        return;
+      }
+
+      try {
+        await approveMeeting.mutateAsync({
+          id,
+          data: {
+            venue: formData.venue,
+            timing: formData.timing,
+          },
+        });
+
+        toast.success("Meeting approved successfully.");
+        setApproval(false);
+        setEditing(false);
+        refetch();
+      } catch (err) {
+        toast.error("Failed to approve meeting.");
+      }
+    }
+    // No formData means this is the first step - entering approval mode
+    else {
+      setApproval(true);
+      setEditing(true);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditing(false);
+    setApproval(false);
+    // Reset form to original values
     if (meeting) {
       reset({
         purpose: meeting.purpose,
@@ -71,22 +116,22 @@ const MeetingDetailComponent = ({ id }: MeetingDetailComponentProps) => {
         venue: meeting.venue,
       });
     }
-  }, [meeting, reset]);
-
-  const handleApprove = async () => {
-    try {
-      await approveMeeting.mutateAsync(id);
-      toast.success("Meeting approved successfully.");
-      refetch();
-    } catch (err) {
-      toast.error("Failed to approve meeting.");
-    }
   };
 
-  const handleReject = async () => {
+  const handleRejectPress = () => {
+    setRejectModalVisible(true);
+  };
+
+  const handleRejectConfirm = async () => {
+    if (!rejectReason.trim()) {
+      toast.error("Please provide a reason for rejection");
+      return;
+    }
+
     try {
-      await rejectMeeting.mutateAsync(id);
+      await rejectMeeting.mutateAsync({ id, reason: rejectReason });
       toast.success("Meeting rejected successfully.");
+      setRejectModalVisible(false);
       refetch();
     } catch (err) {
       toast.error("Failed to reject meeting.");
@@ -95,11 +140,17 @@ const MeetingDetailComponent = ({ id }: MeetingDetailComponentProps) => {
 
   const handleUpdate = async (data: Meeting) => {
     try {
-      await updateMeeting.mutateAsync({ id, data });
+      await updateMeeting.mutateAsync({
+        id,
+        data: {
+          ...data,
+          requestedTo: data.requestedTo._id,
+        },
+      });
       toast.success("Meeting updated successfully.");
       setEditing(false);
       refetch();
-    } catch (err) {
+    } catch (err: any) {
       toast.error("Failed to update meeting.");
     }
   };
@@ -158,24 +209,26 @@ const MeetingDetailComponent = ({ id }: MeetingDetailComponentProps) => {
     >
       {editing ? (
         <>
-          <Controller
-            control={control}
-            name="purpose"
-            render={({ field: { onChange, value } }) => (
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Purpose</Text>
-                <TextInput
-                  style={styles.input}
-                  value={value}
-                  onChangeText={onChange}
-                  placeholder="Enter purpose"
-                />
-              </View>
-            )}
-          />
+          {!approval && (
+            <Controller
+              control={control}
+              name="purpose"
+              render={({ field: { onChange, value } }) => (
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Purpose</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={value}
+                    onChangeText={onChange}
+                    placeholder="Enter purpose"
+                  />
+                </View>
+              )}
+            />
+          )}
 
           {/* Make sure edit for this only renders and if they are a teacher */}
-          {isTeacher && (
+          {isTeacher && approval && (
             <>
               <Controller
                 control={control}
@@ -183,7 +236,7 @@ const MeetingDetailComponent = ({ id }: MeetingDetailComponentProps) => {
                 render={({ field: { onChange, value } }) => (
                   <>
                     <TouchableOpacity
-                            style={styles.dateInput}
+                      style={styles.dateInput}
                       onPress={() => setIsDateTimePickerVisible(true)}
                     >
                       <Text
@@ -231,18 +284,37 @@ const MeetingDetailComponent = ({ id }: MeetingDetailComponentProps) => {
           )}
 
           <View style={styles.buttonGroup}>
-            <TouchableOpacity
-              style={styles.saveButton}
-              onPress={handleSubmit(handleUpdate)}
-            >
-              <Text style={styles.buttonText}>Save Changes</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={() => setEditing(false)}
-            >
-              <Text style={styles.buttonText}>Cancel</Text>
-            </TouchableOpacity>
+            {approval ? (
+              <>
+                <TouchableOpacity
+                  style={styles.approveButton}
+                  onPress={handleSubmit((data) => handleApprove(data))}
+                >
+                  <Text style={styles.buttonText}>Confirm Approval</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={handleCancelEdit}
+                >
+                  <Text style={styles.buttonText}>Cancel</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <TouchableOpacity
+                  style={styles.saveButton}
+                  onPress={handleSubmit((data) => handleUpdate(data))}
+                >
+                  <Text style={styles.buttonText}>Save Changes</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={handleCancelEdit}
+                >
+                  <Text style={styles.buttonText}>Cancel</Text>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         </>
       ) : (
@@ -278,6 +350,13 @@ const MeetingDetailComponent = ({ id }: MeetingDetailComponentProps) => {
               label="Requested To"
               value={meeting.requestedTo.name}
             />
+            {meeting.reason && (
+              <MetaItem
+                icon="info-outline"
+                label="Rejection Reason"
+                value={meeting.reason}
+              />
+            )}
           </View>
 
           {/* Buttons for teachers and students */}
@@ -300,17 +379,17 @@ const MeetingDetailComponent = ({ id }: MeetingDetailComponentProps) => {
           )}
 
           {/* The person who was requested can approve or reject a meeting regardless of student or teacher */}
-          {!isRequester && (
+          {!isRequester && !editing && meeting.status === "pending" && (
             <View style={styles.buttonGroup}>
               <TouchableOpacity
                 style={styles.approveButton}
-                onPress={handleApprove}
+                onPress={() => handleApprove()}
               >
                 <Text style={styles.buttonText}>Approve Meeting</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.rejectButton}
-                onPress={handleReject}
+                onPress={handleRejectPress}
               >
                 <Text style={styles.buttonText}>Reject Meeting</Text>
               </TouchableOpacity>
@@ -318,6 +397,45 @@ const MeetingDetailComponent = ({ id }: MeetingDetailComponentProps) => {
           )}
         </>
       )}
+
+      {/* Reject Reason Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={rejectModalVisible}
+        onRequestClose={() => setRejectModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Reject Meeting</Text>
+            <Text style={styles.modalDescription}>
+              Please provide a reason for rejecting this meeting request:
+            </Text>
+            <TextInput
+              style={styles.reasonInput}
+              multiline={true}
+              numberOfLines={4}
+              placeholder="Enter reason for rejection"
+              value={rejectReason}
+              onChangeText={setRejectReason}
+            />
+            <View style={styles.modalButtonGroup}>
+              <TouchableOpacity
+                style={styles.modalCancelButton}
+                onPress={() => setRejectModalVisible(false)}
+              >
+                <Text style={styles.buttonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalRejectButton}
+                onPress={handleRejectConfirm}
+              >
+                <Text style={styles.buttonText}>Reject Meeting</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -464,6 +582,62 @@ const styles = StyleSheet.create({
   },
   dateText: {
     color: "#000",
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: "white",
+    borderRadius: 12,
+    padding: 24,
+    width: "100%",
+    maxWidth: 500,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#1f2937",
+    marginBottom: 8,
+  },
+  modalDescription: {
+    fontSize: 14,
+    color: "#4b5563",
+    marginBottom: 16,
+  },
+  reasonInput: {
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: "#f9fafb",
+    textAlignVertical: "top",
+    minHeight: 100,
+    marginBottom: 16,
+  },
+  modalButtonGroup: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 12,
+  },
+  modalCancelButton: {
+    backgroundColor: "#64748b",
+    borderRadius: 8,
+    padding: 12,
+    alignItems: "center",
+    flex: 1,
+  },
+  modalRejectButton: {
+    backgroundColor: "#ef4444",
+    borderRadius: 8,
+    padding: 12,
+    alignItems: "center",
+    flex: 1,
   },
 });
 

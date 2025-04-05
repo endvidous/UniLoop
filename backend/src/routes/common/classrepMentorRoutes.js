@@ -10,21 +10,21 @@ import { isAdmin, isAdminOrTeacher } from "../../middleware/authMiddleware.js";
 const classRep_MentorRoutes = express.Router();
 
 //Mentor routes
-classRep_MentorRoutes.post("/assign-mentor", isAdmin, assignMentor);
-classRep_MentorRoutes.delete("/remove-mentor", isAdmin, removeMentor);
+classRep_MentorRoutes.patch("/assign-mentor", isAdmin, assignMentor);
+classRep_MentorRoutes.patch("/remove-mentor", isAdmin, removeMentor);
 
 //Classrep routes
-classRep_MentorRoutes.post(
+classRep_MentorRoutes.patch(
   "/assign-classrep",
   isAdminOrTeacher,
   assignClassRep
 );
-classRep_MentorRoutes.delete(
+classRep_MentorRoutes.patch(
   "/remove-classrep",
   isAdminOrTeacher,
   removeClassRep
 );
-classRep_MentorRoutes.delete(
+classRep_MentorRoutes.patch(
   "/remove-all-classreps",
   isAdminOrTeacher,
   removeAllClassReps

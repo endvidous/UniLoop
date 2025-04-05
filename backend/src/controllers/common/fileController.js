@@ -96,10 +96,12 @@ export const generateDownloadURL = async (req, res) => {
     }
 
     // Validate ownership pattern (uploads/:userId/*)
-    if (!fileKey.startsWith(`uploads/${userId}/`)) {
-      return res.status(403).json({
-        error: "Unauthorized file access",
-      });
+    if (req.user.isStudent()) {
+      if (!fileKey.startsWith(`uploads/${userId}/`)) {
+        return res.status(403).json({
+          error: "Unauthorized file access",
+        });
+      }
     }
 
     const command = new GetObjectCommand({
@@ -111,7 +113,6 @@ export const generateDownloadURL = async (req, res) => {
       expiresIn: 3600,
     });
 
-    console.log("Generated URL:", url);
     res.status(200).json({ url });
   } catch (error) {
     console.error("Error generating download URL:", error);

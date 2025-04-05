@@ -127,7 +127,7 @@ const HomeScreen = () => {
     if (showConfirmCard === item._id) {
       return (
         <View
-          style={[styles.confirmCard, { backgroundColor: colors.background }]}
+          style={[styles.confirmCard, { backgroundColor: colors.secondaryBackground }]}
         >
           <Text style={[styles.confirmText, { color: colors.text }]}>
             Are you sure you want to delete {item.name} ? It will delete all the
@@ -222,14 +222,21 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   card: {
-    backgroundColor: "#007BFF",
-    padding: 15,
-    borderRadius: 10,
+    padding: 16,
     marginVertical: 8,
-    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
+    borderLeftWidth: 0.8,
+    borderRightWidth: 0.8,
+    borderBottomWidth: 1.5,
+    borderTopWidth: 0.8,
   },
   cardText: {
-    color: "white",
+    color: "black",
     fontSize: 18,
     fontWeight: "bold",
   },

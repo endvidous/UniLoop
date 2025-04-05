@@ -1,13 +1,6 @@
-//import BlockPage from "@/src/components/ClassFinder/classrep/BlockPage";
+import ClassRoomFinderPage from "@/src/components/ClassFinder/ClassroomFinderPage";
 
-import { Text, View } from "react-native";
-
-const Blocks = () => {
-  return (
-    <View>
-      <Text>blocks</Text>
-    </View>
-  );
+const ClassFinderIndexPage = () => {
+  return <ClassRoomFinderPage />;
 };
-
-export default Blocks;
+export default ClassFinderIndexPage;

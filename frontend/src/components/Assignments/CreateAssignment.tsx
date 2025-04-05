@@ -117,13 +117,13 @@ const CreateAssignment = ({
     };
 
     createAssignment(formattedData, {
-      onSuccess: (response) => {
-        console.log("Assignment created:", response);
+      onSuccess: () => {
+        onDismiss();
         toast.success("Assignment created successfully");
       },
-      onError: (error) => {
-        console.error("Error creating assignment:", error);
-        toast.error("Error creating assignment");
+      onError: (error: any) => {
+        onDismiss();
+        toast.error("Error creating assignment", error.message);
       },
     });
   };

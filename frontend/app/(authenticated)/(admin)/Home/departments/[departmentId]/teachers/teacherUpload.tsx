@@ -21,6 +21,7 @@ import {
 import { Teacher, TeacherCreateData } from "@/src/services/api/userAPI";
 import CsvUploaderComponent from "@/src/components/common/CsvEntry";
 import ManualEntryComponent from "@/src/components/common/ManualEntry";
+import { useTheme } from "@/src/hooks/colors/useThemeColor";
 
 // Extend Teacher interface to include an internal form ID
 interface TeacherFormItem extends Omit<Teacher, "_id"> {
@@ -38,6 +39,8 @@ interface TeacherFormData {
 
 const TeacherUpload = () => {
   const { departmentId } = useLocalSearchParams<{ departmentId: string }>();
+  const { colors } = useTheme();
+  
 
   const {
     control,
@@ -205,7 +208,6 @@ const TeacherUpload = () => {
       role: row.role || "teacher", // Default role to "teacher" if not provided
       password: row.password || "defaultPassword", // Default password if not provided
     }));
-    console.log("Validated data: ", validatedData);
     reset({ teachers: validatedData });
     setShowUploadSection(false);
     setIsEditingCSV(true);
@@ -234,34 +236,30 @@ const TeacherUpload = () => {
       field: "name",
       label: "Name",
       placeholder: "Enter teacher name",
-      required: true,
     },
     {
       name: "teachers",
       field: "email",
       label: "Email",
       placeholder: "Enter teacher email",
-      required: true,
     },
     {
       name: "teachers",
       field: "role",
       label: "Role",
       placeholder: "Enter role (admin/teacher/student)",
-      required: true,
     },
     {
       name: "teachers",
       field: "password",
       label: "Password",
       placeholder: "Enter password (min 6 characters)",
-      required: true,
     },
   ];
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.secondaryBackground }]}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
     >

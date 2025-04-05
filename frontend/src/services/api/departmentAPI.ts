@@ -80,7 +80,6 @@ export const papersService = {
       return response.data;
     } catch (error: any) {
       const message = error.response;
-      console.log("Update paper message", message);
     }
   },
 

@@ -95,7 +95,6 @@ const CreateReminder = ({ onDismiss }: CreateReminderProps) => {
       toast.success("Reminder created successfully");
       onDismiss();
     } catch (error) {
-      console.log(error);
       toast.error("Failed to create reminder");
     } finally {
       setIsSubmitting(false);

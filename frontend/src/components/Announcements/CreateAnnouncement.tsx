@@ -163,7 +163,6 @@ const CreateAnnouncement = ({
       toast.success("Announcement created successfully");
       onDismiss();
     } catch (error) {
-      console.log(error);
       toast.error("Failed to create announcement");
     }
   };

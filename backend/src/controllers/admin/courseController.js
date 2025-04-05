@@ -257,9 +257,9 @@ export const getOneBatch = async (req, res) => {
     // Find the batch by ID
     const batch = await Batches.findById(batchId)
       .populate("course", "name code type") // populate course with selected fields
-      .populate("students", "name email roll_no") // populate students with essential user details
-      .populate("classReps", "name email roll_no") // populate class reps similarly
-      .populate("mentors", "name email"); // populate mentors
+      .populate("students", "_id name email roll_no") // populate students with essential user details
+      .populate("classReps", "_id name email roll_no") // populate class reps similarly
+      .populate("mentors", "_id name email"); // populate mentors
 
     if (!batch) {
       return res.status(404).json({ message: "Batch not found" });

@@ -11,6 +11,6 @@ const router = express.Router();
 router.post("/login", login); //route for POST login
 router.post("/logout", logout);
 router.get("/validate", validateUser);
-router.post("/edit-password", editPassword);
+router.patch("/edit-password", editPassword);
 
 export default router;

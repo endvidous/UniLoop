@@ -209,7 +209,7 @@ export const assignMentor = async (req, res) => {
     }
 
     // Check the number of mentors
-    if (batch.mentors.length >= 6) {
+    if (batch.mentors.length >= 2) {
       return res.status(400).json({
         message:
           "Cannot have more than two mentors. Remove a mentor to add new ones",
@@ -255,7 +255,6 @@ export const removeMentor = async (req, res) => {
         .status(400)
         .json({ message: "Invalid teacherId or batchId format" });
     }
-
     // Check if the teacher exists
     const teacher = await User.findById(teacherId);
     if (!teacher) {
@@ -287,6 +286,7 @@ export const removeMentor = async (req, res) => {
       data: { teacher: updatedTeacher, batch: updatedBatch },
     });
   } catch (err) {
+    console.log(err);
     res.status(500).json({
       message: "Error removing mentor",
       error: err.message,
