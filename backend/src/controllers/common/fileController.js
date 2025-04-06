@@ -87,7 +87,7 @@ export const generateUploadURL = async (req, res) => {
 export const generateDownloadURL = async (req, res) => {
   try {
     const { fileKey } = req.body;
-    const userId = req.user._id.toString();
+    // const userId = req.user._id.toString();
     // Validate fileKey
     if (!fileKey) {
       return res.status(400).json({
@@ -95,14 +95,14 @@ export const generateDownloadURL = async (req, res) => {
       });
     }
 
-    // Validate ownership pattern (uploads/:userId/*)
-    if (req.user.isStudent()) {
-      if (!fileKey.startsWith(`uploads/${userId}/`)) {
-        return res.status(403).json({
-          error: "Unauthorized file access",
-        });
-      }
-    }
+    // // Validate ownership pattern (uploads/:userId/*)
+    // if (req.user.isStudent()) {
+    //   if (!fileKey.startsWith(`uploads/${userId}/`)) {
+    //     return res.status(403).json({
+    //       error: "Unauthorized file access",
+    //     });
+    //   }
+    // }
 
     const command = new GetObjectCommand({
       Bucket: bucketConfig.bucketName,
