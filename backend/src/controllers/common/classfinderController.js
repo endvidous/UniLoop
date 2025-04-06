@@ -369,11 +369,11 @@ export const getAllBookings = async (req, res) => {
     }
 
     // Student access
-    if (req.user.role === "student" && !req.user.isAdmin) {
+    if (req.user.isStudent() && !req.user.isAdmin()) {
       query = { requestedBy: req.user._id };
     }
     // Teacher access
-    else if (req.user.role === "teacher") {
+    else if (req.user.isTeacher()) {
       const teacherBatches = await Batches.find({
         mentors: req.user._id,
       }).lean();
