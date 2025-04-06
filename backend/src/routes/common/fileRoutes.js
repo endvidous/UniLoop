@@ -19,8 +19,8 @@ router.use(basicLimiter);
 
 router.post("/upload-url", generateUploadURL);
 router.post("/download-url", generateDownloadURL);
-router.get("/", listFiles);
+// router.get("/", listFiles);
 router.delete("/", deleteFile);
-router.delete("/", validateFileKeys, bulkDeleteFiles);
+// router.delete("/", validateFileKeys, bulkDeleteFiles);
 
 export default router;
