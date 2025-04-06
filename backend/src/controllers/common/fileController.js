@@ -110,7 +110,7 @@ export const generateDownloadURL = async (req, res) => {
     });
 
     const url = await getSignedUrl(s3Client, command, {
-      expiresIn: 3600,
+      expiresIn: 300, // 5 minutes
     });
 
     res.status(200).json({ url });
