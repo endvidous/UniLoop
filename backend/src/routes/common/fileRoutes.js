@@ -4,9 +4,6 @@ import {
   generateUploadURL,
   deleteFile,
   generateDownloadURL,
-  listFiles,
-  bulkDeleteFiles,
-  validateFileKeys,
 } from "../../controllers/common/fileController.js";
 
 const router = express.Router();
