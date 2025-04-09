@@ -1,15 +1,8 @@
 import { findTeacherDetails, findStudentDetails } from "./userService.js";
 
 export const buildBaseQuery = (options = {}) => {
-  const { includeExpiry = true } = options;
-  return includeExpiry
-    ? {
-        $or: [
-          { expiresAt: { $exists: false } },
-          { expiresAt: { $gt: new Date() } },
-        ],
-      }
-    : {};
+  const { includeExpiry = false } = options;
+  return includeExpiry ? {} : {};
 };
 
 export const buildVisibilityQuery = async (

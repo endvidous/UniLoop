@@ -262,8 +262,8 @@ export const createAnnouncement = async (req, res) => {
         })
           .select("token -_id")
           .lean();
-        
-          if (pushTokens.length > 0) {
+
+        if (pushTokens.length > 0) {
           await sendBulkNotifications(
             pushTokens.map((t) => t.token),
             {
