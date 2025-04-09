@@ -124,7 +124,6 @@ const CreateMeetingPage: React.FC<CreateMeetingPageProps> = ({
         requestedTo: data.requestedTo,
         // Students can only create pending meetings
       };
-      console.log(studentPayload);
 
       createMeeting(studentPayload, {
         onSuccess: () => {

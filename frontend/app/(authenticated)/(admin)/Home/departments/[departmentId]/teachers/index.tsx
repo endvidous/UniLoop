@@ -197,7 +197,6 @@ const TeachersIndexPage = () => {
         <Swipeable renderRightActions={renderRightActions}>
           <View style={[styles.teacherCard, { borderColor: getRandomColor() }]}>
             <Text style={styles.teacherName}>{item.name}</Text>
-            <Text style={styles.teacherDetail}>Code: {item._id}</Text>
             <Text style={styles.teacherDetail}>Email: {item.email}</Text>
             {item.mentor_of && (
               <Text style={styles.teacherDetail}>

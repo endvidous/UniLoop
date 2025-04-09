@@ -28,7 +28,7 @@ interface Paper {
 
 const PapersIndexPage = () => {
   const { colors } = useTheme();
-  //states definition
+  // State definitions
   const [deletingPaperId, setDeletingPaperId] = useState<string | null>(null);
   const [editingPaper, setEditingPaper] = useState<Paper | null>(null);
   const [updatedName, setUpdatedName] = useState<string>("");
@@ -36,19 +36,34 @@ const PapersIndexPage = () => {
   const [updatedSemester, setUpdatedSemester] = useState<string>("");
   const [isUpdating, setIsUpdating] = useState(false);
 
-  //mutation hooks
+  // Mutation hooks
   const { mutate: updatePaper } = useUpdatePaper();
   const { mutate: deletePaper, status } = useDeletePaper();
-  //?
+
+  // Get department ID and name from URL params
   const { departmentId, name } = useLocalSearchParams<{
     departmentId: string;
     name: string;
   }>();
-  //?
+
+  // Fetch papers for the department
   const { data, isFetching, isError, refetch } =
     useDepartmentPapers(departmentId);
 
-  //delete paper function
+  // Helper function to generate random colors for card borders
+  const getRandomColor = () => {
+    const colors = [
+      "#FF6B6B", // Red
+      "#4ECDC4", // Teal
+      "#FFD166", // Yellow
+      "#45B7D5", // Blue
+      "#A78BFA", // Purple
+      "#F4A261", // Orange
+    ];
+    return colors[Math.floor(Math.random() * colors.length)];
+  };
+
+  // Delete paper function
   const isDeleting = status === "pending";
   const onDelete = (id: string) => {
     if (!isDeleting) {
@@ -68,7 +83,7 @@ const PapersIndexPage = () => {
     }
   };
 
-  //edit paper function
+  // Edit paper function
   const onEdit = (item: Paper) => {
     setEditingPaper(item);
     setUpdatedName(item.name);
@@ -111,6 +126,7 @@ const PapersIndexPage = () => {
     }
   };
 
+  // Render swipeable actions (edit and delete buttons)
   const renderRightActions = (item: Paper) => {
     return (
       <View style={styles.swipeActionsContainer}>
@@ -138,6 +154,7 @@ const PapersIndexPage = () => {
     );
   };
 
+  // Render each paper card
   const renderPaper = ({ item }: { item: Paper }) => {
     if (deletingPaperId === item._id) {
       return (
@@ -147,7 +164,7 @@ const PapersIndexPage = () => {
             { backgroundColor: colors.background },
           ]}
         >
-          <Text style={[styles.paperText, { color: colors.text }]}>
+          <Text style={[styles.papertext, { color: colors.text }]}>
             Are you sure you want to delete {item.name}?
           </Text>
           <View style={styles.confirmationButtons}>
@@ -170,8 +187,13 @@ const PapersIndexPage = () => {
 
     if (editingPaper && editingPaper._id === item._id) {
       return (
-        <View style={[styles.editCard, { backgroundColor: colors.background }]}>
-          <Text style={[styles.paperText, { color: colors.text }]}>
+        <View
+          style={[
+            styles.editCard,
+            { backgroundColor: colors.secondaryBackground },
+          ]}
+        >
+          <Text style={[styles.papertext, { color: colors.text }]}>
             Edit Paper {item.name}
           </Text>
 
@@ -203,8 +225,8 @@ const PapersIndexPage = () => {
             value={updatedSemester}
             onChangeText={setUpdatedSemester}
             keyboardType="numeric"
-            placeholder={updatedSemester || "Semester"} // Use the updatedSemester state
-            placeholderTextColor={colors.text} // Set the placeholder text color to colors.text
+            placeholder={updatedSemester || "Semester"}
+            placeholderTextColor={colors.text}
           />
           <View style={styles.confirmationButtons}>
             <TouchableOpacity
@@ -230,15 +252,16 @@ const PapersIndexPage = () => {
 
     return (
       <Swipeable renderRightActions={() => renderRightActions(item)}>
-        <TouchableOpacity style={styles.paperCard}>
-          <Text style={styles.paperText}>{item.name}</Text>
-          <Text style={styles.paperText}>{item.code}</Text>
-          <Text style={styles.paperText}>{item.semester}</Text>
-        </TouchableOpacity>
+        <View style={[styles.paperCard, { borderColor: getRandomColor() }]}>
+          <Text style={styles.paperName}>{item.name}</Text>
+          <Text style={styles.paperDetail}>Code: {item.code}</Text>
+          <Text style={styles.paperDetail}>Semester: {item.semester}</Text>
+        </View>
       </Swipeable>
     );
   };
 
+  // Loading state
   if (isFetching) {
     return (
       <View style={styles.loadingContainer}>
@@ -247,6 +270,7 @@ const PapersIndexPage = () => {
     );
   }
 
+  // Error state
   if (isError) {
     return (
       <View style={styles.errorContainer}>
@@ -260,6 +284,7 @@ const PapersIndexPage = () => {
     );
   }
 
+  // Main render
   return (
     <View
       style={[
@@ -293,6 +318,7 @@ const PapersIndexPage = () => {
   );
 };
 
+// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -304,14 +330,30 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   paperCard: {
-    backgroundColor: "#007BFF",
+    backgroundColor: "#fff",
     padding: 15,
     borderRadius: 10,
+    borderWidth: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
     marginVertical: 8,
   },
-  paperText: {
-    color: "white",
+  papertext:{
+
+  },
+  paperName: {
     fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 8,
+  },
+  paperDetail: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 4,
   },
   emptyText: {
     textAlign: "center",

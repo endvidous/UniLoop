@@ -49,7 +49,7 @@ export const announcementsService = {
       });
       return response.data;
     } catch (error) {
-      console.log((error as any)?.response?.data?.message);
+      throw new Error((error as any)?.response?.data?.message);
     }
   },
 

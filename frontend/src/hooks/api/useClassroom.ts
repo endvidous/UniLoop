@@ -8,7 +8,7 @@ import axiosInstance from "@/src/services/api/axiosConfig";
 ------------------------------------*/
 export const useClassrooms = (filters?: {
   block?: string;
-  date?: string;
+  date?: string | Date;
   time?: string;
   includeOccupied?: boolean;
 }) => {
@@ -18,15 +18,6 @@ export const useClassrooms = (filters?: {
   });
 };
 
-// export const useBlocks = () => {
-//   return useQuery({
-//     queryKey: ["blocks"],
-//     queryFn: async () => {
-//       const response = await axiosInstance.get("/blocks");
-//       return response.data;
-//     },
-//   });
-// };
 /*------------------------------
  Get a single classroom by ID
 -------------------------------*/
@@ -48,7 +39,18 @@ export const useBookClassroom = () => {
     mutationFn: classroomService.bookClassroom,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.classrooms.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.classrooms.list() });
     },
+  });
+};
+
+/*------------------------------
+ Get all bookings
+-------------------------------*/
+export const useBookings = () => {
+  return useQuery({
+    queryKey: queryKeys.classrooms.bookings.all,
+    queryFn: () => classroomService.getBookings(),
   });
 };
 
@@ -83,13 +85,8 @@ export const useRejectBooking = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      bookingId,
-      reason,
-    }: {
-      bookingId: string;
-      reason: string;
-    }) => classroomService.rejectBooking(bookingId, reason),
+    mutationFn: ({ bookingId }: { bookingId: string }) =>
+      classroomService.rejectBooking(bookingId),
 
     onSuccess: (_, { bookingId }) => {
       queryClient.invalidateQueries({

@@ -250,7 +250,7 @@ const PaperTable = () => {
               isEditingCSV={isEditingCSV}
               errors={errors}
               inputConfig={inputConfig}
-              title="Manule Paper" //{<Text style={styles.title}>Manual Paper Entry</Text>}
+              title="Manual Paper" //{<Text style={styles.title}>Manual Paper Entry</Text>}
             />
 
             {showUploadSection && !isEditingCSV && !isKeyboardVisible && (

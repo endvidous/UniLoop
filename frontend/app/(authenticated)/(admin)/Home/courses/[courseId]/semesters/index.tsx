@@ -74,7 +74,6 @@ const SemestersScreen = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Text style={[styles.title, { color: colors.text }]}>{courseName}</Text>
-      <Text style={[styles.subtitle, { color: colors.text }]}>Semesters</Text>
 
       <FlatList
         data={semesters?.data}
@@ -84,22 +83,10 @@ const SemestersScreen = () => {
             <TouchableOpacity
               style={[
                 styles.card,
-                { backgroundColor: colors.secondaryBackground },
               ]}
               onPress={() => navigateToSemesterDetail(item._id)}
             >
               <Text style={styles.cardText}>Semester {item.number}</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.paperTeacherButton,
-                { backgroundColor: colors.secondaryBackground },
-              ]}
-              onPress={() => navigateToPaperTeacherMapping(item._id)}
-            >
-              <Icon name="school-outline" size={24} color="white" />
-              <Text style={styles.buttonText}>Assign Papers</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -120,6 +107,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 5,
+    paddingBottom: 30,
   },
   subtitle: {
     fontSize: 16,
@@ -134,16 +122,25 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   card: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 10,
+    padding: 16,
+    marginVertical: 8,
+    backgroundColor: "#fffaf0",
     borderRadius: 8,
-    width: "48%",
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
+    width: "100%",
+    borderLeftWidth: 0.8,
+    borderRightWidth: 0.8,
+    borderBottomWidth: 1.5,
+    borderTopWidth: 0.8,
   },
   cardText: {
-    color: "white",
+    color: "black",
     fontSize: 18,
     fontWeight: "bold",
+    alignItems: "center",
   },
   paperTeacherButton: {
     flexDirection: "row",

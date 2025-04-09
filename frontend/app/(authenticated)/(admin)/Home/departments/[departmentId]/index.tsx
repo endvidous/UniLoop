@@ -14,7 +14,7 @@ const DepartmentScreen = () => {
   const { colors } = useTheme();
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.secondaryBackground }]}>
       <Text style={[styles.header, { color: colors.text }]}>
         {name} Department
       </Text>
@@ -35,7 +35,6 @@ const DepartmentScreen = () => {
               `/Home/departments/[departmentId]/papers` as RelativePathString,
             params: { name: name, departmentId: departmentId },
           });
-          console.log("Department id after navigation", departmentId);
         }}
       >
         <View style={styles.cardContent}>

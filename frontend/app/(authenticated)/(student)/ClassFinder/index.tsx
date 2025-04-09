@@ -1,4 +1,4 @@
-import ClassRoomFinderPage from "@/src/components/ClassFinder/classrep/ClassroomFinderPage";
+import ClassRoomFinderPage from "@/src/components/ClassFinder/ClassroomFinderPage";
 
 const ClassFinderIndexPage = () => {
   return <ClassRoomFinderPage />;

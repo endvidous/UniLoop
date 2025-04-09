@@ -44,7 +44,6 @@ export const usePushNotifications = () => {
 
   const handleNotification = useCallback(
     (notification: Notifications.Notification) => {
-      console.log(notification);
       setNotification(notification);
     },
     []

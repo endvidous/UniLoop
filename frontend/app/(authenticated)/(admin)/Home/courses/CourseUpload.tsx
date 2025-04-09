@@ -14,6 +14,7 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { useCourses, useCreateCourses } from "@/src/hooks/api/useCourses";
 import CsvUploaderComponent from "@/src/components/common/CsvEntry";
 import ManualEntryComponent from "@/src/components/common/ManualEntry";
+import { useTheme } from "@/src/hooks/colors/useThemeColor";
 
 interface CourseFormItem {
   name: string;
@@ -37,6 +38,8 @@ const CourseTable = () => {
       courses: [{ name: "", code: "", type: "" }],
     },
   });
+
+  const colors = useTheme();
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -190,7 +193,7 @@ const CourseTable = () => {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, {backgroundColor: colors.colors.secondaryBackground}]}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
     >

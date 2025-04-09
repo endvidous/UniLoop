@@ -1,68 +1,59 @@
-import {
-  View,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  Text,
-  Alert,
-} from "react-native";
+import { View, StyleSheet, TouchableOpacity, Text, Alert } from "react-native";
 import { useState } from "react";
 import { Link, useRouter } from "expo-router";
 
 export default function ResetPasswordPage() {
   const [email, setEmail] = useState("");
-  const [emailError, setEmailError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  // const [emailError, setEmailError] = useState<string | null>(null);
+  // const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const validateEmail = (email: string) => {
-    const regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
-    return regex.test(email);
-  };
+  // const validateEmail = (email: string) => {
+  //   const regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+  //   return regex.test(email);
+  // };
 
-  const handleResetPassword = () => {
-    if (!validateEmail(email)) {
-      setEmailError("Please enter a valid email address.");
-      return;
-    }
+  // const handleResetPassword = () => {
+  //   if (!validateEmail(email)) {
+  //     setEmailError("Please enter a valid email address.");
+  //     return;
+  //   }
 
-    setIsLoading(true);
-    Alert.alert("Success", "Reset password link has been sent to your email.", [
-      {
-        text: "Okay",
-        onPress: () => {
-          router.push("/");
-        },
-      },
-    ]);
-    setIsLoading(false);
-    setEmail("");
-    setEmailError("");
-  };
+  //   setIsLoading(true);
+  //   Alert.alert("Success", "Reset password link has been sent to your email.", [
+  //     {
+  //       text: "Okay",
+  //       onPress: () => {
+  //         router.push("/");
+  //       },
+  //     },
+  //   ]);
+  //   setIsLoading(false);
+  //   setEmail("");
+  //   setEmailError("");
+  // };
 
   return (
     <View style={styles.container}>
       <View style={styles.formCard}>
         <View style={styles.formContainer}>
-          <Text style={styles.label}>Email ID</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your email"
-            placeholderTextColor="#999"
-            value={email}
-            onChangeText={setEmail}
-          />
-          {emailError && <Text style={styles.error}>{emailError}</Text>}
-
-          <TouchableOpacity
-            style={[styles.resetButton, isLoading && styles.loadingButton]}
-            onPress={handleResetPassword}
-            disabled={isLoading}
+          <Text style={styles.label}>
+            Send a request mail to one of the admins:{" "}
+          </Text>
+          <Text
+            style={{
+              color: "black",
+              fontSize: 14,
+              marginBottom: 15,
+              fontWeight: "300",
+            }}
           >
-            <Text style={styles.resetButtonText}>
-              {isLoading ? "Sending..." : "Reset Password"}
-            </Text>
-          </TouchableOpacity>
+            {`
+              1. Henry: henry@gmail.com
+              2. Medha: medha@gmail.com
+              3. Ananya: ananya@gmail.com
+              4. angela: angela@gmail.com`}
+          </Text>
 
           <Link href="/(auth)/" asChild>
             <TouchableOpacity>

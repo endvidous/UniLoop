@@ -87,9 +87,9 @@ const MappingTable = ({
             { backgroundColor: colors.secondaryBackground },
           ]}
         >
-          <Text style={[styles.departmentTitle, { color: colors.text }]}>
+          {/* <Text style={[styles.departmentTitle, { color: colors.text }]}>
             {departmentName}
-          </Text>
+          </Text> */}
 
           {/* Table Header */}
           <View style={[styles.tableRow, styles.tableHeader]}>
@@ -108,8 +108,8 @@ const MappingTable = ({
               style={[
                 styles.tableRow,
                 {
-                  backgroundColor:
-                    index % 2 === 0 ? "rgba(0,0,0,0.03)" : "transparent",
+                  backgroundColor: colors.secondaryBackground
+                    // index % 2 === 0 ? "rgba(0,0,0,0.03)" : "transparent",
                 },
               ]}
             >
@@ -241,7 +241,6 @@ const SemesterPage = () => {
   useEffect(() => {
     if (semesterData && !isFetching) {
       // Transform the API response to match the PaperTeacherMapping format
-      console.log(semesterData.data);
       const transformedMappings = semesterData.data.papers.map(
         (paperAssignment: any) => ({
           paperId: paperAssignment.paper._id,

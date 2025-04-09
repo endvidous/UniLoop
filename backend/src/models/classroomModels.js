@@ -125,6 +125,10 @@ const classroomBookingSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "User",
   },
+  requestedByBatch: {
+    type: Schema.Types.ObjectId,
+    ref: "Batches",
+  },
   status: {
     type: String,
     enum: ["pending", "approved", "rejected"],

@@ -14,7 +14,7 @@ export interface ClassroomData {
 }
 
 interface BookingData {
-  classroom: string; // It's an object in the backend
+  classroomId: string; // It's an object in the backend
   date: string;
   startTime: number;
   endTime: number;
@@ -32,7 +32,7 @@ export const classroomService = {
   ------------------------------------------------------*/
   getClassrooms: async (filters?: {
     block?: string;
-    date?: string;
+    date?: string | Date;
     time?: string;
     includeOccupied?: boolean;
   }) => {
@@ -58,10 +58,24 @@ export const classroomService = {
     Required data: classroom ID, date, start time, end time, purpose
   ------------------------------------------------------*/
   bookClassroom: async (data: BookingData) => {
-    const response = await axiosInstance.post("/classrooms/book", data);
+    const response = await axiosInstance.post("/classrooms/bookings", data);
     return response.data;
   },
 
+  /*------------------------------------------------------
+    Get all bookings
+  ------------------------------------------------------*/
+  getBookings: async () => {
+    try {
+      const response = await axiosInstance.get("/classrooms/bookings");
+      if (!response.data) throw new Error("No data received");
+      return response.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || "Failed to fetch bookings"
+      );
+    }
+  },
   /*------------------------------------------------------
     Approve a booking request
     Only teachers and admins can approve bookings
@@ -77,10 +91,9 @@ export const classroomService = {
     Reject a booking request with a reason
     Only teachers and admins can reject bookings
   ------------------------------------------------------*/
-  rejectBooking: async (bookingId: string, reason: string) => {
+  rejectBooking: async (bookingId: string) => {
     const response = await axiosInstance.patch(
-      `/classrooms/bookings/${bookingId}/reject`,
-      { reason }
+      `/classrooms/bookings/${bookingId}/reject`
     );
     return response.data;
   },
