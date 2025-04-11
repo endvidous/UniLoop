@@ -406,6 +406,16 @@ export const markAnswer = async (req, res) => {
       return res.status(403).json({ message: "Not authorized" });
     }
 
+    // Check if there's already a marked answer
+    const existingAnswer = discussion.comments.find(
+      (comment) => comment.isAnswer
+    );
+    if (existingAnswer) {
+      return res
+        .status(400)
+        .json({ message: "There is already a marked answer" });
+    }
+    
     // Update comment and close discussion
     const updated = await Discussion.findOneAndUpdate(
       { _id: discussionId, "comments._id": commentId },
